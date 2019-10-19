@@ -1,0 +1,2 @@
+Harness=Slave==>Master,Master==>Slave
+I2C=SDA,SCL
