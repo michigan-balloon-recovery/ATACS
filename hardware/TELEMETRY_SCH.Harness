@@ -1,0 +1,3 @@
+RockBLOCK=ON/OFF,Slave==>Master,RI,NETAV,RTS,CTS,Master==>Slave
+VHF=PD,PTT,Master==>Slave,Slave==>Master,MIC_IN
+XBee=Master==>Slave,Slave==>Master,SLEEP
