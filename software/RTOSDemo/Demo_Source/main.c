@@ -112,7 +112,7 @@
 #include "hal_MSP-EXP430F5438.h"
 
 /* Standard demo includes. */
-#include "ParTest.h"
+#include "partest.h"
 #include "dynamic.h"
 #include "comtest2.h"
 #include "GenQTest.h"

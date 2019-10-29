@@ -2,8 +2,6 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-SHELL = cmd.exe
-
 # Add inputs and outputs from these tool invocations to the build variables 
 ASM_SRCS += \
 ../FreeRTOS_Source/portable/CCS/MSP430X/portext.asm 
@@ -22,14 +20,14 @@ ASM_DEPS += \
 ./FreeRTOS_Source/portable/CCS/MSP430X/portext.d 
 
 OBJS__QUOTED += \
-"FreeRTOS_Source\portable\CCS\MSP430X\port.obj" \
-"FreeRTOS_Source\portable\CCS\MSP430X\portext.obj" 
+"FreeRTOS_Source/portable/CCS/MSP430X/port.obj" \
+"FreeRTOS_Source/portable/CCS/MSP430X/portext.obj" 
 
 C_DEPS__QUOTED += \
-"FreeRTOS_Source\portable\CCS\MSP430X\port.d" 
+"FreeRTOS_Source/portable/CCS/MSP430X/port.d" 
 
 ASM_DEPS__QUOTED += \
-"FreeRTOS_Source\portable\CCS\MSP430X\portext.d" 
+"FreeRTOS_Source/portable/CCS/MSP430X/portext.d" 
 
 C_SRCS__QUOTED += \
 "../FreeRTOS_Source/portable/CCS/MSP430X/port.c" 

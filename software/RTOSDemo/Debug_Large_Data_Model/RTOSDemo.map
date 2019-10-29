@@ -1,7 +1,7 @@
 ******************************************************************************
-                  MSP430 Linker PC v18.12.3                    
+                  MSP430 Linker Unix v18.12.3                  
 ******************************************************************************
->> Linked Mon Oct 28 22:39:45 2019
+>> Linked Tue Oct 29 10:48:47 2019
 
 OUTPUT FILE NAME:   <RTOSDemo.out>
 ENTRY POINT SYMBOL: "_c_int00_noargs"  address: 00005c90
@@ -356,7 +356,7 @@ MODULE SUMMARY
 
        Module                       code    ro data   rw data
        ------                       ----    -------   -------
-    .\Demo_Source\
+    ./Demo_Source/
        main.obj                     460     56        26     
        serial.obj                   278     2         8      
        ParTest.obj                  168     0         0      
@@ -364,7 +364,7 @@ MODULE SUMMARY
     +--+----------------------------+-------+---------+---------+
        Total:                       916     60        38     
                                                              
-    .\Demo_Source\Common_Demo_Files\
+    ./Demo_Source/Common_Demo_Files/
        comtest.obj                  328     16        4      
        TimerDemo.obj                90      0         40     
        GenQTest.obj                 76      0         24     
@@ -373,13 +373,13 @@ MODULE SUMMARY
     +--+----------------------------+-------+---------+---------+
        Total:                       608     16        110    
                                                              
-    .\Demo_Source\F5XX_6XX_Core_Lib\
+    ./Demo_Source/F5XX_6XX_Core_Lib/
        HAL_PMM.obj                  424     0         0      
        hal_UCS.obj                  326     0         0      
     +--+----------------------------+-------+---------+---------+
        Total:                       750     0         0      
                                                              
-    .\Demo_Source\MSP-EXP430F5438_HAL\
+    ./Demo_Source/MSP-EXP430F5438_HAL/
        hal_lcd.obj                  1098    0         3866   
        hal_lcd_fonts.obj            0       4401      0      
        hal_board.obj                212     0         0      
@@ -387,7 +387,7 @@ MODULE SUMMARY
     +--+----------------------------+-------+---------+---------+
        Total:                       1342    4401      3866   
                                                              
-    .\FreeRTOS_Source\
+    ./FreeRTOS_Source/
        tasks.obj                    2134    6         180    
        queue.obj                    1818    0         0      
        timers.obj                   1200    8         50     
@@ -395,18 +395,18 @@ MODULE SUMMARY
     +--+----------------------------+-------+---------+---------+
        Total:                       5360    14        230    
                                                              
-    .\FreeRTOS_Source\portable\CCS\MSP430X\
+    ./FreeRTOS_Source/portable/CCS/MSP430X/
        portext.obj                  166     0         0      
        port.obj                     52      2         2      
     +--+----------------------------+-------+---------+---------+
        Total:                       218     2         2      
                                                              
-    .\FreeRTOS_Source\portable\MemMang\
+    ./FreeRTOS_Source/portable/MemMang/
        heap_1.obj                   144     0         10248  
     +--+----------------------------+-------+---------+---------+
        Total:                       144     0         10248  
                                                              
-    C:\ti\ccs920\ccs\tools\compiler\ti-cgt-msp430_18.12.3.LTS\lib\rts430x_lc_ld_eabi.lib
+    /home/justin/ti/ccs920/ccs/tools/compiler/ti-cgt-msp430_18.12.3.LTS/lib/rts430x_lc_ld_eabi.lib
        autoinit.c.obj               120     0         0      
        copy_decompress_lzss.c.obj   118     0         0      
        div32u.asm.obj               88      0         0      

@@ -2,9 +2,7 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-SHELL = cmd.exe
-
-CG_TOOL_ROOT := C:/ti/ccs920/ccs/tools/compiler/ti-cgt-msp430_18.12.3.LTS
+CG_TOOL_ROOT := /home/justin/ti/ccs920/ccs/tools/compiler/ti-cgt-msp430_18.12.3.LTS
 
 GEN_OPTS__FLAG := 
 GEN_CMDS__FLAG := 
@@ -41,8 +39,8 @@ $(GEN_CMDS__FLAG) \
 
 -include ../makefile.init
 
-RM := DEL /F
-RMDIR := RMDIR /S/Q
+RM := rm -rf
+RMDIR := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
@@ -177,23 +175,23 @@ all: RTOSDemo.out
 RTOSDemo.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: MSP430 Linker'
-	"C:/ti/ccs920/ccs/tools/compiler/ti-cgt-msp430_18.12.3.LTS/bin/cl430" -vmspx --code_model=large --data_model=large --use_hw_mpy=F5 --define=__MSP430F5438__ -g --printf_support=full --diag_warning=225 --abi=eabi --silicon_errata=CPU15 --silicon_errata=CPU18 --silicon_errata=CPU21 --silicon_errata=CPU22 --silicon_errata=CPU23 --silicon_errata=CPU40 -z -m"RTOSDemo.map" --heap_size=0 --stack_size=300 --cinit_hold_wdt=on -i"C:/ti/ccs920/ccs/ccs_base/msp430/include" -i"C:/ti/ccs920/ccs/ccs_base/msp430/include" -i"C:/ti/ccs920/ccs/tools/compiler/ti-cgt-msp430_18.12.3.LTS/lib" -i"C:/ti/ccs920/ccs/tools/compiler/ti-cgt-msp430_18.12.3.LTS/include" -i"C:/ti/ccs920/ccs/ccs_base/msp430/lib/5xx_6xx_FRxx" --reread_libs --warn_sections --xml_link_info="RTOSDemo_linkInfo.xml" --use_hw_mpy=F5 --rom_model -o "RTOSDemo.out" $(ORDERED_OBJS)
+	"/home/justin/ti/ccs920/ccs/tools/compiler/ti-cgt-msp430_18.12.3.LTS/bin/cl430" -vmspx --code_model=large --data_model=large --use_hw_mpy=F5 --define=__MSP430F5438__ -g --printf_support=full --diag_warning=225 --abi=eabi --silicon_errata=CPU15 --silicon_errata=CPU18 --silicon_errata=CPU21 --silicon_errata=CPU22 --silicon_errata=CPU23 --silicon_errata=CPU40 -z -m"RTOSDemo.map" --heap_size=0 --stack_size=300 --cinit_hold_wdt=on -i"/home/justin/ti/ccs920/ccs/ccs_base/msp430/include" -i"/home/justin/ti/ccs920/ccs/ccs_base/msp430/include" -i"/home/justin/ti/ccs920/ccs/tools/compiler/ti-cgt-msp430_18.12.3.LTS/lib" -i"/home/justin/ti/ccs920/ccs/tools/compiler/ti-cgt-msp430_18.12.3.LTS/include" -i"/home/justin/ti/ccs920/ccs/ccs_base/msp430/lib/5xx_6xx_FRxx" --reread_libs --warn_sections --xml_link_info="RTOSDemo_linkInfo.xml" --use_hw_mpy=F5 --rom_model -o "RTOSDemo.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
 RTOSDemo.hex: $(EXE_OUTPUTS)
 	@echo 'Building files: $(strip $(EXE_OUTPUTS__QUOTED))'
 	@echo 'Invoking: MSP430 Hex Utility'
-	"C:/ti/ccs920/ccs/tools/compiler/ti-cgt-msp430_18.12.3.LTS/bin/hex430" --memwidth=8 --romwidth=8 -o "RTOSDemo.hex" $(EXE_OUTPUTS__QUOTED)
+	"/home/justin/ti/ccs920/ccs/tools/compiler/ti-cgt-msp430_18.12.3.LTS/bin/hex430" --memwidth=8 --romwidth=8 -o "RTOSDemo.hex" $(EXE_OUTPUTS__QUOTED)
 	@echo 'Finished building: $(strip $(EXE_OUTPUTS__QUOTED))'
 	@echo ' '
 
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "Demo_Source\Common_Demo_Files\GenQTest.obj" "Demo_Source\Common_Demo_Files\TimerDemo.obj" "Demo_Source\Common_Demo_Files\comtest.obj" "Demo_Source\Common_Demo_Files\countsem.obj" "Demo_Source\Common_Demo_Files\dynamic.obj" "Demo_Source\F5XX_6XX_Core_Lib\HAL_PMM.obj" "Demo_Source\F5XX_6XX_Core_Lib\hal_UCS.obj" "Demo_Source\MSP-EXP430F5438_HAL\hal_board.obj" "Demo_Source\MSP-EXP430F5438_HAL\hal_buttons.obj" "Demo_Source\MSP-EXP430F5438_HAL\hal_lcd.obj" "Demo_Source\MSP-EXP430F5438_HAL\hal_lcd_fonts.obj" "Demo_Source\ParTest.obj" "Demo_Source\RegTest.obj" "Demo_Source\RunTimeStatsConfig.obj" "Demo_Source\main.obj" "Demo_Source\printf-stdarg.obj" "Demo_Source\serial.obj" "FreeRTOS_Source\list.obj" "FreeRTOS_Source\queue.obj" "FreeRTOS_Source\tasks.obj" "FreeRTOS_Source\timers.obj" "FreeRTOS_Source\portable\CCS\MSP430X\port.obj" "FreeRTOS_Source\portable\CCS\MSP430X\portext.obj" "FreeRTOS_Source\portable\MemMang\heap_1.obj" 
-	-$(RM) "Demo_Source\Common_Demo_Files\GenQTest.d" "Demo_Source\Common_Demo_Files\TimerDemo.d" "Demo_Source\Common_Demo_Files\comtest.d" "Demo_Source\Common_Demo_Files\countsem.d" "Demo_Source\Common_Demo_Files\dynamic.d" "Demo_Source\F5XX_6XX_Core_Lib\HAL_PMM.d" "Demo_Source\F5XX_6XX_Core_Lib\hal_UCS.d" "Demo_Source\MSP-EXP430F5438_HAL\hal_board.d" "Demo_Source\MSP-EXP430F5438_HAL\hal_buttons.d" "Demo_Source\MSP-EXP430F5438_HAL\hal_lcd.d" "Demo_Source\MSP-EXP430F5438_HAL\hal_lcd_fonts.d" "Demo_Source\ParTest.d" "Demo_Source\RunTimeStatsConfig.d" "Demo_Source\main.d" "Demo_Source\printf-stdarg.d" "Demo_Source\serial.d" "FreeRTOS_Source\list.d" "FreeRTOS_Source\queue.d" "FreeRTOS_Source\tasks.d" "FreeRTOS_Source\timers.d" "FreeRTOS_Source\portable\CCS\MSP430X\port.d" "FreeRTOS_Source\portable\MemMang\heap_1.d" 
-	-$(RM) "Demo_Source\RegTest.d" "FreeRTOS_Source\portable\CCS\MSP430X\portext.d" 
+	-$(RM) "Demo_Source/Common_Demo_Files/GenQTest.obj" "Demo_Source/Common_Demo_Files/TimerDemo.obj" "Demo_Source/Common_Demo_Files/comtest.obj" "Demo_Source/Common_Demo_Files/countsem.obj" "Demo_Source/Common_Demo_Files/dynamic.obj" "Demo_Source/F5XX_6XX_Core_Lib/HAL_PMM.obj" "Demo_Source/F5XX_6XX_Core_Lib/hal_UCS.obj" "Demo_Source/MSP-EXP430F5438_HAL/hal_board.obj" "Demo_Source/MSP-EXP430F5438_HAL/hal_buttons.obj" "Demo_Source/MSP-EXP430F5438_HAL/hal_lcd.obj" "Demo_Source/MSP-EXP430F5438_HAL/hal_lcd_fonts.obj" "Demo_Source/ParTest.obj" "Demo_Source/RegTest.obj" "Demo_Source/RunTimeStatsConfig.obj" "Demo_Source/main.obj" "Demo_Source/printf-stdarg.obj" "Demo_Source/serial.obj" "FreeRTOS_Source/list.obj" "FreeRTOS_Source/queue.obj" "FreeRTOS_Source/tasks.obj" "FreeRTOS_Source/timers.obj" "FreeRTOS_Source/portable/CCS/MSP430X/port.obj" "FreeRTOS_Source/portable/CCS/MSP430X/portext.obj" "FreeRTOS_Source/portable/MemMang/heap_1.obj" 
+	-$(RM) "Demo_Source/Common_Demo_Files/GenQTest.d" "Demo_Source/Common_Demo_Files/TimerDemo.d" "Demo_Source/Common_Demo_Files/comtest.d" "Demo_Source/Common_Demo_Files/countsem.d" "Demo_Source/Common_Demo_Files/dynamic.d" "Demo_Source/F5XX_6XX_Core_Lib/HAL_PMM.d" "Demo_Source/F5XX_6XX_Core_Lib/hal_UCS.d" "Demo_Source/MSP-EXP430F5438_HAL/hal_board.d" "Demo_Source/MSP-EXP430F5438_HAL/hal_buttons.d" "Demo_Source/MSP-EXP430F5438_HAL/hal_lcd.d" "Demo_Source/MSP-EXP430F5438_HAL/hal_lcd_fonts.d" "Demo_Source/ParTest.d" "Demo_Source/RunTimeStatsConfig.d" "Demo_Source/main.d" "Demo_Source/printf-stdarg.d" "Demo_Source/serial.d" "FreeRTOS_Source/list.d" "FreeRTOS_Source/queue.d" "FreeRTOS_Source/tasks.d" "FreeRTOS_Source/timers.d" "FreeRTOS_Source/portable/CCS/MSP430X/port.d" "FreeRTOS_Source/portable/MemMang/heap_1.d" 
+	-$(RM) "Demo_Source/RegTest.d" "FreeRTOS_Source/portable/CCS/MSP430X/portext.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

@@ -98,37 +98,87 @@
 						</toolChain>
 					</folderInfo>
 					<fileInfo id="com.ti.ccstudio.buildDefinitions.MSP430.Debug.1203657382.Demo_Source/F5XX_6XX_Core_Lib/hal_UCS.c" name="hal_UCS.c" rcbsApplicability="disable" resourcePath="Demo_Source/F5XX_6XX_Core_Lib/hal_UCS.c" toolsToInvoke="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.496920098">
-						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.496920098" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414"/>
+						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.496920098" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414">
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS.612040645" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS.1332438671" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS.1736097868" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS.1684057311" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS"/>
+						</tool>
 					</fileInfo>
 					<fileInfo id="com.ti.ccstudio.buildDefinitions.MSP430.Debug.1203657382.Demo_Source/RunTimeStatsConfig.c" name="RunTimeStatsConfig.c" rcbsApplicability="disable" resourcePath="Demo_Source/RunTimeStatsConfig.c" toolsToInvoke="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.641860276">
-						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.641860276" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414"/>
+						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.641860276" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414">
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS.107526977" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS.1257935249" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS.533282041" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS.459703884" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS"/>
+						</tool>
 					</fileInfo>
 					<fileInfo id="com.ti.ccstudio.buildDefinitions.MSP430.Debug.1203657382.Demo_Source/RegTest.asm" name="RegTest.asm" rcbsApplicability="disable" resourcePath="Demo_Source/RegTest.asm" toolsToInvoke="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1561215678">
-						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1561215678" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414"/>
+						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1561215678" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414">
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS.1901876418" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS.203132140" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS.617842326" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS.140988086" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS"/>
+						</tool>
 					</fileInfo>
 					<fileInfo id="com.ti.ccstudio.buildDefinitions.MSP430.Debug.1203657382.Demo_Source/serial.c" name="serial.c" rcbsApplicability="disable" resourcePath="Demo_Source/serial.c" toolsToInvoke="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1691437816">
-						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1691437816" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414"/>
+						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1691437816" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414">
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS.2067989938" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS.299738189" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS.2068759145" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS.951720614" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS"/>
+						</tool>
 					</fileInfo>
 					<fileInfo id="com.ti.ccstudio.buildDefinitions.MSP430.Debug.1203657382.Demo_Source/MSP-EXP430F5438_HAL/hal_lcd.c" name="hal_lcd.c" rcbsApplicability="disable" resourcePath="Demo_Source/MSP-EXP430F5438_HAL/hal_lcd.c" toolsToInvoke="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.61452404">
-						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.61452404" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414"/>
+						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.61452404" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414">
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS.2015291989" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS.1652601616" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS.1246769886" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS.1868239992" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS"/>
+						</tool>
 					</fileInfo>
 					<fileInfo id="com.ti.ccstudio.buildDefinitions.MSP430.Debug.1203657382.Demo_Source/MSP-EXP430F5438_HAL/hal_board.c" name="hal_board.c" rcbsApplicability="disable" resourcePath="Demo_Source/MSP-EXP430F5438_HAL/hal_board.c" toolsToInvoke="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.494616160">
-						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.494616160" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414"/>
+						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.494616160" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414">
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS.1561401682" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS.1903787289" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS.1026907184" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS.550468417" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS"/>
+						</tool>
 					</fileInfo>
 					<fileInfo id="com.ti.ccstudio.buildDefinitions.MSP430.Debug.1203657382.Demo_Source/MSP-EXP430F5438_HAL/hal_buttons.c" name="hal_buttons.c" rcbsApplicability="disable" resourcePath="Demo_Source/MSP-EXP430F5438_HAL/hal_buttons.c" toolsToInvoke="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1478733980">
-						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1478733980" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414"/>
+						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1478733980" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414">
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS.1315623397" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS.1788874651" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS.979034360" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS.1273862288" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS"/>
+						</tool>
 					</fileInfo>
 					<fileInfo id="com.ti.ccstudio.buildDefinitions.MSP430.Debug.1203657382.Demo_Source/MSP-EXP430F5438_HAL/hal_lcd_fonts.c" name="hal_lcd_fonts.c" rcbsApplicability="disable" resourcePath="Demo_Source/MSP-EXP430F5438_HAL/hal_lcd_fonts.c" toolsToInvoke="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.770099213">
-						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.770099213" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414"/>
+						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.770099213" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414">
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS.2032895789" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS.394217274" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS.233454465" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS.205952321" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS"/>
+						</tool>
 					</fileInfo>
 					<fileInfo id="com.ti.ccstudio.buildDefinitions.MSP430.Debug.1203657382.Demo_Source/main.c" name="main.c" rcbsApplicability="disable" resourcePath="Demo_Source/main.c" toolsToInvoke="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1268964565">
-						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1268964565" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414"/>
+						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1268964565" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414">
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS.177893707" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS.1131025769" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS.901252367" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS.146756508" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS"/>
+						</tool>
 					</fileInfo>
 					<fileInfo id="com.ti.ccstudio.buildDefinitions.MSP430.Debug.1203657382.Demo_Source/ParTest.c" name="ParTest.c" rcbsApplicability="disable" resourcePath="Demo_Source/ParTest.c" toolsToInvoke="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1435145022">
-						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1435145022" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414"/>
+						<tool id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414.1435145022" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.exe.compilerDebug.138632414">
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS.1436055547" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS.1077752073" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS.1622067453" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS"/>
+							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS.1944943900" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM2_SRCS"/>
+						</tool>
 					</fileInfo>
 					<sourceEntries>
-						<entry excluding="lnk_msp430f5438a.cmd" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
