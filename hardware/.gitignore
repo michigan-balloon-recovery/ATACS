@@ -2,7 +2,7 @@
 *.PrjPCBStructure
 *.SchDocPreview
 *.PcbDocPreview
-__Previews
+__Previews/*
 *.PrjPcbStructure
 *.Dat
 *.REP 
