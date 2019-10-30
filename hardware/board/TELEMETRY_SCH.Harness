@@ -1,4 +1,4 @@
 RockBLOCK=ON/OFF,Slave==>Master,RI,NETAV,RTS,CTS,Master==>Slave
-SPI=CS,MOSI,CLK,MISO
+SPI=CS,MOSI,CLK,MISO,SWA,SWB
 VHF=PD,PTT,Master==>Slave,Slave==>Master,MIC_IN
 XBee=Master==>Slave,Slave==>Master,SLEEP
