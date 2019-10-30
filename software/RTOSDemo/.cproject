@@ -45,15 +45,14 @@
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.DEBUGGING_MODEL.712386933" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.INCLUDE_PATH.2108942926" name="Add dir to #include search path (--include_path, -I)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.INCLUDE_PATH" valueType="includePath">
 									<listOptionValue builtIn="false" value="${CCS_BASE_ROOT}/msp430/include"/>
-									<listOptionValue builtIn="false" value="&quot;${CCS_BASE_ROOT}/msp430/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RTOSDemo/src/common/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RTOSDemo/src/MSP-EXP430F5438_HAL}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RTOSDemo/src/F5XX_6XX_Core_Lib}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RTOSDemo/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RTOSDemo}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RTOSDemo/FreeRTOS_Source/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RTOSDemo/FreeRTOS_Source/portable/CCS/MSP430X}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${CG_TOOL_ROOT}/include&quot;"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/common/include"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/MSP-EXP430F5438_HAL"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/F5XX_6XX_Core_Lib"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS_Source/include"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS_Source/portable/CCS/MSP430X"/>
+									<listOptionValue builtIn="false" value="${CG_TOOL_ROOT}/include"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.DIAG_WARNING.292602880" name="Treat diagnostic &lt;id&gt; as warning (--diag_warning, -pdsw)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.DIAG_WARNING" valueType="stringList">
 									<listOptionValue builtIn="false" value="225"/>
