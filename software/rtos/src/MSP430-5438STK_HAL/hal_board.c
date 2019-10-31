@@ -3,8 +3,8 @@
  *
  * Copyright 2010 Texas Instruments, Inc.
 ******************************************************************************/
+#include <MSP430-5438STK_HAL/hal_MSP430-5438STK.h>
 #include "msp430.h"
-#include "hal_MSP-EXP430F5438.h"
 
 /**********************************************************************//**
  * @brief  Initializes ACLK, MCLK, SMCLK outputs on P11.0, P11.1,

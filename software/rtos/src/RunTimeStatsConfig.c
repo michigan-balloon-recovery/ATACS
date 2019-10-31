@@ -26,11 +26,11 @@
  */
 
 /* FreeRTOS includes. */
+#include <MSP430-5438STK_HAL/hal_MSP430-5438STK.h>
 #include "FreeRTOS.h"
 
 /* Hardware includes. */
 #include "msp430.h"
-#include "hal_MSP-EXP430F5438.h"
 
 /* This demo uses Timer A1 to generate the time base for gathering run time
 statistics information.  Run time statistics show much processing time has

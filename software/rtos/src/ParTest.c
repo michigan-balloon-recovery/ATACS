@@ -30,12 +30,12 @@
  *-----------------------------------------------------------*/
 
 /* Kernel includes. */
+#include <MSP430-5438STK_HAL/hal_MSP430-5438STK.h>
 #include "FreeRTOS.h"
 #include "task.h"
 
 /* Hardware includes. */
 #include "msp430.h"
-#include "hal_MSP-EXP430F5438.h"
 
 /*-----------------------------------------------------------*/
 
