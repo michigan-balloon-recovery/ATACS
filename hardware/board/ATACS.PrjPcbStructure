@@ -1,0 +1,5 @@
+Record=TopLevelDocument|FileName=ATACS_SCH.SchDoc
+Record=SheetSymbol|SourceDocument=ATACS_SCH.SchDoc|Designator=EPS|SchDesignator=EPS|FileName=EPS_SCH.SchDoc|SymbolType=Normal|RawFileName=EPS_SCH.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
+Record=SheetSymbol|SourceDocument=ATACS_SCH.SchDoc|Designator=MSP430|SchDesignator=MSP430|FileName=MSP430F5438A.SchDoc|SymbolType=Normal|RawFileName=MSP430F5438A.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
+Record=SheetSymbol|SourceDocument=ATACS_SCH.SchDoc|Designator=Sensors|SchDesignator=Sensors|FileName=SENSOR_SCH.SchDoc|SymbolType=Normal|RawFileName=SENSOR_SCH.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
+Record=SheetSymbol|SourceDocument=ATACS_SCH.SchDoc|Designator=Telemetry|SchDesignator=Telemetry|FileName=TELEMETRY_SCH.SchDoc|SymbolType=Normal|RawFileName=TELEMETRY_SCH.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
