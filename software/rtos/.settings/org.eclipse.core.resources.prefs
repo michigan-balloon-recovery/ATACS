@@ -15,6 +15,8 @@ encoding//Debug_Large_Data_Model/FreeRTOS_Source/portable/MemMang/subdir_rules.m
 encoding//Debug_Large_Data_Model/FreeRTOS_Source/portable/MemMang/subdir_vars.mk=UTF-8
 encoding//Debug_Large_Data_Model/FreeRTOS_Source/subdir_rules.mk=UTF-8
 encoding//Debug_Large_Data_Model/FreeRTOS_Source/subdir_vars.mk=UTF-8
+encoding//Debug_Large_Data_Model/driverlib/MSP430F5xx_6xx/subdir_rules.mk=UTF-8
+encoding//Debug_Large_Data_Model/driverlib/MSP430F5xx_6xx/subdir_vars.mk=UTF-8
 encoding//Debug_Large_Data_Model/lib/subdir_rules.mk=UTF-8
 encoding//Debug_Large_Data_Model/lib/subdir_vars.mk=UTF-8
 encoding//Debug_Large_Data_Model/makefile=UTF-8
