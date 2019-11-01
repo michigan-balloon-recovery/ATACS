@@ -30,5 +30,7 @@ encoding//Debug_Large_Data_Model/src/common/subdir_rules.mk=UTF-8
 encoding//Debug_Large_Data_Model/src/common/subdir_vars.mk=UTF-8
 encoding//Debug_Large_Data_Model/src/subdir_rules.mk=UTF-8
 encoding//Debug_Large_Data_Model/src/subdir_vars.mk=UTF-8
+encoding//Debug_Large_Data_Model/src/uart/subdir_rules.mk=UTF-8
+encoding//Debug_Large_Data_Model/src/uart/subdir_vars.mk=UTF-8
 encoding//Debug_Large_Data_Model/subdir_rules.mk=UTF-8
 encoding//Debug_Large_Data_Model/subdir_vars.mk=UTF-8

@@ -37,12 +37,21 @@
 
 /* Hardware includes. */
 #include "msp430.h"
-#include "partest.h"
-#include "dynamic.h"
-#include "comtest2.h"
-#include "GenQTest.h"
-#include "TimerDemo.h"
-#include "countsem.h"
+#include "uart.h"
+
+/*-----------------------------------------------------------*/
+
+/*
+ * UART
+ */
+UARTConfig    cnf;
+USCIUARTRegs  uartUsciRegs;
+
+unsigned char uartTxBuf[200];
+unsigned char uartRxBuf[200];
+
+void init_UART_A0();
+void setSMCLK8MHz();
 
 /*-----------------------------------------------------------*/
 
@@ -53,6 +62,45 @@ static void prvSetupHardware( void );
 
 /*-----------------------------------------------------------*/
 
+void init_UART_A0(){
+    initUartDriver();
+
+    // Configure UART Module on USCIA0
+    cnf.moduleName = USCI_A0;
+
+    // Use UART Pins P3.5 and P3.4
+    cnf.portNum = PORT_3;
+    cnf.RxPinNum = PIN5;
+    cnf.TxPinNum = PIN4;
+
+    // 38400 Baud from 8MHz SMCLK
+    cnf.clkRate = 18000000L;
+    cnf.baudRate = 38400L;
+    cnf.clkSrc = UART_CLK_SRC_SMCLK;
+
+    // 8N1
+    cnf.databits = 8;
+    cnf.parity = UART_PARITY_NONE;
+    cnf.stopbits = 1;
+
+    int res = configUSCIUart(&cnf,&uartUsciRegs);
+    if(res != UART_SUCCESS)
+    {
+        // Failed to initialize UART for some reason
+        __no_operation();
+    }
+
+    // Configure the buffers that will be used by the UART Driver.
+    // These buffers are exclusively for the UART driver's use and should not be touched
+    // by the application itself. Note that they may affect performance if they're too
+    // small.
+    setUartTxBuffer(&cnf, uartTxBuf, 200);
+    setUartRxBuffer(&cnf, uartRxBuf, 200);
+
+    enableUartRx(&cnf);
+}
+
+
 // toggle LED_1 every 200ms
 void task1( void ) {
     portTickType xLastWakeTime;
@@ -62,7 +110,6 @@ void task1( void ) {
 
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-
         LED_PORT_OUT ^= LED_1;
     }
 }
@@ -76,17 +123,36 @@ void task2( void ) {
 
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-
         LED_PORT_OUT ^= LED_2;
     }
 }
 
-void main( void ) {
-	/* Configure the peripherals used by this application. */
-	prvSetupHardware();
+// Print "HELLO" every 100ms
+void task3( void ) {
+    portTickType xLastWakeTime;
+    const portTickType xFrequency = 100 / portTICK_RATE_MS;
 
+    xLastWakeTime = xTaskGetTickCount();
+
+    while(1) {
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        vTaskSuspendAll();
+            uartSendDataInt(&cnf,(unsigned char *)"HELLO\r\n", 7);
+            while(cnf.txBufCtr > 0); // block until all bytes have transmitted
+        xTaskResumeAll();
+    }
+}
+
+void main( void ) {
+
+    /* Initialize Hardware */
+    prvSetupHardware();
+    init_UART_A0();
+
+    /* Create Tasks */
 	xTaskCreate((TaskFunction_t)task1, "t1", 128, NULL, 1, NULL);
 	xTaskCreate((TaskFunction_t)task2, "t2", 128, NULL, 1, NULL);
+	xTaskCreate((TaskFunction_t)task3, "t3", 128, NULL, 2, NULL);
 
     /* Start the scheduler. */
     vTaskStartScheduler();
@@ -108,7 +174,7 @@ static void prvSetupHardware( void ) {
 	halBoardInit();
 
 //	LFXT_Start( XT1DRIVE_0 );
-//	hal430SetSystemClock( configCPU_CLOCK_HZ, configLFXT_CLOCK_HZ );
+	hal430SetSystemClock( configCPU_CLOCK_HZ, configLFXT_CLOCK_HZ );
 
 //	halButtonsInit( BUTTON_ALL );
 //	halButtonsInterruptEnable( BUTTON_SELECT );
@@ -185,3 +251,4 @@ void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
 	for( ;; );
 }
 /*-----------------------------------------------------------*/
+

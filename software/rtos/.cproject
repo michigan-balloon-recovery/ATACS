@@ -49,6 +49,7 @@
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/MSP430-5438STK_HAL"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/F5XX_6XX_Core_Lib"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/uart"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS_Source/include"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS_Source/portable/CCS/MSP430X"/>
