@@ -155,8 +155,7 @@ UARTConfig   USCI_A0_cnf, USCI_A1_cnf, USCI_A2_cnf, USCI_A3_cnf;
 USCIUARTRegs USCI_A0_regs, USCI_A1_regs, USCI_A2_regs, USCI_A3_regs;
 
 /* Function Declarations */
-int initUSCIUart(UART_MODULE_NAMES moduleName, UARTConfig * prtInf,
-				 unsigned char* txbuf, unsigned char* rxbuf);
+int initUSCIUart(UARTConfig * prtInf, unsigned char* txbuf, unsigned char* rxbuf);
 int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs);
 int configUSARTUart(UARTConfig * prtInf, USARTUARTRegs * confRegs);
 int uartSendDataBlocking(UARTConfig * prtInf,unsigned char * buf, int len);

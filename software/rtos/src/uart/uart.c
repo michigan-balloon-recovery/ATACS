@@ -42,10 +42,9 @@ void initUartDriver()
 	}
 }
 
-int initUSCIUart(UART_MODULE_NAMES moduleName, UARTConfig * prtInf,
-				 unsigned char* txbuf, unsigned char* rxbuf){
+int initUSCIUart(UARTConfig * prtInf, unsigned char* txbuf, unsigned char* rxbuf){
     int res = UART_SUCCESS;
-	switch(moduleName){
+	switch(prtInf->moduleName){
 		case USCI_A0:
 			memcpy(&USCI_A0_cnf, prtInf, sizeof(UARTConfig));
 			res = configUSCIUart(&USCI_A0_cnf,&USCI_A0_regs);

@@ -148,7 +148,7 @@ static void prvSetupHardware( void ) {
     a0_cnf.parity = UART_PARITY_NONE;
     a0_cnf.stopbits = 1;
 
-    initUSCIUart(USCI_A0, &a0_cnf, A0_TX, A0_RX);
+    initUSCIUart(&a0_cnf, A0_TX, A0_RX);
 }
 /*-----------------------------------------------------------*/
 
