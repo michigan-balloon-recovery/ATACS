@@ -1,30 +1,3 @@
-/*
- * FreeRTOS Kernel V10.2.1
- * Copyright (C) 2019 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * http://www.FreeRTOS.org
- * http://aws.amazon.com/freertos
- *
- * 1 tab == 4 spaces!
- */
-
 /* Standard includes. */
 #include <MSP430-5438STK_HAL/hal_MSP430-5438STK.h>
 #include <stdio.h>
@@ -32,8 +5,8 @@
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
 #include "task.h"
-#include "timers.h"
-#include "queue.h"
+// #include "timers.h"
+// #include "queue.h"
 
 /* Hardware includes. */
 #include "msp430.h"
@@ -44,14 +17,8 @@
 /*
  * UART
  */
-UARTConfig    cnf;
-USCIUARTRegs  uartUsciRegs;
-
-unsigned char uartTxBuf[200];
-unsigned char uartRxBuf[200];
-
-void init_UART_A0();
-void setSMCLK8MHz();
+unsigned char A0_TX[200];
+unsigned char A0_RX[200];
 
 /*-----------------------------------------------------------*/
 
@@ -62,49 +29,10 @@ static void prvSetupHardware( void );
 
 /*-----------------------------------------------------------*/
 
-void init_UART_A0(){
-    initUartDriver();
-
-    // Configure UART Module on USCIA0
-    cnf.moduleName = USCI_A0;
-
-    // Use UART Pins P3.5 and P3.4
-    cnf.portNum = PORT_3;
-    cnf.RxPinNum = PIN5;
-    cnf.TxPinNum = PIN4;
-
-    // 38400 Baud from 8MHz SMCLK
-    cnf.clkRate = 18000000L;
-    cnf.baudRate = 38400L;
-    cnf.clkSrc = UART_CLK_SRC_SMCLK;
-
-    // 8N1
-    cnf.databits = 8;
-    cnf.parity = UART_PARITY_NONE;
-    cnf.stopbits = 1;
-
-    int res = configUSCIUart(&cnf,&uartUsciRegs);
-    if(res != UART_SUCCESS)
-    {
-        // Failed to initialize UART for some reason
-        __no_operation();
-    }
-
-    // Configure the buffers that will be used by the UART Driver.
-    // These buffers are exclusively for the UART driver's use and should not be touched
-    // by the application itself. Note that they may affect performance if they're too
-    // small.
-    setUartTxBuffer(&cnf, uartTxBuf, 200);
-    setUartRxBuffer(&cnf, uartRxBuf, 200);
-
-    enableUartRx(&cnf);
-}
-
-
-// toggle LED_1 every 200ms
+// toggle LED_1 every 50ms
 void task1( void ) {
     portTickType xLastWakeTime;
-    const portTickType xFrequency = 200 / portTICK_RATE_MS;
+    const portTickType xFrequency = 50 / portTICK_RATE_MS;
 
     xLastWakeTime = xTaskGetTickCount();
 
@@ -114,10 +42,10 @@ void task1( void ) {
     }
 }
 
-// toggle LED_2 every 500ms
+// toggle LED_2 every 300ms
 void task2( void ) {
     portTickType xLastWakeTime;
-    const portTickType xFrequency = 500 / portTICK_RATE_MS;
+    const portTickType xFrequency = 300 / portTICK_RATE_MS;
 
     xLastWakeTime = xTaskGetTickCount();
 
@@ -127,7 +55,7 @@ void task2( void ) {
     }
 }
 
-// Print "HELLO" every 100ms
+// Print "DEADBEEF\r\n" every 100ms
 void task3( void ) {
     portTickType xLastWakeTime;
     const portTickType xFrequency = 100 / portTICK_RATE_MS;
@@ -136,10 +64,33 @@ void task3( void ) {
 
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        vTaskSuspendAll();
-            uartSendDataInt(&cnf,(unsigned char *)"HELLO\r\n", 7);
-            while(cnf.txBufCtr > 0); // block until all bytes have transmitted
+        vTaskSuspendAll(); // Suspend scheduler while we transmit
+        uartSendDataBlocking(&USCI_A0_cnf, (unsigned char*)"DEADBEEF\r\n", 10);
         xTaskResumeAll();
+        LED_PORT_OUT ^= LED_1;
+    }
+}
+
+// Read from UART 0 every 10ms;
+void task4( void ) {
+    portTickType xLastWakeTime;
+    const portTickType xFrequency = 100 / portTICK_RATE_MS;
+
+    xLastWakeTime = xTaskGetTickCount();
+
+    while(1) {
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        int bytesAvailable = numUartBytesReceived(&USCI_A0_cnf);
+        if(bytesAvailable == 10){
+            unsigned char tempBuf[10];
+            volatile int bytesRead = readRxBytes(&USCI_A0_cnf, tempBuf, bytesAvailable, 0);
+            if(bytesRead == bytesAvailable){
+                // If we receive "DEADBEEF\r\n", we toggle LED_2
+                if(!memcmp(tempBuf, "DEADBEEF\r\n", 10)){
+                    LED_PORT_OUT ^= LED_2;
+                }
+            }
+        }
     }
 }
 
@@ -147,12 +98,12 @@ void main( void ) {
 
     /* Initialize Hardware */
     prvSetupHardware();
-    init_UART_A0();
 
     /* Create Tasks */
-	xTaskCreate((TaskFunction_t)task1, "t1", 128, NULL, 1, NULL);
-	xTaskCreate((TaskFunction_t)task2, "t2", 128, NULL, 1, NULL);
-	xTaskCreate((TaskFunction_t)task3, "t3", 128, NULL, 2, NULL);
+//	xTaskCreate((TaskFunction_t)task1, "t1", 128, NULL, 1, NULL);
+//	xTaskCreate((TaskFunction_t)task2, "t2", 128, NULL, 1, NULL);
+	xTaskCreate((TaskFunction_t)task3, "t3", 128, NULL, 1, NULL);
+	xTaskCreate((TaskFunction_t)task4, "t4", 128, NULL, 1, NULL);
 
     /* Start the scheduler. */
     vTaskStartScheduler();
@@ -173,11 +124,31 @@ static void prvSetupHardware( void ) {
   
 	halBoardInit();
 
-//	LFXT_Start( XT1DRIVE_0 );
+	// LFXT_Start( XT1DRIVE_0 );
 	hal430SetSystemClock( configCPU_CLOCK_HZ, configLFXT_CLOCK_HZ );
 
-//	halButtonsInit( BUTTON_ALL );
-//	halButtonsInterruptEnable( BUTTON_SELECT );
+    /* UART */
+    initUartDriver();
+
+    UARTConfig a0_cnf;
+    a0_cnf.moduleName = USCI_A0;
+
+    // Use UART Pins P3.5 and P3.4
+    a0_cnf.portNum = PORT_3;
+    a0_cnf.RxPinNum = PIN5;
+    a0_cnf.TxPinNum = PIN4;
+
+    // 38400 Baud from 18MHz SMCLK
+    a0_cnf.clkRate = 18000000L;
+    a0_cnf.baudRate = 38400L;
+    a0_cnf.clkSrc = UART_CLK_SRC_SMCLK;
+
+    // 8N1
+    a0_cnf.databits = 8;
+    a0_cnf.parity = UART_PARITY_NONE;
+    a0_cnf.stopbits = 1;
+
+    initUSCIUart(USCI_A0, &a0_cnf, A0_TX, A0_RX);
 }
 /*-----------------------------------------------------------*/
 

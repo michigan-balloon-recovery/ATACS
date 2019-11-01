@@ -42,6 +42,60 @@ void initUartDriver()
 	}
 }
 
+int initUSCIUart(UART_MODULE_NAMES moduleName, UARTConfig * prtInf,
+				 unsigned char* txbuf, unsigned char* rxbuf){
+    int res = UART_SUCCESS;
+	switch(moduleName){
+		case USCI_A0:
+			memcpy(&USCI_A0_cnf, prtInf, sizeof(UARTConfig));
+			res = configUSCIUart(&USCI_A0_cnf,&USCI_A0_regs);
+			if(res != UART_SUCCESS) {
+				// Failed to initialize UART for some reason
+				return UART_UNKNOWN;
+			}
+			setUartTxBuffer(&USCI_A0_cnf, txbuf, 200);
+			setUartRxBuffer(&USCI_A0_cnf, rxbuf, 200);
+			enableUartRx(&USCI_A0_cnf);
+			break;
+		case USCI_A1:
+			memcpy(&USCI_A1_cnf, prtInf, sizeof(UARTConfig));
+			res = configUSCIUart(&USCI_A1_cnf,&USCI_A1_regs);
+			if(res != UART_SUCCESS) {
+				// Failed to initialize UART for some reason
+				return UART_UNKNOWN;
+			}
+			setUartTxBuffer(&USCI_A1_cnf, txbuf, 200);
+			setUartRxBuffer(&USCI_A1_cnf, rxbuf, 200);
+			enableUartRx(&USCI_A1_cnf);
+			break;
+		case USCI_A2:
+			memcpy(&USCI_A2_cnf, prtInf, sizeof(UARTConfig));
+			res = configUSCIUart(&USCI_A2_cnf,&USCI_A2_regs);
+			if(res != UART_SUCCESS) {
+				// Failed to initialize UART for some reason
+				return UART_UNKNOWN;
+			}
+			setUartTxBuffer(&USCI_A2_cnf, txbuf, 200);
+			setUartRxBuffer(&USCI_A2_cnf, rxbuf, 200);
+			enableUartRx(&USCI_A2_cnf);
+			break;
+		case USCI_A3:
+			memcpy(&USCI_A3_cnf, prtInf, sizeof(UARTConfig));
+			res = configUSCIUart(&USCI_A3_cnf,&USCI_A3_regs);
+			if(res != UART_SUCCESS) {
+				// Failed to initialize UART for some reason
+				return UART_UNKNOWN;
+			}
+			setUartTxBuffer(&USCI_A3_cnf, txbuf, 200);
+			setUartRxBuffer(&USCI_A3_cnf, rxbuf, 200);
+			enableUartRx(&USCI_A3_cnf);
+			break;
+		default:
+			return UART_INVALID_MODULE;
+	}
+	return UART_SUCCESS;
+}
+
 /*!
  * \brief Configures the MSP430 pins for UART module
  *

@@ -50,7 +50,9 @@ enum UART_ERR_CODES
 	UART_BAD_CLK_SOURCE,
 	UART_INSUFFICIENT_TX_BUF,
 	UART_INSUFFICIENT_RX_BUF,
-	UART_BAD_PORT_SELECTED
+	UART_BAD_PORT_SELECTED,
+	UART_INVALID_MODULE,
+	UART_UNKNOWN
 };
 
 typedef enum
@@ -58,7 +60,7 @@ typedef enum
 	USCI_A0,  /**< USCI_A0 Module  */
 	USCI_A1,  /**< USCI_A1 Module  */
 	USCI_A2,  /**< USCI_A2 Module  */
-	UCA0,
+	USCI_A3,  /**< USCI_A3 Module  */
 	USART_0,  /**< USART_0 Module  */
 	USART_1  /**< USART_1 Module  */
 
@@ -148,14 +150,17 @@ typedef struct
 	int txBufCtr;
 } UARTConfig;
 
-
+/* Global Structs */
+UARTConfig   USCI_A0_cnf, USCI_A1_cnf, USCI_A2_cnf, USCI_A3_cnf;
+USCIUARTRegs USCI_A0_regs, USCI_A1_regs, USCI_A2_regs, USCI_A3_regs;
 
 /* Function Declarations */
+int initUSCIUart(UART_MODULE_NAMES moduleName, UARTConfig * prtInf,
+				 unsigned char* txbuf, unsigned char* rxbuf);
 int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs);
 int configUSARTUart(UARTConfig * prtInf, USARTUARTRegs * confRegs);
 int uartSendDataBlocking(UARTConfig * prtInf,unsigned char * buf, int len);
 int uartSendStringBlocking(UARTConfig * prtInf,char * string);
-int initUSCIUart(USCIUARTRegs * confRegs, UARTConfig * prtInf);
 int initUartPort(UARTConfig * prtInf);
 void initBufferDefaults(UARTConfig * prtInf);
 void setUartTxBuffer(UARTConfig * prtInf, unsigned char * buf, int bufLen);
