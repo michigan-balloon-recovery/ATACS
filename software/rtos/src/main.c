@@ -1,6 +1,7 @@
 /* Standard includes. */
 #include <MSP430-5438STK_HAL/hal_MSP430-5438STK.h>
 #include <stdio.h>
+#include <string.h>
 
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
@@ -30,7 +31,7 @@ static void prvSetupHardware( void );
 /*-----------------------------------------------------------*/
 
 // toggle LED_1 every 50ms
-void task1( void ) {
+void task_led_1_toggle( void ) {
     portTickType xLastWakeTime;
     const portTickType xFrequency = 50 / portTICK_RATE_MS;
 
@@ -42,23 +43,10 @@ void task1( void ) {
     }
 }
 
-// toggle LED_2 every 300ms
-void task2( void ) {
+// Print "DEADBEEF\r\n" every 500ms
+void task_uart_tx( void ) {
     portTickType xLastWakeTime;
-    const portTickType xFrequency = 300 / portTICK_RATE_MS;
-
-    xLastWakeTime = xTaskGetTickCount();
-
-    while(1) {
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        LED_PORT_OUT ^= LED_2;
-    }
-}
-
-// Print "DEADBEEF\r\n" every 100ms
-void task3( void ) {
-    portTickType xLastWakeTime;
-    const portTickType xFrequency = 100 / portTICK_RATE_MS;
+    const portTickType xFrequency = 500 / portTICK_RATE_MS;
 
     xLastWakeTime = xTaskGetTickCount();
 
@@ -71,8 +59,8 @@ void task3( void ) {
     }
 }
 
-// Read from UART 0 every 10ms;
-void task4( void ) {
+// Read from UART 0 every 100ms;
+void task_uart_rx( void ) {
     portTickType xLastWakeTime;
     const portTickType xFrequency = 100 / portTICK_RATE_MS;
 
@@ -100,10 +88,9 @@ void main( void ) {
     prvSetupHardware();
 
     /* Create Tasks */
-//	xTaskCreate((TaskFunction_t)task1, "t1", 128, NULL, 1, NULL);
-//	xTaskCreate((TaskFunction_t)task2, "t2", 128, NULL, 1, NULL);
-	xTaskCreate((TaskFunction_t)task3, "t3", 128, NULL, 1, NULL);
-	xTaskCreate((TaskFunction_t)task4, "t4", 128, NULL, 1, NULL);
+//	xTaskCreate((TaskFunction_t)task_led_1_toggle, "LED_1 Toggle", 128, NULL, 1, NULL);
+	xTaskCreate((TaskFunction_t)task_uart_tx, "Send DEADBEEF", 128, NULL, 1, NULL);
+	xTaskCreate((TaskFunction_t)task_uart_rx, "UART RX Loopback Test", 128, NULL, 1, NULL);
 
     /* Start the scheduler. */
     vTaskStartScheduler();
