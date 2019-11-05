@@ -6,20 +6,14 @@
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
 #include "task.h"
-// #include "timers.h"
-// #include "queue.h"
 
 /* Hardware includes. */
-//#include "msp430.h"
 #include "driverlib.h"
 #include "uart.h"
+#include "afsk.h"
 
-
-
-#define TIMER_PERIOD_MARK 15000
-#define TIMER_PERIOD_SPACE 8182
-//#define TIMER_PERIOD_MARK  configCPU_CLOCK_HZ / 1200
-//#define TIMER_PERIOD_SPACE configCPU_CLOCK_HZ / 2200
+#define TIMER_PERIOD_MARK  configCPU_CLOCK_HZ / 1200
+#define TIMER_PERIOD_SPACE configCPU_CLOCK_HZ / 2200
 
 /*-----------------------------------------------------------*/
 
@@ -91,17 +85,16 @@ void task_uart_rx( void ) {
 }
 
 void main( void ) {
-
     /* Initialize Hardware */
     prvSetupHardware();
 
     /* Create Tasks */
 //	xTaskCreate((TaskFunction_t)task_led_1_toggle, "LED_1 Toggle", 128, NULL, 1, NULL);
-	xTaskCreate((TaskFunction_t)task_uart_tx, "Send DEADBEEF", 128, NULL, 1, NULL);
-	xTaskCreate((TaskFunction_t)task_uart_rx, "UART RX Loopback Test", 128, NULL, 1, NULL);
+//	xTaskCreate((TaskFunction_t)task_uart_tx, "Send DEADBEEF", 128, NULL, 1, NULL);
+//	xTaskCreate((TaskFunction_t)task_uart_rx, "UART RX Loopback Test", 128, NULL, 1, NULL);
 
     /* Start the scheduler. */
-    vTaskStartScheduler();
+//    vTaskStartScheduler();
 
 	/* If all is well then this line will never be reached.  If it is reached
 	then it is likely that there was insufficient (FreeRTOS) heap memory space
@@ -110,6 +103,11 @@ void main( void ) {
 	for( ;; );
 }
 /*-----------------------------------------------------------*/
+
+void afsk_test( void ){
+    afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P2, GPIO_PIN0);
+//    afsk_timer_start();
+}
 
 static void prvSetupHardware( void ) {
 	taskDISABLE_INTERRUPTS();
@@ -133,8 +131,8 @@ static void prvSetupHardware( void ) {
     a0_cnf.RxPinNum = PIN5;
     a0_cnf.TxPinNum = PIN4;
 
-    // 38400 Baud from 18MHz SMCLK
-    a0_cnf.clkRate = 18000000L;
+    // 38400 Baud from 16MHz SMCLK
+    a0_cnf.clkRate = configCPU_CLOCK_HZ;
     a0_cnf.baudRate = 38400L;
     a0_cnf.clkSrc = UART_CLK_SRC_SMCLK;
 
@@ -145,39 +143,7 @@ static void prvSetupHardware( void ) {
 
     initUSCIUart(&a0_cnf, A0_TX, A0_RX);
 
-
-    //P2.2 (TA1.1) as PWM output
-    GPIO_setAsPeripheralModuleFunctionOutputPin(
-        GPIO_PORT_P2,
-        GPIO_PIN2
-        );
-
-    //Generate PWM - Timer runs in Up mode
-    Timer_A_outputPWMParam mark = {0};
-        mark.clockSource = TIMER_A_CLOCKSOURCE_SMCLK;
-        mark.clockSourceDivider = TIMER_A_CLOCKSOURCE_DIVIDER_1;
-        mark.timerPeriod = TIMER_PERIOD_MARK;
-        mark.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_1;
-        mark.compareOutputMode = TIMER_A_OUTPUTMODE_RESET_SET;
-        mark.dutyCycle = TIMER_PERIOD_MARK/2; // 50% duty cycle
-
-    Timer_A_outputPWMParam space = {0};
-        space.clockSource = TIMER_A_CLOCKSOURCE_SMCLK;
-        space.clockSourceDivider = TIMER_A_CLOCKSOURCE_DIVIDER_1;
-        space.timerPeriod = TIMER_PERIOD_SPACE;
-        space.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_1;
-        space.compareOutputMode = TIMER_A_OUTPUTMODE_RESET_SET;
-        space.dutyCycle = TIMER_PERIOD_SPACE/2; //50% duty cycle
-
-//    Timer_A_outputPWM(TIMER_A1_BASE, &mark);
-    while(1){
-        Timer_A_outputPWM(TIMER_A1_BASE, &mark);
-        __delay_cycles(200000);
-        Timer_A_stop(TIMER_A1_BASE);
-        Timer_A_outputPWM(TIMER_A1_BASE, &space);
-        __delay_cycles(200000);
-        Timer_A_stop(TIMER_A1_BASE);
-    }
+    afsk_test();
 }
 /*-----------------------------------------------------------*/
 
