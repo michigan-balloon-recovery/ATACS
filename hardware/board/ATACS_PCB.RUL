@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 DRC Rules Export File for PCB: \\engin-labs.m.storage.umich.edu\jusshe\windat.v2\Desktop\ATACS-master\hardware\board\ATACS_PCB.PcbDoc
 RuleKind=Clearance|RuleName=Clearance Pour|Scope=Board|Minimum=10.00
 RuleKind=Clearance|RuleName=Clearance Pad|Scope=Board|Minimum=5.50
@@ -6,3 +7,13 @@ RuleKind=Width|RuleName=Width_1|Scope=Board|Minimum=5.00
 RuleKind=SolderMaskExpansion|RuleName=SolderMaskExpansion|Scope=Board|Minimum=4.00
 RuleKind=ShortCircuit|RuleName=ShortCircuit|Scope=Board|Allowed=0
 RuleKind=MinimumAnnularRing|RuleName=MinimumAnnularRing|Scope=Board|Minimum=5.00
+=======
+DRC Rules Export File for PCB: \\engin-labs.m.storage.umich.edu\jusshe\windat.v2\Desktop\ATACS-master\hardware\board\ATACS_PCB.PcbDoc
+RuleKind=Clearance|RuleName=Clearance Pour|Scope=Board|Minimum=10.00
+RuleKind=Clearance|RuleName=Clearance Pad|Scope=Board|Minimum=5.50
+RuleKind=Clearance|RuleName=Clearance|Scope=Board|Minimum=6.00
+RuleKind=Width|RuleName=Width_1|Scope=Board|Minimum=5.00
+RuleKind=SolderMaskExpansion|RuleName=SolderMaskExpansion|Scope=Board|Minimum=4.00
+RuleKind=ShortCircuit|RuleName=ShortCircuit|Scope=Board|Allowed=0
+RuleKind=MinimumAnnularRing|RuleName=MinimumAnnularRing|Scope=Board|Minimum=5.00
+>>>>>>> e869755807d0e8de2e573dcd4ad49275429f721a

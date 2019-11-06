@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Output: Gerber Files
 Type  : Gerber
 From  : Variant [[No Variations]] of Project [Free Documents]
@@ -26,3 +27,33 @@ Files Generated   : 19
 Documents Printed : 0
 
 Finished Output Generation At 11:39:23 PM On 11/4/2019
+=======
+Output: Gerber Files
+Type  : Gerber
+From  : Variant [[No Variations]] of Project [Free Documents]
+   Generated File[ATACS_PCB.GTL]
+   Generated File[ATACS_PCB.G1]
+   Generated File[ATACS_PCB.G2]
+   Generated File[ATACS_PCB.GBL]
+   Generated File[ATACS_PCB.GPB]
+   Generated File[ATACS_PCB.GPT]
+   Generated File[ATACS_PCB.GTO]
+   Generated File[ATACS_PCB.GTP]
+   Generated File[ATACS_PCB.GTS]
+   Generated File[ATACS_PCB.GBS]
+   Generated File[ATACS_PCB.GBO]
+   Generated File[ATACS_PCB.GKO]
+   Generated File[ATACS_PCB.GM4]
+   Generated File[ATACS_PCB.GM13]
+   Generated File[ATACS_PCB.GM15]
+   Generated File[ATACS_PCB.GM16]
+   Generated File[ATACS_PCB.RUL]
+   Generated File[ATACS_PCB.EXTREP]
+   Generated File[ATACS_PCB.REP]
+
+
+Files Generated   : 19
+Documents Printed : 0
+
+Finished Output Generation At 11:39:23 PM On 11/4/2019
+>>>>>>> e869755807d0e8de2e573dcd4ad49275429f721a
