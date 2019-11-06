@@ -17,10 +17,20 @@
 *
 */
 
+/* Modified by: Paul Young
+ * Date: Nov 2019
+ */
+
 #include <msp430.h>
 #include <math.h>
 #include <string.h>
 #include "uart.h"
+#include "gnss.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
+
+extern gnss_t gnss_obj;
+extern SemaphoreHandle_t gnss_semaphore;
 
 // Port Information List so user isn't forced to pass information all the time
 UARTConfig * prtInfList[5];
@@ -820,19 +830,22 @@ __interrupt void usart1_rx (void)
 #pragma vector=USCI_A0_VECTOR
 __interrupt void USCI_A0_ISR(void)
 {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	switch(__even_in_range(UCA0IV,4))
 	{
 	  case 0:break;                             // Vector 0 - no interrupt
 	  case 2:                                   // Vector 2 - RXIFG
-		  // Store received byte in RX Buffer
-		  prtInfList[USCI_A0]->rxBuf[prtInfList[USCI_A0]->rxBytesReceived] = *prtInfList[USCI_A0]->usciRegs->RX_BUF;
-		  prtInfList[USCI_A0]->rxBytesReceived++;
-
-		  // If the received bytes filled up the buffer, go back to beginning
-		  if(prtInfList[USCI_A0]->rxBytesReceived > prtInfList[USCI_A0]->rxBufLen)
-		  {
-			  prtInfList[USCI_A0]->rxBytesReceived = 0;
-		  }
+//		  // Store received byte in RX Buffer
+//		  prtInfList[USCI_A0]->rxBuf[prtInfList[USCI_A0]->rxBytesReceived] = *prtInfList[USCI_A0]->usciRegs->RX_BUF;
+//		  prtInfList[USCI_A0]->rxBytesReceived++;
+//
+//		  // If the received bytes filled up the buffer, go back to beginning
+//		  if(prtInfList[USCI_A0]->rxBytesReceived > prtInfList[USCI_A0]->rxBufLen)
+//		  {
+//			  prtInfList[USCI_A0]->rxBytesReceived = 0;
+//		  }
+	      gnss_nmea_queue(&gnss_obj, *prtInfList[USCI_A0]->usciRegs->RX_BUF);
+	      xSemaphoreGiveFromISR(gnss_semaphore, &xHigherPriorityTaskWoken);
 		break;
 	  case 4:                                   // Vector 4 - TXIFG
 		  // Send data if the buffer has bytes to send
@@ -856,6 +869,7 @@ __interrupt void USCI_A0_ISR(void)
 		  break;
 	  default: break;
 	}
+	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 #endif
 

@@ -6,11 +6,21 @@
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
 #include "task.h"
+<<<<<<< HEAD
+#include "semphr.h"
+// #include "timers.h"
+// #include "queue.h"
+=======
+>>>>>>> 9490b610c04886638bf892afc0c214377ac6bb11
 
 /* Hardware includes. */
 #include "driverlib.h"
 #include "uart.h"
+<<<<<<< HEAD
+#include "gnss.h"
+=======
 #include "afsk.h"
+>>>>>>> 9490b610c04886638bf892afc0c214377ac6bb11
 
 #define TIMER_PERIOD_MARK  configCPU_CLOCK_HZ / 1200
 #define TIMER_PERIOD_SPACE configCPU_CLOCK_HZ / 2200
@@ -22,6 +32,9 @@
  */
 unsigned char A0_TX[200];
 unsigned char A0_RX[200];
+
+gnss_t gnss_obj;
+SemaphoreHandle_t gnss_semaphore;
 
 /*-----------------------------------------------------------*/
 
@@ -84,14 +97,30 @@ void task_uart_rx( void ) {
     }
 }
 
+void task_gnss() {
+    gnss_init(&gnss_obj);
+
+    while(1) {
+        xSemaphoreTake(gnss_semaphore, portMAX_DELAY);
+        gnss_nmea_decode(&gnss_obj);
+    }
+}
+
 void main( void ) {
     /* Initialize Hardware */
     prvSetupHardware();
+
+    /* Create Semaphores */
+    vSemaphoreCreateBinary(gnss_semaphore);
 
     /* Create Tasks */
 //	xTaskCreate((TaskFunction_t)task_led_1_toggle, "LED_1 Toggle", 128, NULL, 1, NULL);
 //	xTaskCreate((TaskFunction_t)task_uart_tx, "Send DEADBEEF", 128, NULL, 1, NULL);
 //	xTaskCreate((TaskFunction_t)task_uart_rx, "UART RX Loopback Test", 128, NULL, 1, NULL);
+<<<<<<< HEAD
+    xTaskCreate(task_gnss, "gnss", 128, NULL, 1, NULL);
+=======
+>>>>>>> 9490b610c04886638bf892afc0c214377ac6bb11
 
     /* Start the scheduler. */
 //    vTaskStartScheduler();
@@ -131,9 +160,15 @@ static void prvSetupHardware( void ) {
     a0_cnf.RxPinNum = PIN5;
     a0_cnf.TxPinNum = PIN4;
 
+<<<<<<< HEAD
+    // 38400 Baud from 18MHz SMCLK
+    a0_cnf.clkRate = 18000000L;
+    a0_cnf.baudRate = 9600L;
+=======
     // 38400 Baud from 16MHz SMCLK
     a0_cnf.clkRate = configCPU_CLOCK_HZ;
     a0_cnf.baudRate = 38400L;
+>>>>>>> 9490b610c04886638bf892afc0c214377ac6bb11
     a0_cnf.clkSrc = UART_CLK_SRC_SMCLK;
 
     // 8N1
@@ -143,7 +178,43 @@ static void prvSetupHardware( void ) {
 
     initUSCIUart(&a0_cnf, A0_TX, A0_RX);
 
+<<<<<<< HEAD
+
+    //P2.2 (TA1.1) as PWM output
+    GPIO_setAsPeripheralModuleFunctionOutputPin(
+        GPIO_PORT_P2,
+        GPIO_PIN2
+        );
+
+//    //Generate PWM - Timer runs in Up mode
+//    Timer_A_outputPWMParam mark = {0};
+//        mark.clockSource = TIMER_A_CLOCKSOURCE_SMCLK;
+//        mark.clockSourceDivider = TIMER_A_CLOCKSOURCE_DIVIDER_1;
+//        mark.timerPeriod = TIMER_PERIOD_MARK;
+//        mark.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_1;
+//        mark.compareOutputMode = TIMER_A_OUTPUTMODE_RESET_SET;
+//        mark.dutyCycle = TIMER_PERIOD_MARK/2; // 50% duty cycle
+//
+//    Timer_A_outputPWMParam space = {0};
+//        space.clockSource = TIMER_A_CLOCKSOURCE_SMCLK;
+//        space.clockSourceDivider = TIMER_A_CLOCKSOURCE_DIVIDER_1;
+//        space.timerPeriod = TIMER_PERIOD_SPACE;
+//        space.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_1;
+//        space.compareOutputMode = TIMER_A_OUTPUTMODE_RESET_SET;
+//        space.dutyCycle = TIMER_PERIOD_SPACE/2; //50% duty cycle
+
+//    Timer_A_outputPWM(TIMER_A1_BASE, &mark);
+//    while(1){
+//        Timer_A_outputPWM(TIMER_A1_BASE, &mark);
+//        __delay_cycles(200000);
+//        Timer_A_stop(TIMER_A1_BASE);
+//        Timer_A_outputPWM(TIMER_A1_BASE, &space);
+//        __delay_cycles(200000);
+//        Timer_A_stop(TIMER_A1_BASE);
+//    }
+=======
     afsk_test();
+>>>>>>> 9490b610c04886638bf892afc0c214377ac6bb11
 }
 /*-----------------------------------------------------------*/
 
