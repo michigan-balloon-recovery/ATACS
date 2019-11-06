@@ -6,22 +6,24 @@
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
 #include "task.h"
+<<<<<<< HEAD
 #include "semphr.h"
 // #include "timers.h"
 // #include "queue.h"
+=======
+>>>>>>> 9490b610c04886638bf892afc0c214377ac6bb11
 
 /* Hardware includes. */
-//#include "msp430.h"
 #include "driverlib.h"
 #include "uart.h"
+<<<<<<< HEAD
 #include "gnss.h"
+=======
+#include "afsk.h"
+>>>>>>> 9490b610c04886638bf892afc0c214377ac6bb11
 
-
-
-#define TIMER_PERIOD_MARK 15000
-#define TIMER_PERIOD_SPACE 8182
-//#define TIMER_PERIOD_MARK  configCPU_CLOCK_HZ / 1200
-//#define TIMER_PERIOD_SPACE configCPU_CLOCK_HZ / 2200
+#define TIMER_PERIOD_MARK  configCPU_CLOCK_HZ / 1200
+#define TIMER_PERIOD_SPACE configCPU_CLOCK_HZ / 2200
 
 /*-----------------------------------------------------------*/
 
@@ -105,7 +107,6 @@ void task_gnss() {
 }
 
 void main( void ) {
-
     /* Initialize Hardware */
     prvSetupHardware();
 
@@ -116,10 +117,13 @@ void main( void ) {
 //	xTaskCreate((TaskFunction_t)task_led_1_toggle, "LED_1 Toggle", 128, NULL, 1, NULL);
 //	xTaskCreate((TaskFunction_t)task_uart_tx, "Send DEADBEEF", 128, NULL, 1, NULL);
 //	xTaskCreate((TaskFunction_t)task_uart_rx, "UART RX Loopback Test", 128, NULL, 1, NULL);
+<<<<<<< HEAD
     xTaskCreate(task_gnss, "gnss", 128, NULL, 1, NULL);
+=======
+>>>>>>> 9490b610c04886638bf892afc0c214377ac6bb11
 
     /* Start the scheduler. */
-    vTaskStartScheduler();
+//    vTaskStartScheduler();
 
 	/* If all is well then this line will never be reached.  If it is reached
 	then it is likely that there was insufficient (FreeRTOS) heap memory space
@@ -128,6 +132,11 @@ void main( void ) {
 	for( ;; );
 }
 /*-----------------------------------------------------------*/
+
+void afsk_test( void ){
+    afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P2, GPIO_PIN0);
+//    afsk_timer_start();
+}
 
 static void prvSetupHardware( void ) {
 	taskDISABLE_INTERRUPTS();
@@ -151,9 +160,15 @@ static void prvSetupHardware( void ) {
     a0_cnf.RxPinNum = PIN5;
     a0_cnf.TxPinNum = PIN4;
 
+<<<<<<< HEAD
     // 38400 Baud from 18MHz SMCLK
     a0_cnf.clkRate = 18000000L;
     a0_cnf.baudRate = 9600L;
+=======
+    // 38400 Baud from 16MHz SMCLK
+    a0_cnf.clkRate = configCPU_CLOCK_HZ;
+    a0_cnf.baudRate = 38400L;
+>>>>>>> 9490b610c04886638bf892afc0c214377ac6bb11
     a0_cnf.clkSrc = UART_CLK_SRC_SMCLK;
 
     // 8N1
@@ -163,6 +178,7 @@ static void prvSetupHardware( void ) {
 
     initUSCIUart(&a0_cnf, A0_TX, A0_RX);
 
+<<<<<<< HEAD
 
     //P2.2 (TA1.1) as PWM output
     GPIO_setAsPeripheralModuleFunctionOutputPin(
@@ -196,6 +212,9 @@ static void prvSetupHardware( void ) {
 //        __delay_cycles(200000);
 //        Timer_A_stop(TIMER_A1_BASE);
 //    }
+=======
+    afsk_test();
+>>>>>>> 9490b610c04886638bf892afc0c214377ac6bb11
 }
 /*-----------------------------------------------------------*/
 
