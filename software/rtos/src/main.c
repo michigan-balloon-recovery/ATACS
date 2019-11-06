@@ -103,12 +103,12 @@ void main( void ) {
     vSemaphoreCreateBinary(gnss_semaphore);
 
     /* Create Tasks */
-//	xTaskCreate((TaskFunction_t)task_led_1_toggle, "LED_1 Toggle", 128, NULL, 1, NULL);
-//	xTaskCreate((TaskFunction_t)task_uart_tx, "Send DEADBEEF", 128, NULL, 1, NULL);
-//	xTaskCreate((TaskFunction_t)task_uart_rx, "UART RX Loopback Test", 128, NULL, 1, NULL);
-    xTaskCreate(task_gnss, "gnss", 128, NULL, 1, NULL);
+//	xTaskCreate((TaskFunction_t)task_led_1_toggle, "LED_1 Toggle",          128, NULL, 1, NULL);
+//	xTaskCreate((TaskFunction_t)task_uart_tx,      "Send DEADBEEF",         128, NULL, 1, NULL);
+//	xTaskCreate((TaskFunction_t)task_uart_rx,      "UART RX Loopback Test", 128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t)task_gnss,         "gnss",                  128, NULL, 1, NULL);
 
-    afsk_test();
+//  afsk_test();
 
     /* Start the scheduler. */
     vTaskStartScheduler();

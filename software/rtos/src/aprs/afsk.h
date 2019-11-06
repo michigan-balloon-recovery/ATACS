@@ -1,9 +1,3 @@
-/*
- * afsk.h
- *
- *  Created on: Nov 2, 2019
- *      Author: Justin
- */
 #include <stdbool.h>
 
 #ifndef AFSF_H_

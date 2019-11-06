@@ -1,12 +1,6 @@
-/*
- * afsk.c
- *
- *  Created on: Nov 2, 2019
- *      Author: Justin
- */
 #include <stdint.h>
 #include <afsk.h>
-#include "driverlib.h"
+#include <driverlib.h>
 
 /*
  * Global Constants
@@ -52,8 +46,8 @@ const uint8_t AFSK_SINE_TABLE[AFSK_TABLE_SIZE_100/100] = {
  */
 
 typedef struct {
-    uint16_t sine_idx;
-    uint16_t stride;
+    uint16_t sine_idx_100;
+    uint16_t stride_100;
 
     uint16_t ptt_port, tx_port;
     uint8_t  ptt_pin, tx_pin;
@@ -82,20 +76,19 @@ void afsk_setup(const uint16_t tx_port, const uint8_t tx_pin,
     GPIO_setAsPeripheralModuleFunctionOutputPin(tx_port, tx_pin);
 
     // AFSK configuration
-    g_state.sine_idx = 0;
-//    g_state.stride = AFSK_STRIDE_1200_100;
-    g_state.stride = 1;
+    g_state.sine_idx_100 = 0;
+//    g_state.stride_100 = AFSK_STRIDE_1200_100;
+    g_state.stride_100 = 100;
 
     // Setup AFSK timer
     afsk_timer_setup();
-    afsk_timer_start();
 }
 
 void afsk_timer_setup(){
     TA1CCR0   = AFSK_CPS;
     TA1CCTL1 |= OUTMOD_7;
-    TA1CCR1 = AFSK_SINE_TABLE[0];
-    TA1CTL = TASSEL__SMCLK | MC__STOP;
+    TA1CCR1    = AFSK_SINE_TABLE[0];
+    TA1CTL     = TASSEL__SMCLK | MC__STOP;
 }
 
 void afsk_timer_start(){
@@ -109,6 +102,7 @@ void afsk_timer_stop(){
 
 void afsk_test(){
     afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P2, GPIO_PIN0);
+    afsk_timer_start();
     __bis_SR_register(GIE);
     for( ;; );
 }
@@ -117,27 +111,15 @@ void afsk_test(){
  * AFSK ISR
  */
 
-volatile uint16_t taiv = 0;
 #pragma vector=TIMER1_A0_VECTOR
 __interrupt void TIMER1_A0_ISR (void) {
     //Any access, read or write, of the TAIV register automatically resets the
     //highest "pending" interrupt flag
-    taiv = TA1IV;
-    TA1CCR1 = AFSK_SINE_TABLE[g_state.sine_idx/100];
-    g_state.sine_idx += g_state.stride;
-    if(g_state.sine_idx > AFSK_TABLE_SIZE_100){
-        g_state.sine_idx -= AFSK_TABLE_SIZE_100;
+    volatile uint16_t taiv = TA1IV;
+    TA1CCR1 = AFSK_SINE_TABLE[g_state.sine_idx_100/100];
+    g_state.sine_idx_100 += g_state.stride_100;
+    if(g_state.sine_idx_100 > AFSK_TABLE_SIZE_100){
+        g_state.sine_idx_100 -= AFSK_TABLE_SIZE_100;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
 
