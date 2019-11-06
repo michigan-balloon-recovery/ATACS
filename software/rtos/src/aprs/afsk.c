@@ -6,14 +6,13 @@
  */
 #include <stdint.h>
 #include <afsk.h>
-#include <FreeRTOSConfig.h>
 #include "driverlib.h"
 
 /*
  * Global Constants
  */
 
-const uint8_t AFSK_SINE_TABLE[512] = {
+const uint8_t AFSK_SINE_TABLE[AFSK_TABLE_SIZE_100/100] = {
     128, 129, 131, 132, 134, 135, 137, 138, 140, 142, 143, 145, 146, 148, 149, 151,
     152, 154, 155, 157, 158, 160, 162, 163, 165, 166, 167, 169, 170, 172, 173, 175,
     176, 178, 179, 181, 182, 183, 185, 186, 188, 189, 190, 192, 193, 194, 196, 197,
@@ -48,23 +47,13 @@ const uint8_t AFSK_SINE_TABLE[512] = {
     103, 104, 106, 107, 109, 110, 112, 113, 115, 117, 118, 120, 121, 123, 124, 126,
 };
 
-#define AFSK_CLOCKRATE configCPU_CLOCK_HZ        // SMCLK rate
-#define AFSK_CPS       256                       // Cycles per sample
-#define AFSK_PLAYRATE  AFSK_CLOCKRATE / AFSK_CPS // Samples per second
-
-const uint32_t AFSK_TABLE_SIZE = sizeof(AFSK_SINE_TABLE);
-const double AFSK_STRIDE_1200  = AFSK_TABLE_SIZE * (1200.0 / AFSK_PLAYRATE);
-const double AFSK_STRIDE_2200  = AFSK_TABLE_SIZE * (2200.0 / AFSK_PLAYRATE);
-const uint8_t AFSK_IDLE_CYCLES   = 128;
-
 /*
  * Global State
  */
-typedef struct {
-    Timer_A_outputPWMParam timer_param;
 
-    uint8_t  run_flag;
+typedef struct {
     uint16_t sine_idx;
+    uint16_t stride;
 
     uint16_t ptt_port, tx_port;
     uint8_t  ptt_pin, tx_pin;
@@ -90,55 +79,64 @@ void afsk_setup(const uint16_t tx_port, const uint8_t tx_pin,
     g_state.tx_port = tx_port;
     g_state.tx_pin  = tx_pin;
     GPIO_setAsOutputPin(ptt_port, ptt_pin);
-    GPIO_setAsOutputPin(tx_port, tx_pin);
-//    GPIO_setAsPeripheralModuleFunctionOutputPin(tx_port, tx_pin);
+    GPIO_setAsPeripheralModuleFunctionOutputPin(tx_port, tx_pin);
 
+    // AFSK configuration
     g_state.sine_idx = 0;
+//    g_state.stride = AFSK_STRIDE_1200_100;
+    g_state.stride = 1;
 
     // Setup AFSK timer
     afsk_timer_setup();
-    TA1CTL |= CCIE;
-    __bis_SR_register(LPM0_bits + GIE);
+    afsk_timer_start();
 }
 
 void afsk_timer_setup(){
-    TA1CCR0 = 256;
-    TA1CCR1 = 128;
-    TA1CTL |= TASSEL_2 + MC_1;
+    TA1CCR0   = AFSK_CPS;
+    TA1CCTL1 |= OUTMOD_7;
+    TA1CCR1 = AFSK_SINE_TABLE[0];
+    TA1CTL = TASSEL__SMCLK | MC__STOP;
 }
 
 void afsk_timer_start(){
-    Timer_A_outputPWM(TIMER_A1_BASE, &g_state.timer_param);
+    TA1CTL |= MC__UP;
+    TA1CCTL0 = CCIE;
 }
 
 void afsk_timer_stop(){
-    Timer_A_stop(TIMER_A1_BASE);
+    TA1CTL &= ~MC__STOP;
+}
+
+void afsk_test(){
+    afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P2, GPIO_PIN0);
+    __bis_SR_register(GIE);
+    for( ;; );
 }
 
 /*
  * AFSK ISR
  */
 
-#pragma vector=TIMER1_A1_VECTOR
-__interrupt void TIMER1_A1_ISR (void) {
+volatile uint16_t taiv = 0;
+#pragma vector=TIMER1_A0_VECTOR
+__interrupt void TIMER1_A0_ISR (void) {
     //Any access, read or write, of the TAIV register automatically resets the
     //highest "pending" interrupt flag
-    switch ( __even_in_range(TA1IV,14) ){
-        case  0:
-            GPIO_toggleOutputOnPin(GPIO_PORT_P2, GPIO_PIN0);
-            break;
-        case  2:
-            GPIO_toggleOutputOnPin(GPIO_PORT_P2, GPIO_PIN2);
-            break;
-        case  4: break;                          //CCR2 not used
-        case  6: break;                          //CCR3 not used
-        case  8: break;                          //CCR4 not used
-        case 10: break;                          //CCR5 not used
-        case 12: break;                          //CCR6 not used
-        case 14: break;                          //overflow not used
-        default: break;
+    taiv = TA1IV;
+    TA1CCR1 = AFSK_SINE_TABLE[g_state.sine_idx/100];
+    g_state.sine_idx += g_state.stride;
+    if(g_state.sine_idx > AFSK_TABLE_SIZE_100){
+        g_state.sine_idx -= AFSK_TABLE_SIZE_100;
     }
 }
+
+
+
+
+
+
+
+
 
 
 
