@@ -24,6 +24,8 @@
 #define NULL 0
 #endif
 
+#include "ring_buff.h"
+
 #define PORT_1 1
 #define PORT_2 2
 #define PORT_3 3
@@ -141,13 +143,10 @@ typedef struct
 	UART_PARITY parity;           /**< Parity used for communications  */
 	USCIUARTRegs * usciRegs;
 	USARTUARTRegs * usartRegs;
-	unsigned char * txBuf;
-	unsigned char * rxBuf;
-	int txBufLen;
-	int rxBufLen;
-	int rxBytesReceived;
-	int txBytesToSend;
-	int txBufCtr;
+	ring_buff_t *txBuf;
+	ring_buff_t *rxBuf;
+	void (*rxCallback) (void *params, uint8_t datum);
+	void * callbackParams;
 } UARTConfig;
 
 /* Global Structs */
@@ -155,20 +154,17 @@ UARTConfig   USCI_A0_cnf, USCI_A1_cnf, USCI_A2_cnf, USCI_A3_cnf;
 USCIUARTRegs USCI_A0_regs, USCI_A1_regs, USCI_A2_regs, USCI_A3_regs;
 
 /* Function Declarations */
-int initUSCIUart(UARTConfig * prtInf, unsigned char* txbuf, unsigned char* rxbuf);
+int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf);
+void initUartRxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t datum), void *params);
 int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs);
 int configUSARTUart(UARTConfig * prtInf, USARTUARTRegs * confRegs);
 int uartSendDataBlocking(UARTConfig * prtInf,unsigned char * buf, int len);
 int uartSendStringBlocking(UARTConfig * prtInf,char * string);
 int initUartPort(UARTConfig * prtInf);
-void initBufferDefaults(UARTConfig * prtInf);
-void setUartTxBuffer(UARTConfig * prtInf, unsigned char * buf, int bufLen);
-void setUartRxBuffer(UARTConfig * prtInf, unsigned char * buf, int bufLen);
 void initUartDriver();
 int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len);
 void enableUartRx(UARTConfig * prtInf);
-int numUartBytesReceived(UARTConfig * prtInf);
-unsigned char * getUartRxBufferData(UARTConfig * prtInf);
+ring_buff_t * getUartRxBuffer(UARTConfig * prtInf);
 int readRxBytes(UARTConfig * prtInf, unsigned char * data, int numBytesToRead, int offset);
 
 #endif /* UART_H_ */

@@ -25,12 +25,6 @@
 #include <math.h>
 #include <string.h>
 #include "uart.h"
-#include "gnss.h"
-#include "FreeRTOS.h"
-#include "semphr.h"
-
-extern gnss_t gnss_obj;
-extern SemaphoreHandle_t gnss_semaphore;
 
 // Port Information List so user isn't forced to pass information all the time
 UARTConfig * prtInfList[5];
@@ -52,8 +46,11 @@ void initUartDriver()
 	}
 }
 
-int initUSCIUart(UARTConfig * prtInf, unsigned char* txbuf, unsigned char* rxbuf){
+int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf){
     int res = UART_SUCCESS;
+	prtInf->rxCallback = NULL;
+	prtInf->txBuf = txbuf;
+	prtInf->rxBuf = rxbuf;
 	switch(prtInf->moduleName){
 		case USCI_A0:
 			memcpy(&USCI_A0_cnf, prtInf, sizeof(UARTConfig));
@@ -62,8 +59,6 @@ int initUSCIUart(UARTConfig * prtInf, unsigned char* txbuf, unsigned char* rxbuf
 				// Failed to initialize UART for some reason
 				return UART_UNKNOWN;
 			}
-			setUartTxBuffer(&USCI_A0_cnf, txbuf, 200);
-			setUartRxBuffer(&USCI_A0_cnf, rxbuf, 200);
 			enableUartRx(&USCI_A0_cnf);
 			break;
 		case USCI_A1:
@@ -73,8 +68,6 @@ int initUSCIUart(UARTConfig * prtInf, unsigned char* txbuf, unsigned char* rxbuf
 				// Failed to initialize UART for some reason
 				return UART_UNKNOWN;
 			}
-			setUartTxBuffer(&USCI_A1_cnf, txbuf, 200);
-			setUartRxBuffer(&USCI_A1_cnf, rxbuf, 200);
 			enableUartRx(&USCI_A1_cnf);
 			break;
 		case USCI_A2:
@@ -84,8 +77,6 @@ int initUSCIUart(UARTConfig * prtInf, unsigned char* txbuf, unsigned char* rxbuf
 				// Failed to initialize UART for some reason
 				return UART_UNKNOWN;
 			}
-			setUartTxBuffer(&USCI_A2_cnf, txbuf, 200);
-			setUartRxBuffer(&USCI_A2_cnf, rxbuf, 200);
 			enableUartRx(&USCI_A2_cnf);
 			break;
 		case USCI_A3:
@@ -95,14 +86,17 @@ int initUSCIUart(UARTConfig * prtInf, unsigned char* txbuf, unsigned char* rxbuf
 				// Failed to initialize UART for some reason
 				return UART_UNKNOWN;
 			}
-			setUartTxBuffer(&USCI_A3_cnf, txbuf, 200);
-			setUartRxBuffer(&USCI_A3_cnf, rxbuf, 200);
 			enableUartRx(&USCI_A3_cnf);
 			break;
 		default:
 			return UART_INVALID_MODULE;
 	}
 	return UART_SUCCESS;
+}
+
+void initUartRxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t datum), void *params) {
+	prtInf->rxCallback = callback;
+	prtInf->callbackParams = params;
 }
 
 /*!
@@ -330,35 +324,12 @@ int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs)
 	// have to keep passing it around and can pass only the UART configuration
 	prtInf->usciRegs = confRegs;
 
-	initBufferDefaults(prtInf);
-
 	// Assign pointer to port information to the array so it can be accessed later
 	prtInfList[prtInf->moduleName] = prtInf;
 
 	return UART_SUCCESS;
 }
 #endif
-
-/*!
- * \brief Initializes RX and TX buffers pointers
- *
- *
- * @param None.
- * \return None.
- *
- */
-void initBufferDefaults(UARTConfig * prtInf)
-{
-	prtInf->txBuf = NULL;
-	prtInf->txBufLen = 0;
-
-	prtInf->rxBuf = NULL;
-	prtInf->rxBufLen = 0;
-
-	prtInf->rxBytesReceived = 0;
-	prtInf->txBytesToSend = 0;
-	prtInf->txBufCtr = 0;
-}
 
 /*!
  * \brief Configures the UART Pins and Module for communications
@@ -489,8 +460,6 @@ int configUSARTUart(UARTConfig * prtInf, USARTUARTRegs * confRegs)
 
 	prtInf->usartRegs = confRegs;
 
-	initBufferDefaults(prtInf);
-
 	// Assign pointer to port information to the array so it can be accessed later
 	prtInfList[prtInf->moduleName] = prtInf;
 
@@ -498,20 +467,6 @@ int configUSARTUart(UARTConfig * prtInf, USARTUARTRegs * confRegs)
 }
 
 #endif
-
-/*!
- * \brief Returns the number of bytes in the RX Buffer
- *
- *
- * @param prtInf is a pointer to the UART configuration
- *
- * \return Number of bytes in RX Buffer
- *
- */
-int numUartBytesReceived(UARTConfig * prtInf)
-{
-	return prtInf->rxBytesReceived;
-}
 
 /*!
  * \brief Returns a pointer to the RX Buffer
@@ -522,7 +477,7 @@ int numUartBytesReceived(UARTConfig * prtInf)
  * \return pointer to the RX buffer of the UART
  *
  */
-unsigned char * getUartRxBufferData(UARTConfig * prtInf)
+ring_buff_t * getUartRxBuffer(UARTConfig * prtInf)
 {
 	return prtInf->rxBuf;
 }
@@ -600,50 +555,6 @@ int uartSendStringBlocking(UARTConfig * prtInf,char * string)
 }
 
 /*!
- * \brief Sets the UART TX Buffer
- *
- *
- * @param prtInf is UARTConfig instance with the configuration settings
- * @param buf is a pointer to a user provided buffer to be used by the UART driver
- * @param bufLen the length of the buffer provided to the UART driver
- * \return Success or errors as defined by UART_ERR_CODES
- *
- */
-void setUartTxBuffer(UARTConfig * prtInf, unsigned char * buf, int bufLen)
-{
-	prtInf->txBuf = buf;
-	prtInf->txBufLen = bufLen;
-
-	int i = 0;
-	for(i = 0; i < bufLen; i++)
-	{
-		buf[i] = 0;
-	}
-}
-
-/*!
- * \brief Sets the UART RX Buffer
- *
- *
- * @param prtInf is UARTConfig instance with the configuration settings
- * @param buf is a pointer to a user provided buffer to be used by the UART driver
- * @param bufLen the length of the buffer provided to the UART driver
- * \return Success or errors as defined by UART_ERR_CODES
- *
- */
-void setUartRxBuffer(UARTConfig * prtInf, unsigned char * buf, int bufLen)
-{
-	prtInf->rxBuf = buf;
-	prtInf->rxBufLen = bufLen;
-
-	int i = 0;
-	for(i = 0; i < bufLen; i++)
-	{
-		buf[i] = 0;
-	}
-}
-
-/*!
  * \brief Sends len number of bytes from the buffer using the specified
  * UART using interrupt driven.
  *
@@ -660,16 +571,15 @@ void setUartRxBuffer(UARTConfig * prtInf, unsigned char * buf, int bufLen)
  */
 int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len)
 {
-	if(len > prtInf->txBufLen )
-	{
-		return UART_INSUFFICIENT_TX_BUF;
-	}
-
 	int i = 0;
 	for(i = 0; i < len; i++)
 	{
-		prtInf->txBuf[i] = buf[i];
+		if(!ring_buff_write(prtInf->txBuf, buf[i])) {
+			ring_buff_write_clear_packet(prtInf->txBuf);
+			return UART_INSUFFICIENT_TX_BUF;
+		}
 	}
+	ring_buff_write_finish_packet(prtInf->txBuf);
 
 	// Send the first byte. Since UART interrupt is enabled, it will be called once the byte is sent and will
 	// send the rest of the bytes
@@ -678,9 +588,6 @@ int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len)
 
 	if(prtInf->moduleName == USCI_A0 || prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2)
 	{
-		prtInf->txBytesToSend = len;
-		prtInf->txBufCtr = 0;
-
 		// Enable TX IE
 		*prtInf->usciRegs->IFG_REG &= ~UCTXIFG;
 		*prtInf->usciRegs->IE_REG |= UCTXIE;
@@ -692,9 +599,6 @@ int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len)
 #else
 	if(prtInf->moduleName == UCA0)
 	{
-		prtInf->txBytesToSend = len;
-		prtInf->txBufCtr = 0;
-
 		// Enable TX IE
 		*prtInf->usciRegs->IFG_REG &= ~UCA0TXIFG;
 		*prtInf->usciRegs->IE_REG |= UCA0TXIE;
@@ -708,9 +612,6 @@ int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len)
 #if defined(__MSP430_HAS_UART0__) || defined(__MSP430_HAS_UART1__)
 	if(prtInf->moduleName == USART_0|| prtInf->moduleName == USART_1)
 	{
-		prtInf->txBytesToSend = len;
-		prtInf->txBufCtr = 0;
-
 		// Clear TX IFG and Enable TX IE
 		*prtInf->usartRegs->IFG_REG &= ~ prtInf->usartRegs->TXIFGFlag;
 		*prtInf->usartRegs->IE_REG |= prtInf->usartRegs->TXIE;
@@ -752,6 +653,29 @@ void enableUartRx(UARTConfig * prtInf)
 #endif
 }
 
+void uartRxIsr(UARTConfig * prtInf) {
+	// rx Callback
+	if(prtInf->rxCallback != NULL) {
+		prtInf->rxCallback(prtInf->callbackParams, *prtInf->usciRegs->RX_BUF);
+	}
+	// default
+	else {
+		ring_buff_write(prtInf->rxBuf, *prtInf->usciRegs->RX_BUF);
+		ring_buff_write_finish_packet(prtInf->rxBuf);
+	}
+}
+
+void uartTxIsr(UARTConfig * prtInf) {
+	// Send data if the buffer has bytes to send
+	if(!ring_buff_read(prtInf->txBuf, prtInf->usciRegs->TX_BUF)) {
+		ring_buff_read_finish_packet(prtInf->txBuf);
+		// Disable TX IE
+		*prtInf->usciRegs->IE_REG &= ~UCTXIE;
+		// Clear TX IFG
+		*prtInf->usciRegs->IFG_REG &= ~UCTXIFG;
+	}
+}
+
 #if defined(__MSP430_HAS_UART0__)
 // UART0 TX ISR
 #pragma vector=USART0TX_VECTOR
@@ -776,15 +700,8 @@ __interrupt void usart0_tx (void)
 #pragma vector=USART0RX_VECTOR
 __interrupt void usart0_rx (void)
 {
-	 // Store received byte in RX Buffer
-	prtInfList[USART_0]->rxBuf[prtInfList[USART_0]->rxBytesReceived] = *prtInfList[USART_0]->usciRegs->RX_BUF;
-	prtInfList[USART_0]->rxBytesReceived++;
-
-	// If the received bytes filled up the buffer, go back to beginning
-	if(prtInfList[USART_0]->rxBytesReceived > prtInfList[USART_0]->rxBufLen)
-	{
-	  prtInfList[USART_0]->rxBytesReceived = 0;
-	}
+	UARTConfig * prtInf = prtInfList[USART_1];
+	uartRxIsr(prtInf);
 }
 
 #endif
@@ -813,15 +730,8 @@ __interrupt void usart1_tx (void)
 #pragma vector=USART1RX_VECTOR
 __interrupt void usart1_rx (void)
 {
-	 // Store received byte in RX Buffer
-	prtInfList[USART_1]->rxBuf[prtInfList[USART_1]->rxBytesReceived] = *prtInfList[USART_1]->usciRegs->RX_BUF;
-	prtInfList[USART_1]->rxBytesReceived++;
-
-	// If the received bytes filled up the buffer, go back to beginning
-	if(prtInfList[USART_1]->rxBytesReceived > prtInfList[USART_1]->rxBufLen)
-	{
-	  prtInfList[USART_1]->rxBytesReceived = 0;
-	}
+	UARTConfig * prtInf = prtInfList[USART_1];
+	uartRxIsr(prtInf);
 }
 
 #endif
@@ -830,46 +740,18 @@ __interrupt void usart1_rx (void)
 #pragma vector=USCI_A0_VECTOR
 __interrupt void USCI_A0_ISR(void)
 {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	UARTConfig * prtInf = prtInfList[USCI_A0];
 	switch(__even_in_range(UCA0IV,4))
 	{
 	  case 0:break;                             // Vector 0 - no interrupt
 	  case 2:                                   // Vector 2 - RXIFG
-//		  // Store received byte in RX Buffer
-//		  prtInfList[USCI_A0]->rxBuf[prtInfList[USCI_A0]->rxBytesReceived] = *prtInfList[USCI_A0]->usciRegs->RX_BUF;
-//		  prtInfList[USCI_A0]->rxBytesReceived++;
-//
-//		  // If the received bytes filled up the buffer, go back to beginning
-//		  if(prtInfList[USCI_A0]->rxBytesReceived > prtInfList[USCI_A0]->rxBufLen)
-//		  {
-//			  prtInfList[USCI_A0]->rxBytesReceived = 0;
-//		  }
-	      gnss_nmea_queue(&gnss_obj, *prtInfList[USCI_A0]->usciRegs->RX_BUF);
-	      xSemaphoreGiveFromISR(gnss_semaphore, &xHigherPriorityTaskWoken);
+		uartRxIsr(prtInf);
 		break;
 	  case 4:                                   // Vector 4 - TXIFG
-		  // Send data if the buffer has bytes to send
-		  if(prtInfList[USCI_A0]->txBytesToSend > 0)
-		  {
-			  *prtInfList[USCI_A0]->usciRegs->TX_BUF = prtInfList[USCI_A0]->txBuf[prtInfList[USCI_A0]->txBufCtr];
-			  prtInfList[USCI_A0]->txBufCtr++;
-
-			  // If we've sent all the bytes, set counter to 0 to stop the sending
-			  if(prtInfList[USCI_A0]->txBufCtr == prtInfList[USCI_A0]->txBytesToSend)
-			  {
-				  prtInfList[USCI_A0]->txBufCtr = 0;
-
-				  // Disable TX IE
-				  *prtInfList[USCI_A0]->usciRegs->IE_REG &= ~UCTXIE;
-
-				  // Clear TX IFG
-				  *prtInfList[USCI_A0]->usciRegs->IFG_REG &= ~UCTXIFG;
-			  }
-		  }
-		  break;
+		uartTxIsr(prtInf);
+		break;
 	  default: break;
 	}
-	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 #endif
 
@@ -921,40 +803,16 @@ __interrupt void USCI0RX_ISR(void)
 #pragma vector=USCI_A1_VECTOR
 __interrupt void USCI_A1_ISR(void)
 {
+	UARTConfig * prtInf = prtInfList[USCI_A1];
 	switch(__even_in_range(UCA1IV,4))
 	{
 	  case 0:break;                             // Vector 0 - no interrupt
 	  case 2:                                   // Vector 2 - RXIFG
-		  // Store received byte in RX Buffer
-		  prtInfList[USCI_A1]->rxBuf[prtInfList[USCI_A1]->rxBytesReceived] = *prtInfList[USCI_A1]->usciRegs->RX_BUF;
-		  prtInfList[USCI_A1]->rxBytesReceived++;
-
-		  // If the received bytes filled up the buffer, go back to beginning
-		  if(prtInfList[USCI_A1]->rxBytesReceived > prtInfList[USCI_A1]->rxBufLen)
-		  {
-			  prtInfList[USCI_A1]->rxBytesReceived = 0;
-		  }
+		uartRxIsr(prtInf);
 		break;
-	  case 4:
-		  // Send data if the buffer has bytes to send
-		  if(prtInfList[USCI_A1]->txBytesToSend > 0)
-		  {
-			  *prtInfList[USCI_A1]->usciRegs->TX_BUF = prtInfList[USCI_A1]->txBuf[prtInfList[USCI_A1]->txBufCtr];
-			  prtInfList[USCI_A1]->txBufCtr++;
-
-			  // If we've sent all the bytes, set counter to 0 to stop the sending
-			  if(prtInfList[USCI_A1]->txBufCtr == prtInfList[USCI_A1]->txBytesToSend)
-			  {
-				  prtInfList[USCI_A1]->txBufCtr = 0;
-
-				  // Disable TX IE
-				  *prtInfList[USCI_A1]->usciRegs->IE_REG &= ~UCTXIE;
-
-				  // Clear TX IFG
-				  *prtInfList[USCI_A1]->usciRegs->IFG_REG &= ~UCTXIFG;
-			  }
-		  }
-		  break;                             // Vector 4 - TXIFG
+	  case 4:                                   // Vector 4 - TXIFG
+		uartTxIsr(prtInf);
+		break;
 	  default: break;
 	}
 }
@@ -964,39 +822,35 @@ __interrupt void USCI_A1_ISR(void)
 #pragma vector=USCI_A2_VECTOR
 __interrupt void USCI_A2_ISR(void)
 {
+	UARTConfig * prtInf = prtInfList[USCI_A2];
 	switch(__even_in_range(UCA2IV,4))
 	{
 	  case 0:break;                             // Vector 0 - no interrupt
 	  case 2:                                   // Vector 2 - RXIFG
-		  // Store received byte in RX Buffer
-		  prtInfList[USCI_A2]->rxBuf[prtInfList[USCI_A2]->rxBytesReceived] = *prtInfList[USCI_A2]->usciRegs->RX_BUF;
-		  prtInfList[USCI_A2]->rxBytesReceived++;
-
-		  // If the received bytes filled up the buffer, go back to beginning
-		  if(prtInfList[USCI_A2]->rxBytesReceived > prtInfList[USCI_A2]->rxBufLen)
-		  {
-			  prtInfList[USCI_A2]->rxBytesReceived = 0;
-		  }
+		uartRxIsr(prtInf);
 		break;
-	  case 4:
-		  if(prtInfList[USCI_A2]->txBytesToSend > 0)
-		  {
-			  *prtInfList[USCI_A2]->usciRegs->TX_BUF = prtInfList[USCI_A2]->txBuf[prtInfList[USCI_A2]->txBufCtr];
-			  prtInfList[USCI_A2]->txBufCtr++;
+	  case 4:                                   // Vector 4 - TXIFG
+		uartTxIsr(prtInf);
+		break;
+	  default: break;
+	}
+}
+#endif
 
-			  // If we've sent all the bytes, set counter to 0 to stop the sending
-			  if(prtInfList[USCI_A2]->txBufCtr == prtInfList[USCI_A2]->txBytesToSend)
-			  {
-				  prtInfList[USCI_A2]->txBufCtr = 0;
-
-				  // Disable TX IE
-				  *prtInfList[USCI_A2]->usciRegs->IE_REG &= ~UCTXIE;
-
-				  // Clear TX IFG
-				  *prtInfList[USCI_A2]->usciRegs->IFG_REG &= ~UCTXIFG;
-			  }
-		  }
-		  break;                             // Vector 4 - TXIFG
+#if defined(__MSP430_HAS_USCI_A3__)
+#pragma vector=USCI_A3_VECTOR
+__interrupt void USCI_A3_ISR(void)
+{
+	UARTConfig * prtInf = prtInfList[USCI_A3];
+	switch(__even_in_range(UCA3IV,4))
+	{
+	  case 0:break;                             // Vector 0 - no interrupt
+	  case 2:                                   // Vector 2 - RXIFG
+		uartRxIsr(prtInf);
+		break;
+	  case 4:                                   // Vector 4 - TXIFG
+		uartTxIsr(prtInf);
+		break;
 	  default: break;
 	}
 }
@@ -1016,34 +870,34 @@ __interrupt void USCI_A2_ISR(void)
  * \return number of bytes placed in the data buffer
  *
  */
-int readRxBytes(UARTConfig * prtInf, unsigned char * data, int numBytesToRead, int offset)
-{
-	int bytes = 0;
-
-	// Ensure we don't read past what we have in the buffer
-	if(numBytesToRead+offset <= prtInf->rxBytesReceived )
-	{
-		bytes = numBytesToRead;
-	}
-	else if(offset < prtInf->rxBufLen)
-	{
-		// Since offset is valid, we provide all possible bytes until the end of the buffer
-		bytes = prtInf->rxBytesReceived - offset;
-	}
-	else
-	{
-		return 0;
-	}
-
-	int i = 0;
-	for(i = 0; i < bytes; i++)
-	{
-		data[i] = prtInf->rxBuf[offset+i];
-	}
-
-	// reset number of bytes available, regardless of how many bytes are left
-	prtInf->rxBytesReceived = 0;
-
-	return i;
-
-}
+//int readRxBytes(UARTConfig * prtInf, unsigned char * data, int numBytesToRead, int offset)
+//{
+//	int bytes = 0;
+//
+//	// Ensure we don't read past what we have in the buffer
+//	if(numBytesToRead+offset <= prtInf->rxBytesReceived )
+//	{
+//		bytes = numBytesToRead;
+//	}
+//	else if(offset < prtInf->rxBufLen)
+//	{
+//		// Since offset is valid, we provide all possible bytes until the end of the buffer
+//		bytes = prtInf->rxBytesReceived - offset;
+//	}
+//	else
+//	{
+//		return 0;
+//	}
+//
+//	int i = 0;
+//	for(i = 0; i < bytes; i++)
+//	{
+//		data[i] = prtInf->rxBuf[offset+i];
+//	}
+//
+//	// reset number of bytes available, regardless of how many bytes are left
+//	prtInf->rxBytesReceived = 0;
+//
+//	return i;
+//
+//}

@@ -49,7 +49,7 @@ extern "C" {
 #define UNKNOWN_PROPRIETARY     -3
 #define PAYLOAD_OVERFLOW        -4
 
-bool gnss_nmea_queue(gnss_t *gnss_obj, uint8_t datum);
+bool gnss_nmea_queue(void *param, uint8_t datum);
 
 int8_t gnss_nmea_decode(gnss_t *gnss_obj);
 

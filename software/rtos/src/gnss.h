@@ -11,6 +11,10 @@ extern "C" {
 #include <driverlib.h>
 
 #include "ring_buff.h"
+#include "uart.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
+
 
 #define GNSS_NMEA
 
@@ -73,9 +77,13 @@ typedef struct {
 
 typedef struct {
     uint8_t gnss_rx_mem[GNSS_RX_BUFF_SIZE];
+    uint8_t gnss_tx_mem[GNSS_TX_BUFF_SIZE];
     ring_buff_t gnss_rx_buff;
+    ring_buff_t gnss_tx_buff;
     uint16_t uart_base_address;
     gnss_fix_t last_fix;
+    SemaphoreHandle_t uart_semaphore;
+    bool decoding_message;
 } gnss_t;
 
 #ifdef GNSS_NMEA
