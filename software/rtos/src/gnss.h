@@ -80,7 +80,7 @@ typedef struct {
     uint8_t gnss_tx_mem[GNSS_TX_BUFF_SIZE];
     ring_buff_t gnss_rx_buff;
     ring_buff_t gnss_tx_buff;
-    uint16_t uart_base_address;
+    UART_MODULE_NAMES uart_module;
     gnss_fix_t last_fix;
     SemaphoreHandle_t uart_semaphore;
     bool decoding_message;

@@ -52,6 +52,7 @@ enum UART_ERR_CODES
 	UART_BAD_CLK_SOURCE,
 	UART_INSUFFICIENT_TX_BUF,
 	UART_INSUFFICIENT_RX_BUF,
+	UART_NO_TX_BUFF,
 	UART_BAD_PORT_SELECTED,
 	UART_INVALID_MODULE,
 	UART_UNKNOWN
@@ -146,7 +147,9 @@ typedef struct
 	ring_buff_t *txBuf;
 	ring_buff_t *rxBuf;
 	void (*rxCallback) (void *params, uint8_t datum);
-	void * callbackParams;
+	void (*txCallback) (void *params, uint8_t *txAddress);
+	void * rxCallbackParams;
+	void * txCallbackParams;
 } UARTConfig;
 
 /* Global Structs */
@@ -156,6 +159,7 @@ USCIUARTRegs USCI_A0_regs, USCI_A1_regs, USCI_A2_regs, USCI_A3_regs;
 /* Function Declarations */
 int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf);
 void initUartRxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t datum), void *params);
+void initUartTxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t *txAddress), void *params);
 int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs);
 int configUSARTUart(UARTConfig * prtInf, USARTUARTRegs * confRegs);
 int uartSendDataBlocking(UARTConfig * prtInf,unsigned char * buf, int len);

@@ -48,9 +48,12 @@ void initUartDriver()
 
 int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf){
     int res = UART_SUCCESS;
-	prtInf->rxCallback = NULL;
-	prtInf->txBuf = txbuf;
 	prtInf->rxBuf = rxbuf;
+	prtInf->rxCallback = NULL;
+	prtInf->rxCallbackParams = NULL;
+	prtInf->txBuf = txbuf;
+	prtInf->txCallback = NULL;
+	prtInf->txCallbackParams = NULL;
 	switch(prtInf->moduleName){
 		case USCI_A0:
 			memcpy(&USCI_A0_cnf, prtInf, sizeof(UARTConfig));
@@ -96,9 +99,13 @@ int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf){
 
 void initUartRxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t datum), void *params) {
 	prtInf->rxCallback = callback;
-	prtInf->callbackParams = params;
+	prtInf->rxCallbackParams = params;
 }
 
+void initUartTxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t *txAddress), void *params) {
+	prtInf->txCallback = callback;
+	prtInf->txCallbackParams = params;
+}
 /*!
  * \brief Configures the MSP430 pins for UART module
  *
@@ -572,14 +579,21 @@ int uartSendStringBlocking(UARTConfig * prtInf,char * string)
 int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len)
 {
 	int i = 0;
-	for(i = 0; i < len; i++)
-	{
-		if(!ring_buff_write(prtInf->txBuf, buf[i])) {
-			ring_buff_write_clear_packet(prtInf->txBuf);
-			return UART_INSUFFICIENT_TX_BUF;
+	if(prtInf->txBuf != NULL) {
+		for(i = 0; i < len; i++)
+		{
+			if(!ring_buff_write(prtInf->txBuf, buf[i])) {
+				ring_buff_write_clear_packet(prtInf->txBuf);
+				return UART_INSUFFICIENT_TX_BUF;
+			}
 		}
+		ring_buff_write_finish_packet(prtInf->txBuf);
 	}
-	ring_buff_write_finish_packet(prtInf->txBuf);
+	// if no ring buffer is registered with the UART config, data transfer must be handled
+	// through the TX callback function
+	else if(buf != NULL) {
+		return UART_NO_TX_BUFF;
+	}
 
 	// Send the first byte. Since UART interrupt is enabled, it will be called once the byte is sent and will
 	// send the rest of the bytes
@@ -656,23 +670,30 @@ void enableUartRx(UARTConfig * prtInf)
 void uartRxIsr(UARTConfig * prtInf) {
 	// rx Callback
 	if(prtInf->rxCallback != NULL) {
-		prtInf->rxCallback(prtInf->callbackParams, *prtInf->usciRegs->RX_BUF);
+		prtInf->rxCallback(prtInf->rxCallbackParams, *prtInf->usciRegs->RX_BUF);
 	}
 	// default
-	else {
+	else if(prtInf->rxBuf != NULL) {
 		ring_buff_write(prtInf->rxBuf, *prtInf->usciRegs->RX_BUF);
 		ring_buff_write_finish_packet(prtInf->rxBuf);
 	}
 }
 
 void uartTxIsr(UARTConfig * prtInf) {
-	// Send data if the buffer has bytes to send
-	if(!ring_buff_read(prtInf->txBuf, prtInf->usciRegs->TX_BUF)) {
-		ring_buff_read_finish_packet(prtInf->txBuf);
-		// Disable TX IE
-		*prtInf->usciRegs->IE_REG &= ~UCTXIE;
-		// Clear TX IFG
-		*prtInf->usciRegs->IFG_REG &= ~UCTXIFG;
+	// tx Callback
+	if(prtInf->txCallback != NULL) {
+		prtInf->txCallback(prtInf->txCallbackParams, prtInf->usciRegs->TX_BUF);
+	}
+	// default
+	else if(prtInf->txBuf != NULL) {
+		// Send data if the buffer has bytes to send
+		if(!ring_buff_read(prtInf->txBuf, prtInf->usciRegs->TX_BUF)) {
+			ring_buff_read_finish_packet(prtInf->txBuf);
+			// Disable TX IE
+			*prtInf->usciRegs->IE_REG &= ~UCTXIE;
+			// Clear TX IFG
+			*prtInf->usciRegs->IFG_REG &= ~UCTXIFG;
+		}
 	}
 }
 

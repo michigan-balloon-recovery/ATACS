@@ -8,6 +8,7 @@ extern UARTConfig * prtInfList[5];
 // ----- public API ----- //
 void gnss_init(gnss_t *gnss_obj) {
     gnss_obj->decoding_message = false;
+    gnss_obj->uart_module = USCI_A0;
 
     // initialize ring buffers
     ring_buff_init(&gnss_obj->gnss_rx_buff, gnss_obj->gnss_rx_mem, GNSS_RX_BUFF_SIZE);
