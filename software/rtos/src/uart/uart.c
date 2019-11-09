@@ -29,6 +29,10 @@
 // Port Information List so user isn't forced to pass information all the time
 UARTConfig * prtInfList[5];
 
+/* ----- Private Function Prototypes ----- */
+static void uartRxIsr(UARTConfig * prtInf);
+static void uartTxIsr(UARTConfig * prtInf);
+
 /*!
  * \brief Initializes the UART Driver
  *
@@ -97,11 +101,37 @@ int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf){
 	return UART_SUCCESS;
 }
 
+/*!
+ * \brief Registers the RX Callback for the UART module
+ * 
+ * This function allows a RX Callback function being run when a UART message is recieved.
+ * The callback function will be called from within an Interrupt Service Routine (ISR).
+ * The callback function can access application specific data through a void pointer stored in the UARTConfig instance.
+ * This application data should be global in scope.
+ * 
+ * @param prtInf is UARTConfig instance with the configuration settings
+ * @param callback is the function pointer of the callback function
+ * @param params is a pointer to the memory storing application parameters to the callback function
+ * 
+ */
 void initUartRxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t datum), void *params) {
 	prtInf->rxCallback = callback;
 	prtInf->rxCallbackParams = params;
 }
 
+/*!
+ * \brief Registers the TX Callback for the UART module
+ * 
+ * This function allows a TX Callback function being run when a byte is transmitted over UART using interrupts.
+ * The callback function will be called from within an Interrupt Service Routine (ISR).
+ * The callback function can access application specific data through a void pointer stored in the UARTConfig instance.
+ * This application data should be global in scope.
+ * 
+ * @param prtInf is UARTConfig instance with the configuration settings
+ * @param callback is the function pointer of the callback function
+ * @param params is a pointer to the memory storing application parameters to the callback function
+ * 
+ */
 void initUartTxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t *txAddress), void *params) {
 	prtInf->txCallback = callback;
 	prtInf->txCallbackParams = params;
@@ -111,8 +141,8 @@ void initUartTxCallback(UARTConfig * prtInf, void (*callback) (void *params, uin
  *
  *
  * @param prtInf is UARTConfig instance with the configuration settings
- * \return Success or errors as defined by UART_ERR_CODES
- *
+ * * Restarts reading in the current packet.
+ * * Restarts reading in the current packet.
  */
 int initUartPort(UARTConfig * prtInf)
 {
@@ -667,7 +697,7 @@ void enableUartRx(UARTConfig * prtInf)
 #endif
 }
 
-void uartRxIsr(UARTConfig * prtInf) {
+static void uartRxIsr(UARTConfig * prtInf) {
 	// rx Callback
 	if(prtInf->rxCallback != NULL) {
 		prtInf->rxCallback(prtInf->rxCallbackParams, *prtInf->usciRegs->RX_BUF);
@@ -679,7 +709,7 @@ void uartRxIsr(UARTConfig * prtInf) {
 	}
 }
 
-void uartTxIsr(UARTConfig * prtInf) {
+static void uartTxIsr(UARTConfig * prtInf) {
 	// tx Callback
 	if(prtInf->txCallback != NULL) {
 		prtInf->txCallback(prtInf->txCallbackParams, prtInf->usciRegs->TX_BUF);
