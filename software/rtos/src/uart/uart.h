@@ -20,9 +20,15 @@
 #ifndef UART_H_
 #define UART_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef NULL
 #define NULL 0
 #endif
+
+#include "ring_buff.h"
 
 #define PORT_1 1
 #define PORT_2 2
@@ -50,6 +56,7 @@ enum UART_ERR_CODES
 	UART_BAD_CLK_SOURCE,
 	UART_INSUFFICIENT_TX_BUF,
 	UART_INSUFFICIENT_RX_BUF,
+	UART_NO_TX_BUFF,
 	UART_BAD_PORT_SELECTED,
 	UART_INVALID_MODULE,
 	UART_UNKNOWN
@@ -62,7 +69,7 @@ typedef enum
 	USCI_A2,  /**< USCI_A2 Module  */
 	USCI_A3,  /**< USCI_A3 Module  */
 	USART_0,  /**< USART_0 Module  */
-	USART_1  /**< USART_1 Module  */
+	USART_1   /**< USART_1 Module  */
 
 }UART_MODULE_NAMES;
 
@@ -129,25 +136,24 @@ typedef struct
  */
 typedef struct
 {
-	UART_MODULE_NAMES moduleName; /**< Module Name that specifies which module to use  */
-	char portNum;                 /**< GPIO Port Number  */
-	char TxPinNum;                /**< GPIO TX Pin Number  */
-	char RxPinNum;                /**< GPIO RX Pin Number  */
-	unsigned long clkRate;        /**< Clock rate of the clock used as source for module  */
-	unsigned long baudRate;       /**< UART baud rate desired  */
-	UART_CLK_SRCS clkSrc;         /**< Clock source used for UART module  */
-	char databits;                /**< Number of data bits used for communications  */
-	char stopbits;                /**< Number of stop bits used for communications  */
-	UART_PARITY parity;           /**< Parity used for communications  */
+	UART_MODULE_NAMES moduleName; 									/**< Module Name that specifies which module to use  */
+	char portNum;													/**< GPIO Port Number  */
+	char TxPinNum;													/**< GPIO TX Pin Number  */
+	char RxPinNum;													/**< GPIO RX Pin Number  */
+	unsigned long clkRate;											/**< Clock rate of the clock used as source for module  */
+	unsigned long baudRate;											/**< UART baud rate desired  */
+	UART_CLK_SRCS clkSrc;											/**< Clock source used for UART module  */
+	char databits;													/**< Number of data bits used for communications  */
+	char stopbits;													/**< Number of stop bits used for communications  */
+	UART_PARITY parity;												/**< Parity used for communications  */
 	USCIUARTRegs * usciRegs;
 	USARTUARTRegs * usartRegs;
-	unsigned char * txBuf;
-	unsigned char * rxBuf;
-	int txBufLen;
-	int rxBufLen;
-	int rxBytesReceived;
-	int txBytesToSend;
-	int txBufCtr;
+	ring_buff_t *txBuf;												/**< Pointer to TX ring buffer */
+	ring_buff_t *rxBuf;												/**< Pointer to RX ring buffer */
+	void (*rxCallback) (void *params, uint8_t datum);				/**< Function pointer to RX callback function */
+	void * rxCallbackParams;										/**< Pointer to application parameters for RX callback function */
+	void (*txCallback) (void *params, uint8_t *txAddress);			/**< Function pointer to TX callback function */
+	void * txCallbackParams;										/**< Pointer to application parameters for TX callback function */
 } UARTConfig;
 
 /* Global Structs */
@@ -155,20 +161,22 @@ UARTConfig   USCI_A0_cnf, USCI_A1_cnf, USCI_A2_cnf, USCI_A3_cnf;
 USCIUARTRegs USCI_A0_regs, USCI_A1_regs, USCI_A2_regs, USCI_A3_regs;
 
 /* Function Declarations */
-int initUSCIUart(UARTConfig * prtInf, unsigned char* txbuf, unsigned char* rxbuf);
+int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf);
+void initUartRxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t datum), void *params);
+void initUartTxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t *txAddress), void *params);
 int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs);
 int configUSARTUart(UARTConfig * prtInf, USARTUARTRegs * confRegs);
 int uartSendDataBlocking(UARTConfig * prtInf,unsigned char * buf, int len);
 int uartSendStringBlocking(UARTConfig * prtInf,char * string);
 int initUartPort(UARTConfig * prtInf);
-void initBufferDefaults(UARTConfig * prtInf);
-void setUartTxBuffer(UARTConfig * prtInf, unsigned char * buf, int bufLen);
-void setUartRxBuffer(UARTConfig * prtInf, unsigned char * buf, int bufLen);
 void initUartDriver();
 int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len);
 void enableUartRx(UARTConfig * prtInf);
-int numUartBytesReceived(UARTConfig * prtInf);
-unsigned char * getUartRxBufferData(UARTConfig * prtInf);
+ring_buff_t * getUartRxBuffer(UARTConfig * prtInf);
 int readRxBytes(UARTConfig * prtInf, unsigned char * data, int numBytesToRead, int offset);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UART_H_ */

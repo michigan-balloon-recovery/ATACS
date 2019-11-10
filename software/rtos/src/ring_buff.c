@@ -62,7 +62,7 @@ void ring_buff_read_clear_packet(ring_buff_t *buff) {
     buff->read_ptr_byte = buff->read_ptr_packet;
 }
 
-// ----- ring buff utilities ----- //
+// ----- private ring buff utilities ----- //
 
 static inline void ring_buff_increment_ptr(ring_buff_t *buff, uint8_t **ptr) {
     *ptr += 1;

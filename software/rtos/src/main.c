@@ -16,14 +16,7 @@
 
 /*-----------------------------------------------------------*/
 
-/*
- * UART
- */
-unsigned char A0_TX[200];
-unsigned char A0_RX[200];
-
-gnss_t gnss_obj;
-SemaphoreHandle_t gnss_semaphore;
+gnss_t GNSS;
 
 /*-----------------------------------------------------------*/
 
@@ -34,64 +27,63 @@ static void prvSetupHardware( void );
 
 /*-----------------------------------------------------------*/
 
-// toggle LED_1 every 50ms
-void task_led_1_toggle( void ) {
-    portTickType xLastWakeTime;
-    const portTickType xFrequency = 50 / portTICK_RATE_MS;
-
-    xLastWakeTime = xTaskGetTickCount();
-
-    while(1) {
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        LED_PORT_OUT ^= LED_1;
-    }
-}
-
-// Print "DEADBEEF\r\n" every 500ms
-void task_uart_tx( void ) {
-    portTickType xLastWakeTime;
-    const portTickType xFrequency = 500 / portTICK_RATE_MS;
-
-    xLastWakeTime = xTaskGetTickCount();
-
-    while(1) {
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        vTaskSuspendAll(); // Suspend scheduler while we transmit
-        uartSendDataBlocking(&USCI_A0_cnf, (unsigned char*)"DEADBEEF\r\n", 10);
-        xTaskResumeAll();
-        LED_PORT_OUT ^= LED_1;
-    }
-}
-
-// Read from UART 0 every 100ms;
-void task_uart_rx( void ) {
-    portTickType xLastWakeTime;
-    const portTickType xFrequency = 100 / portTICK_RATE_MS;
-
-    xLastWakeTime = xTaskGetTickCount();
-
-    while(1) {
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        int bytesAvailable = numUartBytesReceived(&USCI_A0_cnf);
-        if(bytesAvailable == 10){
-            unsigned char tempBuf[10];
-            volatile int bytesRead = readRxBytes(&USCI_A0_cnf, tempBuf, bytesAvailable, 0);
-            if(bytesRead == bytesAvailable){
-                // If we receive "DEADBEEF\r\n", we toggle LED_2
-                if(!memcmp(tempBuf, "DEADBEEF\r\n", 10)){
-                    LED_PORT_OUT ^= LED_2;
-                }
-            }
-        }
-    }
-}
+//// toggle LED_1 every 50ms
+//void task_led_1_toggle( void ) {
+//    portTickType xLastWakeTime;
+//    const portTickType xFrequency = 50 / portTICK_RATE_MS;
+//
+//    xLastWakeTime = xTaskGetTickCount();
+//
+//    while(1) {
+//        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+//        LED_PORT_OUT ^= LED_1;
+//    }
+//}
+//
+//// Print "DEADBEEF\r\n" every 500ms
+//void task_uart_tx( void ) {
+//    portTickType xLastWakeTime;
+//    const portTickType xFrequency = 500 / portTICK_RATE_MS;
+//
+//    xLastWakeTime = xTaskGetTickCount();
+//
+//    while(1) {
+//        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+//        vTaskSuspendAll(); // Suspend scheduler while we transmit
+//        uartSendDataBlocking(&USCI_A0_cnf, (unsigned char*)"DEADBEEF\r\n", 10);
+//        xTaskResumeAll();
+//        LED_PORT_OUT ^= LED_1;
+//    }
+//}
+//
+//// Read from UART 0 every 100ms;
+//void task_uart_rx( void ) {
+//    portTickType xLastWakeTime;
+//    const portTickType xFrequency = 100 / portTICK_RATE_MS;
+//
+//    xLastWakeTime = xTaskGetTickCount();
+//
+//    while(1) {
+//        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+//        int bytesAvailable = numUartBytesReceived(&USCI_A0_cnf);
+//        if(bytesAvailable == 10){
+//            unsigned char tempBuf[10];
+//            volatile int bytesRead = readRxBytes(&USCI_A0_cnf, tempBuf, bytesAvailable, 0);
+//            if(bytesRead == bytesAvailable){
+//                // If we receive "DEADBEEF\r\n", we toggle LED_2
+//                if(!memcmp(tempBuf, "DEADBEEF\r\n", 10)){
+//                    LED_PORT_OUT ^= LED_2;
+//                }
+//            }
+//        }
+//    }
+//}
 
 void task_gnss() {
-    gnss_init(&gnss_obj);
 
     while(1) {
-        xSemaphoreTake(gnss_semaphore, portMAX_DELAY);
-        gnss_nmea_decode(&gnss_obj);
+        xSemaphoreTake(GNSS.uart_semaphore, portMAX_DELAY);
+        gnss_nmea_decode(&GNSS);
     }
 }
 
@@ -99,8 +91,7 @@ void main( void ) {
     /* Initialize Hardware */
     prvSetupHardware();
 
-    /* Create Semaphores */
-    vSemaphoreCreateBinary(gnss_semaphore);
+    gnss_init(&GNSS);
 
     /* Create Tasks */
 //	xTaskCreate((TaskFunction_t)task_led_1_toggle, "LED_1 Toggle",          128, NULL, 1, NULL);
@@ -135,25 +126,25 @@ static void prvSetupHardware( void ) {
     /* UART */
     initUartDriver();
 
-    UARTConfig a0_cnf;
-    a0_cnf.moduleName = USCI_A0;
+    // UARTConfig a0_cnf;
+    // a0_cnf.moduleName = USCI_A0;
 
-    // Use UART Pins P3.5 and P3.4
-    a0_cnf.portNum = PORT_3;
-    a0_cnf.RxPinNum = PIN5;
-    a0_cnf.TxPinNum = PIN4;
+    // // Use UART Pins P3.5 and P3.4
+    // a0_cnf.portNum = PORT_3;
+    // a0_cnf.RxPinNum = PIN5;
+    // a0_cnf.TxPinNum = PIN4;
 
-    // 38400 Baud from 16MHz SMCLK
-    a0_cnf.clkRate = configCPU_CLOCK_HZ;
-    a0_cnf.baudRate = 38400L;
-    a0_cnf.clkSrc = UART_CLK_SRC_SMCLK;
+    // // 38400 Baud from 16MHz SMCLK
+    // a0_cnf.clkRate = configCPU_CLOCK_HZ;
+    // a0_cnf.baudRate = 38400L;
+    // a0_cnf.clkSrc = UART_CLK_SRC_SMCLK;
 
-    // 8N1
-    a0_cnf.databits = 8;
-    a0_cnf.parity = UART_PARITY_NONE;
-    a0_cnf.stopbits = 1;
+    // // 8N1
+    // a0_cnf.databits = 8;
+    // a0_cnf.parity = UART_PARITY_NONE;
+    // a0_cnf.stopbits = 1;
 
-    initUSCIUart(&a0_cnf, A0_TX, A0_RX);
+    // initUSCIUart(&a0_cnf, A0_TX, A0_RX);
 
     //P2.2 (TA1.1) as PWM output
     GPIO_setAsPeripheralModuleFunctionOutputPin(

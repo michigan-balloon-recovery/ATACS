@@ -5,26 +5,34 @@ static inline int gnss_nmea_atoi(uint8_t *temp, uint8_t *ascii, uint8_t length);
 
 // ----- public API ----- //
 
-bool gnss_nmea_queue(gnss_t *gnss_obj, uint8_t datum) {
-    static bool nmea_message = false;
+bool gnss_nmea_queue(void *param, uint8_t datum) {
+    gnss_t *gnss_obj = (gnss_t *)param;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     ring_buff_t *buff = &gnss_obj->gnss_rx_buff;
+    bool end_of_packet;
 
     // check if start of a packet
     if(datum == '$') {
-        nmea_message = true;
+        gnss_obj->decoding_message = true;
         ring_buff_write_clear_packet(buff);
-        return false;
+        end_of_packet = false;
     }
-
     // check if end of a packet
-    if( nmea_message && (datum == '\n') ) {
-        nmea_message = false;
+    else if(gnss_obj->decoding_message && (datum == '\n') ) {
+        gnss_obj->decoding_message = false;
         ring_buff_write_finish_packet(buff);
-        return true;
+        end_of_packet = true;
+        // give semaphore
+    }
+    // contents of message
+    else if(gnss_obj->decoding_message){
+        ring_buff_write(buff, datum);
+        end_of_packet = false;
     }
 
-    ring_buff_write(buff, datum);
-    return false;
+        xSemaphoreGiveFromISR(gnss_obj->uart_semaphore, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    return end_of_packet;
 }
 
 int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
