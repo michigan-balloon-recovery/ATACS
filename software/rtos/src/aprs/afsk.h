@@ -12,7 +12,7 @@
 #define AFSK_STRIDE_SPACE_100 1802                      // Indices to move in LUT for space (2200 Hz)
 
 /*
- * Exported Function Definitions
+ * Exported Function Declarations
  */
 void afsk_setup(const uint16_t tx_port, const uint8_t tx_pin,
                 const uint16_t ptt_port, const uint8_t ptt_pin,
