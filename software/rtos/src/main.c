@@ -12,7 +12,7 @@
 #include "driverlib.h"
 #include "uart.h"
 #include "gnss.h"
-#include "afsk.h"
+#include "ax25.h"
 
 /*-----------------------------------------------------------*/
 
@@ -72,7 +72,7 @@ static void prvSetupHardware( void );
 //            if(bytesRead == bytesAvailable){
 //                // If we receive "DEADBEEF\r\n", we toggle LED_2
 //                if(!memcmp(tempBuf, "DEADBEEF\r\n", 10)){
-//                    LED_PORT_OUT ^= LED_2;
+//                    LED_PORT_OUT ^= LED_2;sample_ctr++; // Another sample completed
 //                }
 //            }
 //        }
@@ -81,9 +81,29 @@ static void prvSetupHardware( void );
 
 void task_gnss() {
 
-    while(1) {
+    while (1) {
         xSemaphoreTake(GNSS.uart_semaphore, portMAX_DELAY);
         gnss_nmea_decode(&GNSS);
+    }
+}
+
+void task_ax25() {
+    portTickType xLastWakeTime;
+    const portTickType xFrequency = 2000 / portTICK_RATE_MS;
+    xLastWakeTime = xTaskGetTickCount();
+    address_t addresses[2] = {
+      {"KD2OHS", 11},
+      {"APRS", 0}
+    };
+    while (1){
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        vTaskSuspendAll();
+            ax25_send_header(addresses, 2);
+            uint8_t buf[20] = "AAAAABBAAACCAADDAAA";
+            ax25_send_string(buf, 19);
+            ax25_send_footer();
+            ax25_flush_frame();
+        xTaskResumeAll();
     }
 }
 
@@ -91,15 +111,14 @@ void main( void ) {
     /* Initialize Hardware */
     prvSetupHardware();
 
-    gnss_init(&GNSS);
+//    gnss_init(&GNSS);
 
     /* Create Tasks */
-//	xTaskCreate((TaskFunction_t)task_led_1_toggle, "LED_1 Toggle",          128, NULL, 1, NULL);
-//	xTaskCreate((TaskFunction_t)task_uart_tx,      "Send DEADBEEF",         128, NULL, 1, NULL);
-//	xTaskCreate((TaskFunction_t)task_uart_rx,      "UART RX Loopback Test", 128, NULL, 1, NULL);
-    xTaskCreate((TaskFunction_t)task_gnss,         "gnss",                  128, NULL, 1, NULL);
-
-//  afsk_test();
+//    xTaskCreate((TaskFunction_t)task_led_1_toggle, "LED_1 Toggle",          128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t)task_uart_tx,      "Send DEADBEEF",         128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t)task_uart_rx,      "UART RX Loopback Test", 128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t)task_gnss,         "gnss",                  128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t)task_ax25,           "afsk_ax25",             128, NULL, 1, NULL);
 
     /* Start the scheduler. */
     vTaskStartScheduler();
@@ -145,12 +164,6 @@ static void prvSetupHardware( void ) {
     // a0_cnf.stopbits = 1;
 
     // initUSCIUart(&a0_cnf, A0_TX, A0_RX);
-
-    //P2.2 (TA1.1) as PWM output
-    GPIO_setAsPeripheralModuleFunctionOutputPin(
-        GPIO_PORT_P2,
-        GPIO_PIN2
-        );
 }
 /*-----------------------------------------------------------*/
 
