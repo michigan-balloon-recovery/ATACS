@@ -54,11 +54,11 @@ typedef struct {
     uint16_t stride_100;
 
     uint8_t  tx_flag;
-    uint16_t tx_idx;
+    uint16_t tx_idx;     // bitwise
 
     uint8_t* packet_buf;
-    uint16_t packet_len;
-    uint16_t packet_max_len;
+    uint16_t packet_len; // bitwise
+    uint8_t  current_byte;
 } afsk_state_t;
 
 afsk_state_t afsk_state;
@@ -74,8 +74,7 @@ void afsk_timer_stop();
  * Exported Functions Definitions
  */
 void afsk_setup(const uint16_t tx_port, const uint8_t tx_pin,
-                const uint16_t ptt_port, const uint8_t ptt_pin,
-                const uint16_t max_packet_size){
+                const uint16_t ptt_port, const uint8_t ptt_pin){
     // Setup radio GPIO
     afsk_state.ptt_port = ptt_port;
     afsk_state.ptt_pin = ptt_pin;
@@ -83,10 +82,6 @@ void afsk_setup(const uint16_t tx_port, const uint8_t tx_pin,
     afsk_state.tx_port = tx_port;
     afsk_state.tx_pin  = tx_pin;
     GPIO_setAsPeripheralModuleFunctionOutputPin(tx_port, tx_pin);
-
-    // Allocate packet buffer
-    afsk_state.packet_max_len = max_packet_size;
-    afsk_state.packet_buf     = malloc(afsk_state.packet_max_len);
 
     // Setup timer ISR
     afsk_timer_setup();
@@ -103,40 +98,24 @@ void afsk_reset(){
     afsk_state.packet_len = 0;
 }
 
-void afsk_test(){
-    afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P2, GPIO_PIN0, 8);
-    __bis_SR_register(GIE);
-    while (1) {
-        uint8_t val = 0xFF;
-        while (afsk_packet_append(&val, 1)) {
-//            val++;
-        }
-        afsk_send();
-        __delay_cycles(configCPU_CLOCK_HZ / 109);
-    }
+void afsk_send(uint8_t* buf, uint16_t len) {
+    afsk_state.packet_buf = buf;
+    afsk_state.packet_len = len; //bits
 }
 
-int afsk_packet_append(const uint8_t* buf, uint16_t len) {
-    if (afsk_state.packet_max_len == afsk_state.packet_len) {
-        return 0;
-    }
-    if (len > afsk_state.packet_max_len - afsk_state.packet_len) {
-        len = afsk_state.packet_max_len - afsk_state.packet_len;
-    }
-    memcpy(afsk_state.packet_buf + afsk_state.packet_len, buf, len);
-    afsk_state.packet_len += len;
-    return afsk_state.packet_max_len - afsk_state.packet_len;
-}
+void afsk_transmit(){
+    if (afsk_state.packet_buf == 0 || afsk_state.packet_len == 0)
+        return;
 
-void afsk_send(){
-    // Put radio in TX mode (active low), wait 100ms
-    GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    // Put radio in TX mode (active low), wait 1ms
+    GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
     __delay_cycles(configCPU_CLOCK_HZ / 10);
 
     // Reset metadata
     afsk_state.tx_idx             = 0;
     afsk_state.sine_idx_100       = 0;
-    afsk_state.stride_100         = afsk_state.packet_buf[0] & (1 << 7) ? AFSK_STRIDE_MARK_100: AFSK_STRIDE_SPACE_100; //check first bit (msb)
+    afsk_state.stride_100         = AFSK_STRIDE_SPACE_100;    // initially 2200 Hz
+    afsk_state.current_byte       = afsk_state.packet_buf[0];
 
     // Set tx flag and start timers
     afsk_state.tx_flag            = true;
@@ -145,9 +124,9 @@ void afsk_send(){
     // Block until ISR resets tx flag
     while(afsk_state.tx_flag);
 
-    // Wait 100ms, then put radio back in RX mode
-    __delay_cycles(configCPU_CLOCK_HZ / 10);
-    GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    // Wait 1ms, then put radio back in RX mode
+    __delay_cycles(configCPU_CLOCK_HZ / 1000);
+    GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
 }
 
 /*
@@ -174,17 +153,13 @@ void afsk_timer_stop(){
  * AFSK ISR
  */
 uint16_t sample_ctr = 0;
-int8_t current_bit = 7;
-uint16_t temp = 0;
-uint16_t compval = 0;
 #pragma vector=TIMER1_A0_VECTOR
 __interrupt void TIMER1_A0_ISR (void) {
     // Read TAIV to reset interrupt flag
     uint16_t taiv = TA1IV;
 
     // Adjust duty cycle
-    temp = AFSK_SINE_TABLE[afsk_state.sine_idx_100/100];
-    TA1CCR1 = temp;
+    TA1CCR1= AFSK_SINE_TABLE[afsk_state.sine_idx_100/100];
     afsk_state.sine_idx_100 += afsk_state.stride_100;
     if (afsk_state.sine_idx_100 > AFSK_TABLE_SIZE_100) {
         afsk_state.sine_idx_100 -= AFSK_TABLE_SIZE_100;
@@ -195,26 +170,24 @@ __interrupt void TIMER1_A0_ISR (void) {
     // Bit finished
     if (sample_ctr == AFSK_SPS) {
         sample_ctr = 0;
-        if (current_bit == 0) {
-            current_bit = 7;
-            // Byte finished
-            afsk_state.tx_idx++;
-            if (afsk_state.tx_idx == afsk_state.packet_len) {
-                // All bytes transmitted
-                afsk_state.tx_flag = false;
-                afsk_state.packet_len = 0;
-                TA1CCR1 = AFSK_CPS/2;
-                afsk_timer_stop();
-                return;
-            }
-        } else {
-            current_bit--;
+        afsk_state.tx_idx++;
+
+        if (afsk_state.tx_idx > afsk_state.packet_len) {
+            afsk_state.tx_flag = false;
+            afsk_state.packet_len = 0;
+            TA1CCR1 = AFSK_CPS/2;
+            afsk_timer_stop();
+            return;
         }
 
-        if (afsk_state.packet_buf[afsk_state.tx_idx] & (1 << current_bit)) {
-            afsk_state.stride_100 = AFSK_STRIDE_MARK_100;
+        if ((afsk_state.tx_idx & 7) == 0) {
+            afsk_state.current_byte = afsk_state.packet_buf[afsk_state.tx_idx >> 3];
         } else {
-            afsk_state.stride_100 = AFSK_STRIDE_SPACE_100;
+            afsk_state.current_byte /= 2;
+        }
+
+        if ((afsk_state.current_byte & 1) == 0) { // if the next bit is 0, toggle the frequency
+            afsk_state.stride_100 ^= (AFSK_STRIDE_MARK_100 ^ AFSK_STRIDE_SPACE_100);
         }
     }
 }

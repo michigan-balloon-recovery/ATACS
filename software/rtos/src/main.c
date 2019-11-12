@@ -27,57 +27,18 @@ static void prvSetupHardware( void );
 
 /*-----------------------------------------------------------*/
 
-//// toggle LED_1 every 50ms
-//void task_led_1_toggle( void ) {
-//    portTickType xLastWakeTime;
-//    const portTickType xFrequency = 50 / portTICK_RATE_MS;
-//
-//    xLastWakeTime = xTaskGetTickCount();
-//
-//    while(1) {
-//        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-//        LED_PORT_OUT ^= LED_1;
-//    }
-//}
-//
-//// Print "DEADBEEF\r\n" every 500ms
-//void task_uart_tx( void ) {
-//    portTickType xLastWakeTime;
-//    const portTickType xFrequency = 500 / portTICK_RATE_MS;
-//
-//    xLastWakeTime = xTaskGetTickCount();
-//
-//    while(1) {
-//        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-//        vTaskSuspendAll(); // Suspend scheduler while we transmit
-//        uartSendDataBlocking(&USCI_A0_cnf, (unsigned char*)"DEADBEEF\r\n", 10);
-//        xTaskResumeAll();
-//        LED_PORT_OUT ^= LED_1;
-//    }
-//}
-//
-//// Read from UART 0 every 100ms;
-//void task_uart_rx( void ) {
-//    portTickType xLastWakeTime;
-//    const portTickType xFrequency = 100 / portTICK_RATE_MS;
-//
-//    xLastWakeTime = xTaskGetTickCount();
-//
-//    while(1) {
-//        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-//        int bytesAvailable = numUartBytesReceived(&USCI_A0_cnf);
-//        if(bytesAvailable == 10){
-//            unsigned char tempBuf[10];
-//            volatile int bytesRead = readRxBytes(&USCI_A0_cnf, tempBuf, bytesAvailable, 0);
-//            if(bytesRead == bytesAvailable){
-//                // If we receive "DEADBEEF\r\n", we toggle LED_2
-//                if(!memcmp(tempBuf, "DEADBEEF\r\n", 10)){
-//                    LED_PORT_OUT ^= LED_2;sample_ctr++; // Another sample completed
-//                }
-//            }
-//        }
-//    }
-//}
+//// toggle LED_1 every 500ms
+void example_task( void ) {
+    portTickType xLastWakeTime;
+    const portTickType xFrequency = 500 / portTICK_RATE_MS;
+
+    xLastWakeTime = xTaskGetTickCount();
+
+    while(1) {
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        LED_PORT_OUT ^= LED_1;
+    }
+}
 
 void task_gnss() {
 
@@ -89,20 +50,47 @@ void task_gnss() {
 
 void task_ax25() {
     portTickType xLastWakeTime;
-    const portTickType xFrequency = 2000 / portTICK_RATE_MS;
+    const portTickType xFrequency = 15000 / portTICK_RATE_MS;
     xLastWakeTime = xTaskGetTickCount();
     address_t addresses[2] = {
-      {"KD2OHS", 11},
-      {"APRS", 0}
+      {"APRS", 0},
+      {"KD2OHS", 11}
     };
+
+    // TODO, add digipeater path to addresses[]
+
     while (1){
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         vTaskSuspendAll();
+            LED_PORT_OUT |= LED_1;
+
+            // Header
             ax25_send_header(addresses, 2);
-            uint8_t buf[20] = "AAAAABBAAACCAADDAAA";
-            ax25_send_string(buf, 19);
+            ax25_send_byte('/');
+            ax25_send_string("000000", 6);
+            ax25_send_byte('h');
+            ax25_send_string("0000.00N", strlen("0000.00N"));
+            ax25_send_byte('/');
+            ax25_send_string("00000.00E", strlen("00000.00E"));
+            ax25_send_byte('O');
+            ax25_send_string("000", 3);
+
+//            ax25_send_string("/A=000000", strlen("/A=000000"));
+//            ax25_send_string("/Ti=27", strlen("/Ti=27"));
+//            ax25_send_string("/Te=93", strlen("/Te=93"));
+//            ax25_send_string("/V=7435", strlen("/V=7435"));
+
+            // Comment
+            ax25_send_byte(' ');
+            ax25_send_string("HELLO 473", strlen("473 RULES"));
+
+            // Footer
             ax25_send_footer();
+
+            // Send!
             ax25_flush_frame();
+
+            LED_PORT_OUT &= ~LED_1;
         xTaskResumeAll();
     }
 }
@@ -114,11 +102,9 @@ void main( void ) {
 //    gnss_init(&GNSS);
 
     /* Create Tasks */
-//    xTaskCreate((TaskFunction_t)task_led_1_toggle, "LED_1 Toggle",          128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t)task_uart_tx,      "Send DEADBEEF",         128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t)task_uart_rx,      "UART RX Loopback Test", 128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t)example_task,      "LED_1 Toggle",          128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t)task_gnss,         "gnss",                  128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t)task_ax25,           "afsk_ax25",             128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t)task_ax25,           "afsk_ax25",             128, NULL, 1, NULL);
 
     /* Start the scheduler. */
     vTaskStartScheduler();

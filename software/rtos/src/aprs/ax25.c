@@ -20,9 +20,9 @@ ax25_state_t ax25_state;
 void update_crc(uint8_t bit){
     ax25_state.crc ^= bit;
     if (ax25_state.crc & 1){
-        ax25_state.crc = (ax25_state.crc >> 1) ^ 0x8408;
+        ax25_state.crc = (ax25_state.crc >> 1) ^ AX25_CRC_POLY;
     } else {
-        ax25_state.crc = ax25_state.crc >> 1;
+        ax25_state.crc >>= 1;
     }
 }
 
@@ -85,11 +85,11 @@ void ax25_send_header(const address_t* addresses, uint8_t num){
 
     // Start flag(s)
     uint8_t i;
-    send_flag();
-//    for(i = 0 ; i < AX25_TX_DELAY_MS/10 * 12 / 8 ; i++){
-//        // Enough flags to fill AX_TX_DELAY_MS
-//        send_flag();
-//    }
+//    send_flag();
+    for(i = 0 ; i < AX25_TX_DELAY_MS/10 * 12 / 8 ; i++){
+        // Enough flags to fill AX_TX_DELAY_MS
+        send_flag();
+    }
 
     // Addresses (Destination, Source, Digipeaters)
     for(i = 0 ; i < num ; i++){
@@ -132,15 +132,16 @@ void ax25_send_string(const uint8_t* buf, const uint16_t buflen){
 }
 
 void ax25_send_footer(){
-    send_byte(~(ax25_state.crc & 0x00FF));
-    send_byte(~(ax25_state.crc & 0xFF00) >> 8);
+    uint16_t final_crc = ax25_state.crc;
+    send_byte(~(final_crc & 0xFF));
+    final_crc >>= 8;
+    send_byte(~(final_crc & 0xFF));
     send_flag();
 }
 
 void ax25_flush_frame(){
     // P2.2 TX, P2.0 PTT
-    afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P2, GPIO_PIN0, AX25_MAX_PACKET);
-
-    afsk_packet_append(ax25_state.packet, ax25_state.packet_len >> 3);
-    afsk_send();
+    afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P2, GPIO_PIN0);
+    afsk_send(ax25_state.packet, ax25_state.packet_len);
+    afsk_transmit();
 }

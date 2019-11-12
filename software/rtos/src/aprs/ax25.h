@@ -11,9 +11,9 @@
 #define AX25_FLAG        0x7E
 #define AX25_CONTROL     0x03
 #define AX25_PROTOCOL    0xF0
-#define AX25_CRC_INITIAL 0x8FFF
-#define AX25_CRC_POLY    0x8408  // assumes lsb-first computation
-#define AX25_TX_DELAY_MS 100
+#define AX25_CRC_INITIAL 0xFFFF
+#define AX25_CRC_POLY    0x8408  // lsb-first
+#define AX25_TX_DELAY_MS 300
 
 typedef struct {
     char    callsign[7];

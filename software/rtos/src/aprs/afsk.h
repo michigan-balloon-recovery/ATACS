@@ -15,11 +15,9 @@
  * Exported Function Declarations
  */
 void afsk_setup(const uint16_t tx_port, const uint8_t tx_pin,
-                const uint16_t ptt_port, const uint8_t ptt_pin,
-                const uint16_t max_packet_size);
+                const uint16_t ptt_port, const uint8_t ptt_pin);
 void afsk_reset();
-int afsk_packet_append(const uint8_t* buf, uint16_t len);
-void afsk_send();
-void afsk_test();
+void afsk_send(uint8_t* buf, uint16_t len);
+void afsk_transmit();
 
 #endif /* AFSK_H_ */
