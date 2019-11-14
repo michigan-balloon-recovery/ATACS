@@ -13,6 +13,7 @@
 #include "uart.h"
 #include "gnss.h"
 #include "ax25.h"
+#include "sensors.h"
 
 /*-----------------------------------------------------------*/
 
@@ -24,6 +25,8 @@ gnss_t GNSS;
  * Configures clocks, LCD, port pints, etc. necessary to execute this demo.
  */
 static void prvSetupHardware( void );
+SemaphoreHandle_t pressureSemaphore;
+SemaphoreHandle_t humiditySemaphore;
 
 /*-----------------------------------------------------------*/
 
@@ -95,6 +98,144 @@ void task_ax25() {
     }
 }
 
+void task_getHumidity(){
+	
+	humiditySemaphore = xSemaphoreCreateBinary();
+    portTickType xLastWakeTime;
+    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
+    xLastWakeTime = xTaskGetTickCount();
+	
+	uint32_t hum = 0;
+	uint8_t data[4] = {0x0, 0x0, 0x0, 0x0};
+	uint32_t temp = 0;
+	
+	while(1){
+		vTaskDelayUntil(&xLastWakeTime, xFrequency);
+		
+		i2c_write(0x27, 0, 0);
+		vTaskDelay(1/portTICK_PERIOD_MS);
+		i2c_read(0x27, data, 4);
+
+		hum = data[0] & 0x3F;
+		hum = hum << 8;
+		hum += data[1];
+		hum = 100*hum;
+		hum += 8191; // add 1/2 LSB for accurate rounding
+		hum = hum/16382;
+		temp = data[2];
+		temp = temp << 6;
+		temp += (data[3] >> 2);
+		temp = 165*temp;
+		temp += 8191; // add 1/2 LSB for accurate rounding
+		temp = temp / 16382;
+		temp -= 40;
+		temp = 1.8*temp + 32;
+		
+		xSemaphoreTake(humiditySemaphore, portMAX_DELAY);
+		sensor_data.humidity = hum;
+		sensor_data.hTemp = temp;
+		xSemaphoreGive(humiditySemaphore);
+	}
+
+}
+
+void task_getPressure(){
+	pressureSemaphore = xSemaphoreCreateBinary();
+	portTickType xLastWakeTime;
+    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
+    xLastWakeTime = xTaskGetTickCount();
+	
+	
+	volatile unsigned int i,j;      // volatile to prevent optimization
+    uint8_t data[4] = {0x0, 0x0, 0x0, 0x0};
+    uint8_t cmd[1];
+    uint8_t get_data_cmd[1] = {0x00};
+    
+    
+    int32_t pressure = 0;
+
+    uint32_t d1, d2;
+
+    int32_t dT, pTemp;
+    int64_t offset, sens;
+
+	while(1)
+	{
+		vTaskDelayUntil(&xLastWakeTime, xFrequency);
+		//retrieves digital pressure value
+		vTaskDelay(1/portTICK_PERIOD_MS);
+		cmd[0] = 0x48;
+		i2c_write(0x77, cmd, 1);
+		vTaskDelay(1/portTICK_PERIOD_MS);
+		cmd[0] = 0x00;
+		i2c_write(0x77, cmd, 1);
+		vTaskDelay(1/portTICK_PERIOD_MS);
+		i2c_read(0x77, data, 3);
+		d1 = data[0];
+		d1 = d1 << 8;
+		d1 += data[1];
+		d1 = d1 << 8;
+		d1 += data[2];
+
+		//retrieves digital temperature value
+		cmd[0] = 0x58;
+		i2c_write(0x77, cmd, 1);
+		vTaskDelay(1/portTICK_PERIOD_MS);
+		cmd[0] = 0x00;
+		i2c_write(0x77, cmd, 1);
+		vTaskDelay(1/portTICK_PERIOD_MS);
+		i2c_read(0x77, data, 3);
+		d2 = data[0];
+		d2 = d2 << 8;
+		d2 += data[1];
+		d2 = d2 << 8;
+		d2 += data[2];
+
+		//calculate temperature
+		dT = c[5];
+		dT *= 256;
+		dT = d2 - dT;
+
+		pTemp = c[6];
+		pTemp *= dT;
+		pTemp /= 8388608;
+		pTemp += 2000;
+
+		//calculate temperature compensated pressure
+		int64_t temporary;
+		offset = c[2];
+		offset *= 65536;
+		temporary = c[4];
+		temporary += dT;
+		temporary /= 128;
+		offset = offset + temporary;
+
+		sens = c[1];
+		sens *= 32768;
+		temporary = c[3];
+		temporary *= dT;
+		temporary /= 256;
+
+
+		pressure = d1;
+		pressure *= sens;
+		pressure /= 2097152;
+		pressure -= offset;
+		pressure /= 16384; // 32768
+		pressure /= 100;
+
+		pTemp += 50;
+		pTemp /= 100;
+		pTemp *= 1.8;
+		pTemp += 32;
+		
+		xSemaphoreTake(pressureSemaphore,portMAX_DELAY);
+		sensor_data.pressure = pressure;
+		sensor_data.pTemp = pTemp;
+		xSemaphoreGive(pressureSemaphore);
+	}
+}
+
 void main( void ) {
     /* Initialize Hardware */
     prvSetupHardware();
@@ -105,6 +246,8 @@ void main( void ) {
 //    xTaskCreate((TaskFunction_t)example_task,      "LED_1 Toggle",          128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t)task_gnss,         "gnss",                  128, NULL, 1, NULL);
     xTaskCreate((TaskFunction_t)task_ax25,           "afsk_ax25",             128, NULL, 1, NULL);
+	xTaskCreate((TaskFunction_t)task_getPressure	 "getPressure",			  128, NULL, 1, NULL);
+	xTaskCreate((TaskFunction_t)task_getHumidity	 "getHumidity",			  128, NULL, 1, NULL);
 
     /* Start the scheduler. */
     vTaskStartScheduler();
@@ -131,6 +274,9 @@ static void prvSetupHardware( void ) {
     /* UART */
     initUartDriver();
 
+	/* I2C and Pressure Sensor */
+	initPressure();
+	
     // UARTConfig a0_cnf;
     // a0_cnf.moduleName = USCI_A0;
 
