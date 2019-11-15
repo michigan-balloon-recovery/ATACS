@@ -152,7 +152,7 @@ typedef struct
 	ring_buff_t *rxBuf;												/**< Pointer to RX ring buffer */
 	void (*rxCallback) (void *params, uint8_t datum);				/**< Function pointer to RX callback function */
 	void * rxCallbackParams;										/**< Pointer to application parameters for RX callback function */
-	void (*txCallback) (void *params, uint8_t *txAddress);			/**< Function pointer to TX callback function */
+	bool (*txCallback) (void *params, uint8_t *txAddress);			/**< Function pointer to TX callback function */
 	void * txCallbackParams;										/**< Pointer to application parameters for TX callback function */
 } UARTConfig;
 
@@ -163,7 +163,7 @@ USCIUARTRegs USCI_A0_regs, USCI_A1_regs, USCI_A2_regs, USCI_A3_regs;
 /* Function Declarations */
 int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf);
 void initUartRxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t datum), void *params);
-void initUartTxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t *txAddress), void *params);
+void initUartTxCallback(UARTConfig * prtInf, bool (*callback) (void *params, uint8_t *txAddress), void *params);
 int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs);
 int configUSARTUart(UARTConfig * prtInf, USARTUARTRegs * confRegs);
 int uartSendDataBlocking(UARTConfig * prtInf,unsigned char * buf, int len);

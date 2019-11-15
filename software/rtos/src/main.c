@@ -13,11 +13,12 @@
 #include "uart.h"
 #include "gnss.h"
 #include "ax25.h"
+#include "rockblock.h"
 
 /*-----------------------------------------------------------*/
 
 gnss_t GNSS;
-
+ROCKBLOCK_t rb;
 /*-----------------------------------------------------------*/
 
 /*
@@ -121,6 +122,17 @@ void main( void ) {
 //    xTaskCreate((TaskFunction_t)task_ax25,           "afsk_ax25",             128, NULL, 1, NULL);
 
     /* Start the scheduler. */
+
+    __bis_SR_register(GIE);
+    rb_init(&rb);
+    bool msgSent = false;
+    int8_t msgReceived;
+    int8_t msgsQueued;
+    while(msgSent == false) {
+        rb_send_message(&rb, "hello", 5, &msgSent, &msgReceived, &msgsQueued);
+        __delay_cycles(16000000*10);
+    }
+    while(1);
     vTaskStartScheduler();
 
 	/* If all is well then this line will never be reached.  If it is reached

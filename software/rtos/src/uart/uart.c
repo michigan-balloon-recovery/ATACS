@@ -132,7 +132,7 @@ void initUartRxCallback(UARTConfig * prtInf, void (*callback) (void *params, uin
  * @param params is a pointer to the memory storing application parameters to the callback function
  * 
  */
-void initUartTxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t *txAddress), void *params) {
+void initUartTxCallback(UARTConfig * prtInf, bool (*callback) (void *params, uint8_t *txAddress), void *params) {
 	prtInf->txCallback = callback;
 	prtInf->txCallbackParams = params;
 }
@@ -621,7 +621,7 @@ int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len)
 	}
 	// if no ring buffer is registered with the UART config, data transfer must be handled
 	// through the TX callback function
-	else if(buf != NULL) {
+	else if(buf == NULL) {
 		return UART_NO_TX_BUFF;
 	}
 
@@ -712,7 +712,11 @@ static void uartRxIsr(UARTConfig * prtInf) {
 static void uartTxIsr(UARTConfig * prtInf) {
 	// tx Callback
 	if(prtInf->txCallback != NULL) {
-		prtInf->txCallback(prtInf->txCallbackParams, prtInf->usciRegs->TX_BUF);
+		if(!prtInf->txCallback(prtInf->txCallbackParams, prtInf->usciRegs->TX_BUF)) {
+            *prtInf->usciRegs->IE_REG &= ~UCTXIE;
+            // Clear TX IFG
+            *prtInf->usciRegs->IFG_REG &= ~UCTXIFG;
+		}
 	}
 	// default
 	else if(prtInf->txBuf != NULL) {

@@ -4,9 +4,7 @@
 #include "rockblock.h"
 
 // formats the command for the message sent to the RockBLOCK.
-static void rb_format_command(ROCKBLOCK_t *rb, rb_command_t cmd) {
-
-    while(rb->tx.transmitting);
+static void rb_format_command(ROCKBLOCK_t *rb, rb_command_t cmd, uint8_t * numReturns) {
 
     *(rb->tx.cur_ptr++) = 'A';
     *(rb->tx.cur_ptr++) = 'T';
@@ -19,29 +17,34 @@ static void rb_format_command(ROCKBLOCK_t *rb, rb_command_t cmd) {
     }
 
     switch(cmd) {
-        case AT:
+        case AT: // are you alive?
+            *numReturns = 3;
         break;
-        case ATK0:
+        case ATK0: // turn off flow control
             *(rb->tx.cur_ptr++) = '&';
             *(rb->tx.cur_ptr++) = 'K';
             *(rb->tx.cur_ptr++) = '0';
+            *numReturns = 3;
         break;
-        case SBDWT:
+        case SBDWT: // create message
             *(rb->tx.cur_ptr++) = 'W';
             *(rb->tx.cur_ptr++) = 'T';
+            *numReturns = 3;
         break;
-        case SBDIX:
+        case SBDIX: // create session
             *(rb->tx.cur_ptr++) = 'I';
             *(rb->tx.cur_ptr++) = 'X';
+            *numReturns = 5;
         break;
-        case SBDRT:
+        case SBDRT: // download ASCII message
             *(rb->tx.cur_ptr++) = 'R';
             *(rb->tx.cur_ptr++) = 'T';
+            *numReturns = 5;
         break;
-        case SBDRB:
-            *(rb->tx.cur_ptr++) = 'R';
-            *(rb->tx.cur_ptr++) = 'B';
+        default:
+            *numReturns = 0;
         break;
+
     }
     // set end of command index and add the carriage return or equal sign depending on command.
     rb->tx.last_ptr = rb->tx.cur_ptr;
@@ -53,10 +56,14 @@ static void rb_format_command(ROCKBLOCK_t *rb, rb_command_t cmd) {
 }
 
 static void rb_clear_buffers(ROCKBLOCK_t *rb) {
+    while(rb->tx.transmitting);
+    while(!rb->rx.finished);
     rb->tx.cur_ptr = rb->tx.buff;
     rb->tx.last_ptr = rb->tx.buff;
     rb->rx.cur_ptr = rb->rx.buff;
     rb->rx.last_ptr = rb->rx.buff;
+    rb->tx.tx_ptr = rb->tx.buff;
+    rb->rx.rx_ptr = rb->rx.buff;
 }
 
 void rb_init(ROCKBLOCK_t *rb) {
@@ -96,6 +103,7 @@ void rb_init(ROCKBLOCK_t *rb) {
     P7DIR |= BIT3; // set sleep to an output.
 
     rb_set_awake(true); // TODO: might want to not just always be on, so add the ability to sleep...
+    //rb_set_awake(false);
 
     rb->tx.transmitting = false;
 }
@@ -132,43 +140,48 @@ void rb_rx_callback(void *param, uint8_t datum) {
     static uint8_t numReturns = 0;
     ROCKBLOCK_t *rb = (ROCKBLOCK_t *) param;
 
-    *(rb->rx.cur_ptr) = datum; // take the data, we assume we have room here.
+    if(rb->rx.finished == false) {
+        *(rb->rx.rx_ptr) = datum; // take the data, we assume we have room here.
 
-    if(datum == (uint8_t) '\r') { // all message responses end with '\r', but there might be '\r' per message.
-        numReturns++;
+        if(datum == (uint8_t) '\r') { // all message responses end with '\r', but there might be multiple '\r' per message.
+            numReturns++;
 
-        if(numReturns == rb->rx.numReturns) {
-            numReturns = 0;
-            rb->rx.finished = true;
-            rb->rx.last_ptr = rb->rx.cur_ptr;
+            if(numReturns == rb->rx.numReturns) {
+                numReturns = 0;
+                rb->rx.finished = true;
+                rb->rx.last_ptr = rb->rx.rx_ptr;
+            }
         }
-    }
 
-    rb->rx.cur_ptr++; // increment the index.
+        rb->rx.rx_ptr++; // increment the index.
 
-    if(rb->rx.cur_ptr >= rb->rx.end_ptr) { // we are full! Message must be complete.
-        //TODO: Handle this case in a reasonable way.
+        if(rb->rx.rx_ptr >= rb->rx.end_ptr) { // we are full! Message must be complete.
+            //TODO: Handle this case in a reasonable way.
+        }
     }
 }
 
-void rb_tx_callback(void *param, uint8_t *txAddress) {
+bool rb_tx_callback(void *param, uint8_t *txAddress) {
     ROCKBLOCK_t *rb = (ROCKBLOCK_t *) param;
 
-    *txAddress= *(rb->tx.cur_ptr);
+    *txAddress= *(rb->tx.tx_ptr);
 
-    if(rb->tx.cur_ptr == rb->tx.last_ptr) { // sent last byte.
+    if(rb->tx.tx_ptr == rb->tx.last_ptr) { // sent last byte.
         rb->tx.transmitting = false;
+        return false;
     }
 
-    rb->tx.cur_ptr++;
+    rb->tx.tx_ptr++;
+    return true;
 }
 
 void rb_send_message(ROCKBLOCK_t *rb, uint8_t * msg, uint16_t len, bool *msgSent, int8_t *msgReceived, int8_t *msgsQueued) {
 
     rb_clear_buffers(rb);
 
+    uint8_t numReturns;
     // create the message.
-    rb_format_command(rb, SBDWT);    // Set up the command
+    rb_format_command(rb, SBDWT, &numReturns);    // Set up the command
 
     uint16_t i = 0;
     for(i = 0; i < len; i++) {
@@ -176,13 +189,14 @@ void rb_send_message(ROCKBLOCK_t *rb, uint8_t * msg, uint16_t len, bool *msgSent
     }
 
     rb->tx.last_ptr = rb->tx.cur_ptr;
-    *(rb->tx.cur_ptr++) == '\r'; // end message with carriage return.
+    *(rb->tx.cur_ptr++) = '\r'; // end message with carriage return.
 
     rb->tx.transmitting = true; // we are transmitting
     rb->rx.finished = false; // not done receiving response
-    rb->rx.numReturns = 1; // expect 1 carriage return to signify end of comms
-    uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff; // length
+    rb->rx.numReturns = numReturns; // expect 1 carriage return to signify end of comms
+    uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
+    while(rb->tx.transmitting);
     while(!rb->rx.finished); // wait for response.
 
     rb_start_session(rb, msgSent, msgReceived, msgsQueued);
@@ -195,23 +209,24 @@ void rb_start_session(ROCKBLOCK_t *rb, bool *msgSent, int8_t *msgReceived, int8_
     // start session.
 
     rb_clear_buffers(rb);
-
-    rb_format_command(rb, SBDIX);
+    uint8_t numReturns;
+    rb_format_command(rb, SBDIX, &numReturns);
     rb->tx.transmitting = true;
     rb->rx.finished = false;
-    rb->rx.numReturns = 1; // I expect just one '/r' to signify end of message.
-    uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff;
+    rb->rx.numReturns = numReturns;
+    uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1;
 
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
 
+    while(rb->tx.transmitting);
     while(!rb->rx.finished); // wait for response
 
-    totalLen = rb->rx.last_ptr - rb->rx.buff;
+    totalLen = rb->rx.last_ptr - rb->rx.buff + 1;
 
     *msgSent = true;
     *msgReceived = 0;
 
-    if(rb->rx.numReturns != 1) {
+    if(rb->rx.numReturns != numReturns) {
         // ERROR
         *msgSent = false;
         return;
@@ -309,15 +324,17 @@ uint8_t rb_check_mailbox(ROCKBLOCK_t *rb, int8_t *msgsQueued) {
 void rb_retrieve_message(ROCKBLOCK_t *rb) {
 
     rb_clear_buffers(rb);
-    rb_format_command(rb, SBDRT);
-    uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff; // length
+    uint8_t numReturns;
+    rb_format_command(rb, SBDRT, &numReturns);
+    uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
 
     rb->tx.transmitting = true;
     rb->rx.finished = false;
-    rb->rx.numReturns = 3; // I expect 3 '/r' to signify end of message.
+    rb->rx.numReturns = numReturns;
 
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
 
+    while(rb->tx.transmitting);
     while(!rb->rx.finished); // wait for response.
 
 }

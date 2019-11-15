@@ -39,6 +39,7 @@ typedef struct {
     volatile uint8_t * volatile end_ptr; // indicates the end of the rb_rx_buff array, must not index past this point.
     volatile uint8_t * volatile cur_ptr; // pointer to next spot in the rb_rx_buff, where newest values will be put when received.
     volatile uint8_t * volatile last_ptr; // pointer to the final valid value in rb_rx_buff.
+    volatile uint8_t * volatile rx_ptr; // pointer to where the value being received in callback should be put.
     volatile uint8_t numReturns;
     bool finished;
 } rb_rx_buffer_t;
@@ -48,6 +49,7 @@ typedef struct {
     volatile uint8_t * volatile end_ptr; // indicates the end of the rb_tx_buff array, must not index past this point.
     volatile uint8_t * volatile cur_ptr; // pointer to next spot in the rb_tx_buff, where newest values will be taken from when sending.
     volatile uint8_t * volatile last_ptr; // pointer to the final valid value in rb_tx_buff.
+    volatile uint8_t * volatile tx_ptr; // pointer to the value being transmitted by callback.
     bool transmitting;
 } rb_tx_buffer_t;
 
@@ -117,7 +119,7 @@ void rb_rx_callback(void *param, uint8_t datum);
 // Pass this into the driver via the initUartTxCallback function.
 // txAddress is where we put the byte we want the UART driver to send over the port.
 // the void * param MUST hold the ROCKBLOCK struct.
-void rb_tx_callback(void *param, uint8_t * txAddress);
+bool rb_tx_callback(void *param, uint8_t * txAddress);
 
 // Controls the sleep/awake state of the RockBLOCK. If awake == 1, the RockBLOCK is set to awake, if 0 it is set to sleep.
 void rb_set_awake(bool awake);
