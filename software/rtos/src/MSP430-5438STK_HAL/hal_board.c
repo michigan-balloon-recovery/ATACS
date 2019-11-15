@@ -54,7 +54,7 @@ void halBoardInit(void)
   PCDIR  = 0xFFFF;
   PCSEL  = 0;
   PDOUT  = 0;
-  PDDIR  = 0xFFFF;
+  P8DIR  = 0xFF & ~(BIT0 | BIT2); // ROCKBLOCK pins 8.0, 8.2 are inputs.
   PDSEL  = 0x0003;
   PEOUT  = 0;
   PEDIR  = 0xFEFF;                          // P10.0 to USB RST pin,

@@ -51,6 +51,8 @@
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/F5XX_6XX_Core_Lib"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/uart"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/Sensors"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/RockBLOCK"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/aprs"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS_Source/include"/>
@@ -62,6 +64,7 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.CODE_MODEL.572756233" name="Specify the code memory model. (--code_model)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.CODE_MODEL" value="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.CODE_MODEL.large" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.ABI.474934953" name="Application binary interface (--abi)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.ABI" value="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.ABI.eabi" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.OPT_LEVEL.1721521129" name="Optimization level (--opt_level, -O)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.OPT_LEVEL" value="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.OPT_LEVEL.off" valueType="enumerated"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS.427155073" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__C_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS.1830706782" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__CPP_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS.679341318" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compiler.inputType__ASM_SRCS"/>

@@ -16,10 +16,19 @@
 #include "rockblock.h"
 #include "sensors.h"
 
+#include <stdlib.h>
+
 /*-----------------------------------------------------------*/
 
 gnss_t GNSS;
 ROCKBLOCK_t rb;
+/*-----------------------------------------------------------*/
+
+/*-----------------------------------------------------------*/
+#define RB_TRANSMIT_RATE_MS 300000      // this is 5 minutes (1000 ms/sec * 60 sec/min * 5min)
+#define RB_RETRY_RATE_MS    15000       // this is 15 seconds (1000 ms/sec / * 15 sec)
+#define RB_MAX_TX_RETRIES   10          // Retry at most 10 times. This means we try for 10*15=150 seconds.
+#define RB_MAX_RX_RETRIES   5           // retry at most 5 times. This means we try for 5*15=75 seconds.
 /*-----------------------------------------------------------*/
 
 /*
@@ -237,6 +246,53 @@ void task_getPressure(){
 	}
 }
 
+void task_rockblock(void) {
+    portTickType xLastWakeTime;
+    const portTickType xTaskFrequency = RB_TRANSMIT_RATE_MS / portTICK_RATE_MS;
+    const portTickType xRetryFrequency = RB_RETRY_RATE_MS / portTICK_RATE_MS;
+    xLastWakeTime = xTaskGetTickCount();
+
+    uint8_t msg[RB_TX_SIZE];
+    uint16_t len = 0;
+    bool msgSent = false;
+    int8_t msgReceived = 0;
+    int8_t msgsQueued = 0;
+    uint8_t numRetries = 0;
+
+    rb_init(&rb);
+
+    while(1) {
+        vTaskDelayUntil(&xLastWakeTime, xTaskFrequency);
+        //TODO: grab data and populate msg, len fields
+        rb_send_message(&rb, &msg, len, &msgSent, &msgReceived, &msgsQueued);
+
+        while(!msgSent && numRetries < RB_MAX_TX_RETRIES) {
+            numRetries++;
+            vTaskDelayUntil(&xLastWakeTime, xRetryFrequency);
+            rb_start_session(&rb, &msgSent, &msgReceived, &msgsQueued);
+        }
+
+        numRetries = 0;
+
+        if(msgReceived == 1) { // we received a message
+            rb_retrieve_message(&rb);
+            // TODO: process message
+
+            while(msgsQueued > 0 && numRetries < RB_MAX_RX_RETRIES ) { // other messages to download
+                rb_start_session(&rb, &msgSent, &msgReceived, &msgsQueued);
+                if(msgReceived == 1) {
+                    numRetries = 0;
+                    rb_retrieve_message(&rb);
+                    // TODO: process message
+                } else {
+                    numRetries++;
+                    vTaskDelayUntil(&xLastWakeTime, xRetryFrequency);
+                }
+            }
+        }
+    }
+}
+
 void main( void ) {
     /* Initialize Hardware */
     prvSetupHardware();
@@ -246,21 +302,15 @@ void main( void ) {
     /* Create Tasks */
 //    xTaskCreate((TaskFunction_t)example_task,      "LED_1 Toggle",          128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t)task_gnss,         "gnss",                  128, NULL, 1, NULL);
-    xTaskCreate((TaskFunction_t)task_ax25,           "afsk_ax25",             128, NULL, 1, NULL);
-	xTaskCreate((TaskFunction_t)task_getPressure	 "getPressure",			  128, NULL, 1, NULL);
-	xTaskCreate((TaskFunction_t)task_getHumidity	 "getHumidity",			  128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_ax25,          "afsk_ax25",             128, NULL, 1, NULL);
+	xTaskCreate((TaskFunction_t) task_getPressure,	 "getPressure",			  128, NULL, 1, NULL);
+	xTaskCreate((TaskFunction_t) task_getHumidity,	 "getHumidity",			  128, NULL, 1, NULL);
+	xTaskCreate((TaskFunction_t) task_rockblock,     "RockBLOCK",             128, NULL, 1, NULL);
 
     /* Start the scheduler. */
 
     __bis_SR_register(GIE);
-    rb_init(&rb);
-    bool msgSent = false;
-    int8_t msgReceived;
-    int8_t msgsQueued;
-    while(msgSent == false) {
-        rb_send_message(&rb, "hello", 5, &msgSent, &msgReceived, &msgsQueued);
-        __delay_cycles(16000000*10);
-    }
+
     while(1);
     vTaskStartScheduler();
 

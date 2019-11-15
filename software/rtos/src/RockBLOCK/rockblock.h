@@ -95,13 +95,15 @@ uint8_t rb_get_ssi();
 // We return values into the passed by reference arguments of this function.
 // int8_t msgReceived indicates if messages were received. 0-> no message, 1 or more -> yes message, -1-> error downloading.
 // bool msgSent indicates if we successfully sent a message to the network.
-void rb_send_message(ROCKBLOCK_t *rb, uint8_t * msg, uint16_t len, bool *msgSent, int8_t *msgReceived, int8_t *msgsQueued);
+// msgsQueued is number of queued messages waiting to be downloaded.
+void rb_send_message(ROCKBLOCK_t *rb, uint8_t *msg, uint16_t len, bool *msgSent, int8_t *msgReceived, int8_t *msgsQueued);
 
 // Starts an SBD session with the Irdium Network.
 // This is called by the rb_send_message(), rb_retrieve_message() functions.
 // This can also be manually called to retry transmission of a previously failed message still in the queue.
 // int8_t msgReceived indicates if messages were received. 0-> no message, 1 or more -> yes message, -1-> error downloading.
 // bool msgSent indicates if we successfully sent a message to the network.
+// msgsQueued is number of queued messages waiting to be downloaded.
 void rb_start_session(ROCKBLOCK_t *rb, bool *msgSent, int8_t *msgReceived, int8_t *msgsQueued);
 
 // Grabs message from the RockBLOCK.

@@ -8,7 +8,7 @@ typedef struct{
 	int32_t humidity;
 	int32_t pTemp;
 	int32_t hTemp;
-} sensor_data_t
+} sensor_data_t;
 
 sensor_data_t sensor_data; 
 
