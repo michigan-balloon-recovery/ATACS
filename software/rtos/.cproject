@@ -51,6 +51,7 @@
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/F5XX_6XX_Core_Lib"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/uart"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/I2C"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/Sensors"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/RockBLOCK"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/aprs"/>

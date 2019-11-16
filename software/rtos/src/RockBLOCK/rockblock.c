@@ -66,6 +66,13 @@ static void rb_clear_buffers(ROCKBLOCK_t *rb) {
     rb->rx.rx_ptr = rb->rx.buff;
 }
 
+static void rb_wait_for_messages(ROCKBLOCK_t *rb) {
+    xSemaphoreTake(rb->tx.txSemaphore, portMAX_DELAY);
+    while(rb->tx.transmitting);
+    xSemaphoreTake(rb->rx.rxSemaphore, portMAX_DELAY);
+    while(!rb->rx.finished); // wait for response
+}
+
 void rb_init(ROCKBLOCK_t *rb) {
 
     // initialize buffers with appropriate start values and end values.
@@ -76,6 +83,9 @@ void rb_init(ROCKBLOCK_t *rb) {
     rb->tx.cur_ptr = rb->tx.buff;
     rb->tx.last_ptr = rb->tx.buff;
     rb->tx.end_ptr = rb->tx.buff + RB_TX_SIZE - 1;
+
+    rb->rx.rxSemaphore = xSemaphoreCreateCounting(1, 0);
+    rb->tx.txSemaphore = xSemaphoreCreateCounting(1, 0);
 
     // UART initialization
     UARTConfig a1_cnf = {
@@ -106,6 +116,7 @@ void rb_init(ROCKBLOCK_t *rb) {
     //rb_set_awake(false);
 
     rb->tx.transmitting = false;
+    rb->rx.finished = false;
 }
 
 
@@ -150,6 +161,7 @@ void rb_rx_callback(void *param, uint8_t datum) {
                 numReturns = 0;
                 rb->rx.finished = true;
                 rb->rx.last_ptr = rb->rx.rx_ptr;
+                xSemaphoreGiveFromISR(rb->rx.rxSemaphore, NULL);
             }
         }
 
@@ -158,6 +170,7 @@ void rb_rx_callback(void *param, uint8_t datum) {
         if(rb->rx.rx_ptr >= rb->rx.end_ptr) { // we are full! Message must be complete.
             //TODO: Handle this case in a reasonable way.
         }
+
     }
 }
 
@@ -168,6 +181,7 @@ bool rb_tx_callback(void *param, uint8_t *txAddress) {
 
     if(rb->tx.tx_ptr == rb->tx.last_ptr) { // sent last byte.
         rb->tx.transmitting = false;
+        xSemaphoreGiveFromISR(rb->tx.txSemaphore, NULL);
         return false;
     }
 
@@ -179,9 +193,8 @@ void rb_send_message(ROCKBLOCK_t *rb, uint8_t * msg, uint16_t len, bool *msgSent
 
     rb_clear_buffers(rb);
 
-    uint8_t numReturns;
     // create the message.
-    rb_format_command(rb, SBDWT, &numReturns);    // Set up the command
+    rb_format_command(rb, SBDWT, &(rb->rx.numReturns));    // Set up the command
 
     uint16_t i = 0;
     for(i = 0; i < len; i++) {
@@ -193,11 +206,9 @@ void rb_send_message(ROCKBLOCK_t *rb, uint8_t * msg, uint16_t len, bool *msgSent
 
     rb->tx.transmitting = true; // we are transmitting
     rb->rx.finished = false; // not done receiving response
-    rb->rx.numReturns = numReturns; // expect 1 carriage return to signify end of comms
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
-    while(rb->tx.transmitting);
-    while(!rb->rx.finished); // wait for response.
+    rb_wait_for_messages(rb);
 
     rb_start_session(rb, msgSent, msgReceived, msgsQueued);
 
@@ -209,28 +220,18 @@ void rb_start_session(ROCKBLOCK_t *rb, bool *msgSent, int8_t *msgReceived, int8_
     // start session.
 
     rb_clear_buffers(rb);
-    uint8_t numReturns;
-    rb_format_command(rb, SBDIX, &numReturns);
+    rb_format_command(rb, SBDIX, &(rb->rx.numReturns));
     rb->tx.transmitting = true;
     rb->rx.finished = false;
-    rb->rx.numReturns = numReturns;
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1;
 
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
-
-    while(rb->tx.transmitting);
-    while(!rb->rx.finished); // wait for response
+    rb_wait_for_messages(rb);
 
     totalLen = rb->rx.last_ptr - rb->rx.buff + 1;
 
     *msgSent = true;
     *msgReceived = 0;
-
-    if(rb->rx.numReturns != numReturns) {
-        // ERROR
-        *msgSent = false;
-        return;
-    }
 
     // response format:
     //+SBDIX: <MO status>, <MOMSN>, <MT status>, <MTMSN>, <MT length>, <MT queued>\r
@@ -324,17 +325,13 @@ uint8_t rb_check_mailbox(ROCKBLOCK_t *rb, int8_t *msgsQueued) {
 void rb_retrieve_message(ROCKBLOCK_t *rb) {
 
     rb_clear_buffers(rb);
-    uint8_t numReturns;
-    rb_format_command(rb, SBDRT, &numReturns);
+    rb_format_command(rb, SBDRT, &(rb->rx.numReturns));
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
 
     rb->tx.transmitting = true;
     rb->rx.finished = false;
-    rb->rx.numReturns = numReturns;
 
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
-
-    while(rb->tx.transmitting);
-    while(!rb->rx.finished); // wait for response.
+    rb_wait_for_messages(rb);
 
 }

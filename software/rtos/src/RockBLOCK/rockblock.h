@@ -41,7 +41,8 @@ typedef struct {
     volatile uint8_t * volatile last_ptr; // pointer to the final valid value in rb_rx_buff.
     volatile uint8_t * volatile rx_ptr; // pointer to where the value being received in callback should be put.
     volatile uint8_t numReturns;
-    bool finished;
+    volatile bool finished;
+    SemaphoreHandle_t rxSemaphore;
 } rb_rx_buffer_t;
 
 typedef struct {
@@ -50,13 +51,13 @@ typedef struct {
     volatile uint8_t * volatile cur_ptr; // pointer to next spot in the rb_tx_buff, where newest values will be taken from when sending.
     volatile uint8_t * volatile last_ptr; // pointer to the final valid value in rb_tx_buff.
     volatile uint8_t * volatile tx_ptr; // pointer to the value being transmitted by callback.
-    bool transmitting;
+    SemaphoreHandle_t txSemaphore;
+    volatile bool transmitting;
 } rb_tx_buffer_t;
 
 typedef struct {
     rb_tx_buffer_t tx; // all tx info is stored here
     rb_rx_buffer_t rx; // all rx info is stored here
-    SemaphoreHandle_t uart_semaphore;
 } ROCKBLOCK_t;
 
 // Initializes the RockBLOCK module and uart ports on the msp430 to what we need.
