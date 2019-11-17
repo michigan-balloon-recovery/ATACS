@@ -122,7 +122,7 @@ void rb_rx_callback(void *param, uint8_t datum);
 // Pass this into the driver via the initUartTxCallback function.
 // txAddress is where we put the byte we want the UART driver to send over the port.
 // the void * param MUST hold the ROCKBLOCK struct.
-bool rb_tx_callback(void *param, uint8_t * txAddress);
+bool rb_tx_callback(void *param, uint8_t *txAddress);
 
 // Controls the sleep/awake state of the RockBLOCK. If awake == 1, the RockBLOCK is set to awake, if 0 it is set to sleep.
 void rb_set_awake(bool awake);
