@@ -32,9 +32,6 @@ void task_getPressure();
 void task_getHumidity();
 void task_rockblock();
 
-SemaphoreHandle_t pressureSemaphore;
-SemaphoreHandle_t humiditySemaphore;
-
 gnss_t GNSS;
 ROCKBLOCK_t rb;
 
@@ -88,42 +85,44 @@ void task_ax25() {
 }
 
 void task_getHumidity(){
-    humiditySemaphore = xSemaphoreCreateBinary();
+
+    sensor_data.humiditySemaphore = xSemaphoreCreateBinary();
     portTickType xLastWakeTime;
     const portTickType xFrequency = 1000 / portTICK_RATE_MS;
     xLastWakeTime = xTaskGetTickCount();
 
     while(1){
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+	vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
-            int32_t data[1];
-            getHumidity(data);
+    	int32_t data[1];
+        calculateHumidity(data);
 
-        xSemaphoreTake(humiditySemaphore, portMAX_DELAY);
-        sensor_data.humidity = data[0];
-        sensor_data.hTemp = data[1];
-        xSemaphoreGive(humiditySemaphore);
+	xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY);
+	sensor_data.humidity = data[0];
+	sensor_data.hTemp = data[1];
+	xSemaphoreGive(sensor_data.humiditySemaphore);
     }
+
 }
 
 void task_getPressure(){
-	pressureSemaphore = xSemaphoreCreateBinary();
+	sensor_data.pressureSemaphore = xSemaphoreCreateBinary();
 	portTickType xLastWakeTime;
   	const portTickType xFrequency = 1000 / portTICK_RATE_MS;
   	xLastWakeTime = xTaskGetTickCount();
 
-	while(1) {
+	while(1)
+	{
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
-    		int32_t data[1];
-    		getPressure(data);
+    	int32_t data[1];
+    	calculatePressure(data);
 
-		xSemaphoreTake(pressureSemaphore,portMAX_DELAY);
+		xSemaphoreTake(sensor_data.pressureSemaphore,portMAX_DELAY);
 		sensor_data.pressure = data[0];
 		sensor_data.pTemp = data[1];
-		xSemaphoreGive(pressureSemaphore);
+		xSemaphoreGive(sensor_data.pressureSemaphore);
 	}
 }
-
 
 void task_rockblock(void) {
     portTickType xLastWakeTime;
