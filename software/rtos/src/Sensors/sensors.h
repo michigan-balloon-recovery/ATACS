@@ -6,6 +6,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
+#include <stdbool.h>
 
 
 uint16_t c[8];
@@ -28,13 +29,13 @@ void calculatePressure(int32_t* return_data);
 
 void calculateHumidity(int32_t* return_data);
 
-int32_t getPressure();
+bool getPressure(int32_t* pressure);
 
-int32_t getPTemp();
+bool getPTemp(int32_t* temp);
 
-int32_t getHumidity();
+bool getHumidity(int32_t* humidity);
 
-int32_t getHTemp();
+bool getHTemp(int32_t* temp);
 
 
 #endif
