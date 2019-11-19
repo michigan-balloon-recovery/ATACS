@@ -159,7 +159,7 @@ int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uin
             gnss_nmea_decode_field(payload, &ptr, &gnss_nmea_field_int8, &(current_fix.quality));
             gnss_nmea_decode_field(payload, &ptr, &gnss_nmea_field_int8, &(current_fix.num_satellites));
             gnss_nmea_decode_field(payload, &ptr, NULL, NULL);
-            gnss_nmea_decode_field(payload, &ptr, &gnss_nmea_field_int32, &(current_fix.altiude));
+            gnss_nmea_decode_field(payload, &ptr, &gnss_nmea_field_int32, &(current_fix.altitude));
             if( (current_fix.quality != no_fix) && (current_fix.quality != 0xFFFF)) {
                 gnss_obj->last_fix = current_fix;
             }

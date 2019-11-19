@@ -11,8 +11,9 @@ void gnss_init(gnss_t *gnss_obj) {
     ring_buff_init(&gnss_obj->gnss_rx_buff, gnss_obj->gnss_rx_mem, GNSS_RX_BUFF_SIZE);
     ring_buff_init(&gnss_obj->gnss_tx_buff, gnss_obj->gnss_tx_mem, GNSS_TX_BUFF_SIZE);
 
-    // initialize semaphore
-    vSemaphoreCreateBinary(gnss_obj->uart_semaphore);
+    // initialize semaphores
+    gnss_obj->uart_semaphore = xSemaphoreCreateBinary();
+    gnss_obj->data_mutex = xSemaphoreCreateMutex();
 
     // initialize UART
     UARTConfig a0_cnf = {
@@ -30,4 +31,61 @@ void gnss_init(gnss_t *gnss_obj) {
     initUSCIUart(&a0_cnf, &gnss_obj->gnss_tx_buff, &gnss_obj->gnss_rx_buff);
 
     initUartRxCallback(&USCI_A0_cnf, &gnss_nmea_rx_callback, gnss_obj);
+}
+
+bool gnss_get_time(gnss_t *gnss_obj, gnss_time_t *time) {
+    bool data_valid = false;
+    if(xSemaphoreTake(gnss_obj->data_mutex, 100) == pdFALSE) {
+        return false;
+    }
+    // check if the previous fix is valid
+    if(gnss_obj->last_fix.quality == no_fix) {
+
+        data_valid = false;
+    }
+    else {
+        *time = gnss_obj->last_fix.time;
+        data_valid = true;
+    }
+
+    xSemaphoreGive(gnss_obj->data_mutex);
+    return data_valid;
+}
+
+bool gnss_get_location(gnss_t *gnss_obj, gnss_coordinate_pair_t *location) {
+    bool data_valid = false;
+    if(xSemaphoreTake(gnss_obj->data_mutex, 100) == pdFALSE) {
+        return false;
+    }
+    // check if the previous fix is valid
+    if(gnss_obj->last_fix.quality == no_fix) {
+
+        data_valid = false;
+    }
+    else {
+        *location = gnss_obj->last_fix.location;
+        data_valid = true;
+    }
+
+    xSemaphoreGive(gnss_obj->data_mutex);
+    return data_valid;
+}
+
+bool gnss_get_altitude(gnss_t *gnss_obj, uint32_t *altitude) {
+    bool data_valid = false;
+    if(xSemaphoreTake(gnss_obj->data_mutex, 100) == pdFALSE) {
+        return false;
+    }
+    // check if the previous fix is valid
+    if(gnss_obj->last_fix.quality == no_fix) {
+
+        data_valid = false;
+    }
+    else {
+        *altitude = gnss_obj->last_fix.altitude;
+        data_valid = true;
+    }
+
+    xSemaphoreGive(gnss_obj->data_mutex);
+    return data_valid;
 }
