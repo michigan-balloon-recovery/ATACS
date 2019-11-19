@@ -71,7 +71,7 @@ bool gnss_get_location(gnss_t *gnss_obj, gnss_coordinate_pair_t *location) {
     return data_valid;
 }
 
-bool gnss_get_altitude(gnss_t *gnss_obj, uint32_t *altitude) {
+bool gnss_get_altitude(gnss_t *gnss_obj, int32_t *altitude) {
     bool data_valid = false;
     if(xSemaphoreTake(gnss_obj->data_mutex, 100) == pdFALSE) {
         return false;

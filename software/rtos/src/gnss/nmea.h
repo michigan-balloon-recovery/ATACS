@@ -123,7 +123,7 @@ bool gnss_nmea_field_time(uint8_t *start, uint8_t *end, gnss_time_t *data);
 
 bool gnss_nmea_field_char(uint8_t *start, uint8_t *end, char *output);
 
-bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, uint32_t *output);
+bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, int32_t *output);
 
 bool gnss_nmea_field_int8(uint8_t *start, uint8_t *end, uint8_t *output);
 

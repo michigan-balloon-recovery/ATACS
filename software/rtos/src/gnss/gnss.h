@@ -65,7 +65,7 @@ typedef struct {
     gnss_coordinate_pair_t location;
     gnss_quality_t quality;
     uint8_t num_satellites;
-    uint32_t altitude;
+    int32_t altitude;
 } gnss_fix_t;
 
 typedef struct {
@@ -100,7 +100,7 @@ bool gnss_get_time(gnss_t *gnss_obj, gnss_time_t *time);
 
 bool gnss_get_location(gnss_t *gnss_obj, gnss_coordinate_pair_t *location);
 
-bool gnss_get_altitude(gnss_t *gnss_obj, uint32_t *altitude);
+bool gnss_get_altitude(gnss_t *gnss_obj, int32_t *altitude);
 
 #ifdef __cplusplus
 }
