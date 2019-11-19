@@ -145,9 +145,9 @@ void calculateHumidity(int32_t *return_data)
 
 bool getPressure(int32_t* pressure)
 {
-	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTrue)
+	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTRUE)
 	{
-		pressure = sensor_data.pressure;
+		*pressure = sensor_data.pressure;
 		xSemaphoreGive(sensor_data.pressureSemaphore);
 		return true;
 	}
@@ -157,9 +157,9 @@ bool getPressure(int32_t* pressure)
 
 bool getPTemp(int32_t* temp)
 {
-	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTrue)
+	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTRUE)
 	{
-		temp = sensor_data.pTemp;
+		*temp = sensor_data.pTemp;
 		xSemaphoreGive(sensor_data.pressureSemaphore);
 		return true;
 	}
@@ -169,9 +169,9 @@ bool getPTemp(int32_t* temp)
 
 bool getHumidity(int32_t* humidity)
 {
-	if(xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY) == pdTrue)
+	if(xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY) == pdTRUE)
 	{
-		humidity = sensor_data.humidity;
+		*humidity = sensor_data.humidity;
 		xSemaphoreGive(sensor_data.humiditySemaphore);
 		return true;
 	}
@@ -181,9 +181,9 @@ bool getHumidity(int32_t* humidity)
 
 bool getHTemp(int32_t* temp)
 {
-    if(xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY) == pdTrue)
+    if(xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY) == pdTRUE)
 	{
-		temp = sensor_data.hTemp;
+		*temp = sensor_data.hTemp;
 		xSemaphoreGive(sensor_data.humiditySemaphore);
 		return true; 
 	}
