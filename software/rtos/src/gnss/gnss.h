@@ -23,13 +23,6 @@ extern "C" {
 #define GNSS_RX_BUFF_SIZE                1000
 #define GNSS_TX_BUFF_SIZE                1000
 
-typedef struct {
-    uint8_t class;
-    uint8_t id;
-    uint16_t length;
-    uint8_t *payload;
-} GNSS_UBX_msg;
-
 #endif /* GNSS_UBX */
 
 #ifdef GNSS_NMEA
@@ -94,6 +87,12 @@ typedef struct {
 #include "ubx.h"
 #endif
 
+/*!
+ * \brief initializes the GNSS object
+ * 
+ * @param gnss_obj the GNSS object to be initialized
+ * \return None
+ */
 void gnss_init(gnss_t *gnss_obj);
 
 #ifdef __cplusplus

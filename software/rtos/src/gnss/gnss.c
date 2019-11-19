@@ -1,8 +1,5 @@
 #include "gnss.h"
 
-gnss_time_t UTC_time;
-gnss_coordinate_pair_t position;
-
 extern UARTConfig * prtInfList[5];
 
 // ----- public API ----- //
@@ -32,5 +29,5 @@ void gnss_init(gnss_t *gnss_obj) {
                     };
     initUSCIUart(&a0_cnf, &gnss_obj->gnss_tx_buff, &gnss_obj->gnss_rx_buff);
 
-    initUartRxCallback(&USCI_A0_cnf, &gnss_nmea_queue, gnss_obj);
+    initUartRxCallback(&USCI_A0_cnf, &gnss_nmea_rx_callback, gnss_obj);
 }

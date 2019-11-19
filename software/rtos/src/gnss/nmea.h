@@ -49,14 +49,67 @@ extern "C" {
 #define UNKNOWN_PROPRIETARY     -3
 #define PAYLOAD_OVERFLOW        -4
 
-bool gnss_nmea_queue(void *param, uint8_t datum);
+/*!
+ * \brief UART RX callback function
+ * 
+ * Callback function to be called within the UART RX Interrupt Service Routine (ISR).
+ * Identifies start or end of sentence and adds data to the ring buffer if part of a sentence.
+ * Must be registered with the UART driver with initUartRxCallback().
+ * 
+ * @param param is the passed in parameter from the UART driver. should be set as the GNSS object.
+ * @param datum is the byte read over uart passed in by the UART driver.
+ * \return None
+ * 
+ */
+void gnss_nmea_rx_callback(void *param, uint8_t datum);
 
+/*!
+ * \brief NMEA queue byte
+ * 
+ * Identifies start or end of sentence and adds data to the ring buffer if part of an NMEA sentence.
+ * 
+ * @param gnss_obj is the GNSS object
+ * @datum is the byte to add to the buffer
+ * \return true if end of the sentence
+ * 
+ */
+bool gnss_nmea_queue(gnss_t *gnss_obj, uint8_t datum);
+
+/*!
+ * \brief Decodes the next NMEA sentence in the ring buffer
+ * 
+ * 
+ * @param gnss_obj is the GNSS object
+ */
 int8_t gnss_nmea_decode(gnss_t *gnss_obj);
 
-int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence, uint8_t *payload);
+/*!
+ * \brief Decode a standard NMEA sentence
+ * 
+ * @param gnss_obj is the GNSS object
+ * @param sentence_id is the identifier code for the sentence type using the SENTENCE() macro
+ * @param payload is a byte array containing the sentence payload
+ * \return NMEA fault code
+ */
+int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uint8_t *payload);
 
+/*!
+ * \brief Decode a PUBX (Ublox proprietary) NMEA sentence
+ * 
+ * currently not implemented
+ * 
+ */
 int8_t gnss_nmea_decode_PUBX();
 
+/*!
+ * \brief Decode a field in a NMEA sentence
+ * 
+ * @param payload is a byte array containing the sentence payload
+ * @param field is a pass by reference to the pointer indicating the start of the field
+ * @format_data is a function pointer to the function that decodes the field
+ * @param data is a void pointer to the data passed into the field decoder function
+ * \return true if more fields remain in the sentence
+ */
 bool gnss_nmea_decode_field(uint8_t *payload, uint8_t **field, bool (*format_data)(uint8_t*, uint8_t*, void*), void *data);
 
 // ----- field formatting decoders ----- //

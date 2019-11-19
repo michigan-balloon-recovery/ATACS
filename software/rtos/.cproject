@@ -55,9 +55,14 @@
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/Sensors"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/RockBLOCK"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/aprs"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/gnss"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/logging"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS_Source/include"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS_Source/portable/CCS/MSP430X"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS-Plus-FAT-191108a-MIT"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS-Plus-FAT-191108a-MIT/include"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/MMC_lib"/>
 									<listOptionValue builtIn="false" value="${CG_TOOL_ROOT}/include"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.DIAG_WARNING.292602880" name="Treat diagnostic &lt;id&gt; as warning (--diag_warning, -pdsw)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.compilerID.DIAG_WARNING" valueType="stringList">
@@ -133,7 +138,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="FreeRTOS-Plus-FAT-191108a-MIT/ff_dev_support.c|FreeRTOS-Plus-FAT-191108a-MIT/portable" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
