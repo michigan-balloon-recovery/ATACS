@@ -17,6 +17,7 @@
 #include "uart.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
+#include "gnss.h"
 
 // maximum message sizes for our buffers.
 // We know TX is going to be be 340 bytes at most by the RockBLOCK spec.
@@ -126,5 +127,11 @@ bool rb_tx_callback(void *param, uint8_t *txAddress);
 
 // Controls the sleep/awake state of the RockBLOCK. If awake == 1, the RockBLOCK is set to awake, if 0 it is set to sleep.
 void rb_set_awake(bool awake);
+
+// Creates a rockblock telemetry packet which will hold all of our sensor data.
+// This message uses 2 credits to send.
+void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
+                       int32_t humidity, int32_t pTemp, int32_t hTemp, int32_t altitude,
+                       gnss_time_t *time, gnss_coordinate_pair_t *location, bool *success);
 
 #endif /* SRC_ROCKBLOCK_ROCKBLOCK_H_ */

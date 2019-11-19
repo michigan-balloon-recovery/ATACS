@@ -136,12 +136,38 @@ void task_rockblock(void) {
     int8_t msgReceived = 0;
     int8_t msgsQueued = 0;
     uint8_t numRetries = 0;
+    uint8_t i = 0;
+
+    int32_t pressure, humidity, hTemp, pTemp;
+    int32_t altitude;
+    gnss_time_t time;
+    gnss_coordinate_pair_t location;
+    bool success[7];
+
+    for(i = 0; i < 7; i++)
+        success[i] = true;
 
     rb_init(&rb);
 
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xTaskFrequency);
-        //TODO: grab data and populate msg, len fields
+
+        i = 0;
+        success[i++] = getPressure(&pressure);
+        success[i++] = getHumidity(&humidity);
+        success[i++] = getHTemp(&hTemp);
+        success[i++] = getPTemp(&pTemp);
+        success[i++] = gnss_get_altitude(&GNSS, &altitude);
+        success[i++] = gnss_get_time(&GNSS, &time);
+        success[i++] = gnss_get_location(&GNSS, &location);
+
+        rb_create_telemetry_packet(msg, &len, pressure, humidity, pTemp, hTemp, altitude, &time, &location, success);
+
+        msgSent = false;
+        msgReceived = 0;
+        msgsQueued = 0;
+        numRetries = 0;
+
         rb_send_message(&rb, msg, len, &msgSent, &msgReceived, &msgsQueued);
 
         while(!msgSent && numRetries < RB_MAX_TX_RETRIES) {

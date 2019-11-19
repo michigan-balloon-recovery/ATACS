@@ -4,7 +4,7 @@
 #include "rockblock.h"
 
 // formats the command for the message sent to the RockBLOCK.
-static void rb_format_command(ROCKBLOCK_t *rb, rb_command_t cmd, uint8_t * numReturns) {
+static void rb_format_command(ROCKBLOCK_t *rb, rb_command_t cmd, uint8_t *numReturns) {
 
     *(rb->tx.cur_ptr++) = 'A';
     *(rb->tx.cur_ptr++) = 'T';
@@ -189,7 +189,7 @@ bool rb_tx_callback(void *param, uint8_t *txAddress) {
     return true;
 }
 
-void rb_send_message(ROCKBLOCK_t *rb, uint8_t * msg, uint16_t len, bool *msgSent, int8_t *msgReceived, int8_t *msgsQueued) {
+void rb_send_message(ROCKBLOCK_t *rb, uint8_t *msg, uint16_t len, bool *msgSent, int8_t *msgReceived, int8_t *msgsQueued) {
 
     rb_clear_buffers(rb);
 
@@ -334,4 +334,73 @@ void rb_retrieve_message(ROCKBLOCK_t *rb) {
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
     rb_wait_for_messages(rb);
 
+}
+
+static void put_int32_array(int32_t toInsert, uint8_t *msg, uint16_t *cur_idx, bool success) {
+    char str[15]; // 2^32 + 1 < 15 indexes, so should be able to fit entire int32_t inside of this.
+    uint16_t lenStr;
+    if(success) {
+        ltoa(toInsert, str);
+        lenStr = strlen(str);
+        memcpy(msg[*cur_idx], str, lenStr);
+        *cur_idx += lenStr;
+    } else {
+        msg[*(cur_idx)++] = '?';
+    }
+    msg[(*cur_idx)++] = ',';
+}
+
+void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
+                       int32_t humidity, int32_t pTemp, int32_t hTemp, int32_t altitude,
+                       gnss_time_t *time, gnss_coordinate_pair_t *location, bool *success)
+{
+    uint16_t cur_idx = 0;
+    char str[15];
+
+    size_t lenstr = strlen("ATACS,");
+    memcpy(msg, "ATACS,", lenstr); // header len = 6
+
+    put_int32_array(pressure, msg, &cur_idx, success[0]);
+    put_int32_array(humidity, msg, &cur_idx, success[1]);
+    put_int32_array(pTemp, msg, &cur_idx, success[2]);
+    put_int32_array(hTemp, msg, &cur_idx, success[3]);
+    put_int32_array(altitude, msg, &cur_idx, success[4]);
+
+    if(success[5]) { // time
+        ltoa(time->hour, str);
+        lenstr = strlen(str);
+        memcpy(msg[cur_idx], str, lenstr);
+        cur_idx += lenstr;
+        msg[cur_idx++] = ':';
+        ltoa(time->min, str);
+        lenstr = strlen(str);
+        memcpy(msg[cur_idx], str, lenstr);
+        cur_idx += lenstr;
+        msg[cur_idx++] = ',';
+    } else {
+        msg[cur_idx++] = '?';
+        msg[cur_idx++] = ',';
+    }
+
+    if(success[6]) {// location
+        int32_t decSecLat = gnss_coord_to_decSec(location->latitude); // should be fine using signed integer here.
+        int32_t decSecLong = gnss_coord_to_decSec(location->longitude);
+
+        put_int32_array(decSecLat, msg, &cur_idx, true);
+        msg[cur_idx++] = location->latitude.dir;
+        msg[cur_idx++] = ',';
+        put_int32_array(decSecLong, msg, &cur_idx, true);
+        msg[cur_idx++] = location->longitude.dir;
+        msg[cur_idx++] = '\n'; // end of message
+    } else {
+        msg[cur_idx++] = '?'; // lat
+        msg[cur_idx++] = ',';
+        msg[cur_idx++] = '?'; // lat dir
+        msg[cur_idx++] = ',';
+        msg[cur_idx++] = '?'; // long
+        msg[cur_idx++] = ',';
+        msg[cur_idx++] = '?'; // long dir
+        msg[cur_idx++] = '\n'; // end of message
+    }
+    *len = cur_idx;
 }
