@@ -91,5 +91,5 @@ bool gnss_get_altitude(gnss_t *gnss_obj, int32_t *altitude) {
 }
 
 int32_t gnss_coord_to_decSec(gnss_coordinate_t *coordinate) {
-    return ((int32_t) coordinate->deg) * 3600 + ((int32_t) coordinate->min) * 60 + ((int32_t) coordinate->msec) / 1000;
+    return ((uint32_t) coordinate->deg) * 3600 + ((uint32_t) coordinate->min) * 60 + ((uint32_t) coordinate->msec) / 1000;
 }
