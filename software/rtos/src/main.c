@@ -1,8 +1,6 @@
 /* Standard includes. */
 #include <MSP430-5438STK_HAL/hal_MSP430-5438STK.h>
 #include <stdio.h>
-#include <string.h>
-
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
 #include "task.h"
@@ -12,50 +10,65 @@
 #include "driverlib.h"
 #include "uart.h"
 #include "gnss.h"
-#include "ax25.h"
+#include "aprs.h"
 #include "rockblock.h"
 #include "sensors.h"
 
-#include <stdlib.h>
-#include "stdint.h"
-
 /*-----------------------------------------------------------*/
 
-gnss_t GNSS;
-ROCKBLOCK_t rb;
-/*-----------------------------------------------------------*/
-
-/*-----------------------------------------------------------*/
 #define RB_TRANSMIT_RATE_MS (uint32_t) 300000      // this is 5 minutes (1000 ms/sec * 60 sec/min * 5min)
 #define RB_RETRY_RATE_MS    15000       // this is 15 seconds (1000 ms/sec / * 15 sec)
 #define RB_MAX_TX_RETRIES   10          // Retry at most 10 times. This means we try for 10*15=150 seconds.
 #define RB_MAX_RX_RETRIES   5           // retry at most 5 times. This means we try for 5*15=75 seconds.
+
+#define APRS_PERIOD_MS      60000
+
 /*-----------------------------------------------------------*/
 
-/*
- * Configures clocks, LCD, port pints, etc. necessary to execute this demo.
- */
 static void prvSetupHardware( void );
+void task_gnss();
+void task_ax25();
+void task_getPressure();
+void task_getHumidity();
+void task_rockblock();
+
 SemaphoreHandle_t pressureSemaphore;
 SemaphoreHandle_t humiditySemaphore;
 
+gnss_t GNSS;
+ROCKBLOCK_t rb;
+
 /*-----------------------------------------------------------*/
 
-//// toggle LED_1 every 500ms
-void example_task( void ) {
-    portTickType xLastWakeTime;
-    const portTickType xFrequency = 500 / portTICK_RATE_MS;
+void main( void ) {
+    /* Initialize Hardware */
+    prvSetupHardware();
 
-    xLastWakeTime = xTaskGetTickCount();
+//    gnss_init(&GNSS);
 
-    while(1) {
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        LED_PORT_OUT ^= LED_1;
-    }
+    /* Create Tasks */
+//    xTaskCreate((TaskFunction_t)task_gnss,         "gnss",                  128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_ax25,          "afsk_ax25",             128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_getPressure,   "getPressure",           128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_getHumidity,   "getHumidity",           128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_rockblock,     "RockBLOCK",             128, NULL, 1, NULL);
+
+    /* Start the scheduler. */
+
+    __bis_SR_register(GIE);
+
+    vTaskStartScheduler();
+
+    /* If all is well then this line will never be reached.  If it is reached
+    then it is likely that there was insufficient (FreeRTOS) heap memory space
+    to create the idle task.  This may have been trapped by the malloc() failed
+    hook function, if one is configured. */
+    for( ;; );
 }
 
-void task_gnss() {
+/*-----------------------------------------------------------*/
 
+void task_gnss() {
     while (1) {
         xSemaphoreTake(GNSS.uart_semaphore, portMAX_DELAY);
         gnss_nmea_decode(&GNSS);
@@ -64,70 +77,33 @@ void task_gnss() {
 
 void task_ax25() {
     portTickType xLastWakeTime;
-    const portTickType xFrequency = 15000 / portTICK_RATE_MS;
+    const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
     xLastWakeTime = xTaskGetTickCount();
-    address_t addresses[2] = {
-      {"APRS", 0},
-      {"KD2OHS", 11}
-    };
-
-    // TODO, add digipeater path to addresses[]
-
     while (1){
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         vTaskSuspendAll();
-            LED_PORT_OUT |= LED_1;
-
-            // Header
-            ax25_send_header(addresses, 2);
-            ax25_send_byte('/');
-            ax25_send_string("000000", 6);
-            ax25_send_byte('h');
-            ax25_send_string("0000.00N", strlen("0000.00N"));
-            ax25_send_byte('/');
-            ax25_send_string("00000.00E", strlen("00000.00E"));
-            ax25_send_byte('O');
-            ax25_send_string("000", 3);
-
-//            ax25_send_string("/A=000000", strlen("/A=000000"));
-//            ax25_send_string("/Ti=27", strlen("/Ti=27"));
-//            ax25_send_string("/Te=93", strlen("/Te=93"));
-//            ax25_send_string("/V=7435", strlen("/V=7435"));
-
-            // Comment
-            ax25_send_byte(' ');
-            ax25_send_string("HELLO 473", strlen("473 RULES"));
-
-            // Footer
-            ax25_send_footer();
-
-            // Send!
-            ax25_flush_frame();
-
-            LED_PORT_OUT &= ~LED_1;
+        aprs_beacon(0);
         xTaskResumeAll();
     }
 }
 
 void task_getHumidity(){
-
     humiditySemaphore = xSemaphoreCreateBinary();
     portTickType xLastWakeTime;
     const portTickType xFrequency = 1000 / portTICK_RATE_MS;
     xLastWakeTime = xTaskGetTickCount();
 
     while(1){
-	vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
-    	int32_t data[1];
-        getHumidity(data);
+            int32_t data[1];
+            getHumidity(data);
 
-	xSemaphoreTake(humiditySemaphore, portMAX_DELAY);
-	sensor_data.humidity = data[0];
-	sensor_data.hTemp = data[1];
-	xSemaphoreGive(humiditySemaphore);
+        xSemaphoreTake(humiditySemaphore, portMAX_DELAY);
+        sensor_data.humidity = data[0];
+        sensor_data.hTemp = data[1];
+        xSemaphoreGive(humiditySemaphore);
     }
-
 }
 
 void task_getPressure(){
@@ -136,8 +112,7 @@ void task_getPressure(){
   	const portTickType xFrequency = 1000 / portTICK_RATE_MS;
   	xLastWakeTime = xTaskGetTickCount();
 
-	while(1)
-	{
+	while(1) {
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
     		int32_t data[1];
     		getPressure(data);
@@ -168,7 +143,7 @@ void task_rockblock(void) {
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xTaskFrequency);
         //TODO: grab data and populate msg, len fields
-        rb_send_message(&rb, &msg, len, &msgSent, &msgReceived, &msgsQueued);
+        rb_send_message(&rb, msg, len, &msgSent, &msgReceived, &msgsQueued);
 
         while(!msgSent && numRetries < RB_MAX_TX_RETRIES) {
             numRetries++;
@@ -197,33 +172,6 @@ void task_rockblock(void) {
     }
 }
 
-void main( void ) {
-    /* Initialize Hardware */
-    prvSetupHardware();
-
-//    gnss_init(&GNSS);
-
-    /* Create Tasks */
-//    xTaskCreate((TaskFunction_t)example_task,      "LED_1 Toggle",          128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t)task_gnss,         "gnss",                  128, NULL, 1, NULL);
-    xTaskCreate((TaskFunction_t) task_ax25,          "afsk_ax25",             128, NULL, 1, NULL);
-	xTaskCreate((TaskFunction_t) task_getPressure,	 "getPressure",			  128, NULL, 1, NULL);
-	xTaskCreate((TaskFunction_t) task_getHumidity,	 "getHumidity",			  128, NULL, 1, NULL);
-	xTaskCreate((TaskFunction_t) task_rockblock,     "RockBLOCK",             128, NULL, 1, NULL);
-
-    /* Start the scheduler. */
-
-    __bis_SR_register(GIE);
-
-    while(1);
-    vTaskStartScheduler();
-
-	/* If all is well then this line will never be reached.  If it is reached
-	then it is likely that there was insufficient (FreeRTOS) heap memory space
-	to create the idle task.  This may have been trapped by the malloc() failed
-	hook function, if one is configured. */	
-	for( ;; );
-}
 /*-----------------------------------------------------------*/
 
 static void prvSetupHardware( void ) {
