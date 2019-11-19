@@ -1,7 +1,7 @@
 #include "nmea.h"
 
 // ----- private function prototypes ----- //
-static inline int gnss_nmea_atoi(uint8_t *temp, uint8_t *ascii, uint8_t length);
+static inline long gnss_nmea_atoi(uint8_t *temp, uint8_t *ascii, uint8_t length);
 
 // ----- public API ----- //
 
@@ -353,7 +353,7 @@ bool gnss_nmea_field_char(uint8_t *start, uint8_t *end, char *output) {
     return true;
 }
 
-bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, uint32_t *output) {
+bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, int32_t *output) {
     uint8_t temp[10];
     if( (end - start) == 0) {
         *output = 0xFFFFFFFF;
@@ -377,9 +377,9 @@ bool gnss_nmea_field_int8(uint8_t *start, uint8_t *end, uint8_t *output) {
 
 
 // ----- GNSS NMEA utilities ----- //
-static inline int gnss_nmea_atoi(uint8_t *temp, uint8_t *ascii, uint8_t length) {
+static inline long gnss_nmea_atoi(uint8_t *temp, uint8_t *ascii, uint8_t length) {
     temp[length] = '\0';
     memcpy(temp, ascii, length);
-    return atoi(temp);
+    return atol(temp);
 }
 
