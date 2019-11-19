@@ -126,7 +126,7 @@ void task_getPressure(){
 
 void task_rockblock(void) {
     portTickType xLastWakeTime;
-    const portTickType xTaskFrequency = RB_TRANSMIT_RATE_MS / portTICK_RATE_MS;
+    const portTickType xTaskFrequency =  (uint16_t) ((uint32_t) RB_TRANSMIT_RATE_MS / (uint32_t) portTICK_RATE_MS);
     const portTickType xRetryFrequency = RB_RETRY_RATE_MS / portTICK_RATE_MS;
     xLastWakeTime = xTaskGetTickCount();
 

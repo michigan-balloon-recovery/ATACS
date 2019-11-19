@@ -5,6 +5,7 @@
 #include "i2c_driver.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "semphr.h"
 
 
 uint16_t c[8];
