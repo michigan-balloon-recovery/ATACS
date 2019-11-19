@@ -14,6 +14,8 @@ typedef struct{
 	int32_t humidity;
 	int32_t pTemp;
 	int32_t hTemp;
+	SemaphoreHandle_t pressureSemaphore;
+	SemaphoreHandle_t humiditySemaphore;
 } sensor_data_t;
 
 
@@ -21,8 +23,18 @@ sensor_data_t sensor_data;
 
 void initPressure();
 
-void getPressure(int32_t* return_data);
+void calculatePressure(int32_t* return_data);
 
-void getHumidity(int32_t* return_data);
+void calculateHumidity(int32_t* return_data);
+
+int32_t getPressure();
+
+int32_t getPTemp();
+
+int32_t getHumidity();
+
+int32_t getHTemp();
+
 
 #endif
+
