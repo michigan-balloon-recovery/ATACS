@@ -145,5 +145,44 @@ void getHumidity(int32_t *return_data)
   return_data[1] = temp;
 }
 
+int32_t getPressure()
+{
+	int32_t pressure;
+	xSemaphoreTake(sensor_data.pressureSemaphore,portMAX_DELAY);
+	pressure = sensor_data.pressure;
+	xSemaphoreGive(sensor_data.pressureSemaphore);
+	
+	return pressure;
+}
+
+int32_t getPTemp()
+{
+	int32_t temp;
+	xSemaphoreTake(sensor_data.pressureSemaphore,portMAX_DELAY);
+	temp = sensor_data.pTemp;
+	xSemaphoreGive(sensor_data.pressureSemaphore);
+	
+	return temp; 
+}
+
+int32_t getHumidity()
+{
+	int32_t humidity;
+	xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY);
+	humidity = sensor_data.humidity;
+	xSemaphoreGive(sensor_data.humiditySemaphore);
+	
+	return humidity; 
+}
+
+int32_t getHTemp()
+{
+	int32_t temp;
+	xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY);
+	temp = sensor_data.hTemp;
+	xSemaphoreGive(sensor_data.humiditySemaphore);
+	
+	return temp; 
+}
  
 
