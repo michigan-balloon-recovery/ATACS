@@ -13,6 +13,7 @@
 #include "aprs.h"
 #include "rockblock.h"
 #include "sensors.h"
+#include "ff_msp430_sddisk.h"
 
 /*-----------------------------------------------------------*/
 
@@ -32,6 +33,7 @@ void task_aprs();
 void task_getPressure();
 void task_getHumidity();
 void task_rockblock();
+void task_logging();
 
 gnss_t GNSS;
 ROCKBLOCK_t rb;
@@ -44,12 +46,13 @@ void main( void ) {
 
     /* Create Tasks */
 
-    xTaskCreate((TaskFunction_t) task_heartbeat,     "LED heartbeat",    128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_heartbeat,     "LED heartbeat",    128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t)task_gnss,         "gnss",                  128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_aprs,          "aprs",             128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_getPressure,   "getPressure",           128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_getHumidity,   "getHumidity",           128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_rockblock,     "RockBLOCK",             128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_logging,      "Logging",              512, NULL, 1, NULL);
 
     /* Start the scheduler. */
 
@@ -65,6 +68,47 @@ void main( void ) {
 }
 
 /*-----------------------------------------------------------*/
+
+//uint8_t buff[2048];
+uint8_t wbuf[512];
+uint8_t rbuf[512];
+
+void task_logging() {
+    uint16_t i;
+    uint32_t num;
+    uint32_t sd_size;
+    uint8_t status = 1;
+    uint32_t timeout = 0;
+    FF_Disk_t *disk;
+    FF_FILE *file;
+    FF_Error_t *error;
+    //Initialisation of the MMC/SD-card
+    while (status != 0)                       // if return in not NULL an error did occur and the
+                                              // MMC/SD-card will be initialized again
+    {
+      status = mmcInit();
+      timeout++;
+      if (timeout == 150)                      // Try 50 times till error
+      {
+        //printf ("No MMC/SD-card found!! %x\n", status);
+        break;
+      }
+    }
+    sd_size = mmcReadCardSize();
+
+    disk = FF_SDDiskInit("/", sd_size, 2048);
+
+    status = ff_mkdir("/sd", 0);
+
+    file = ff_fopen("/sd/data", "w");
+
+    memset(wbuf, 't', 512);
+    num = ff_fwrite(wbuf, sizeof(uint8_t), 512, file);
+    ff_rewind(file);
+    num = ff_fread(rbuf, sizeof(uint8_t), 512, file);
+
+    ff_fclose(file);
+}
 
 void task_heartbeat() {
     portTickType xLastWakeTime;
@@ -241,7 +285,7 @@ static void prvSetupHardware( void ) {
     initUartDriver();
 
 	/* I2C and Pressure Sensor */
-	initPressure();
+//	initPressure();
 
 }
 /*-----------------------------------------------------------*/

@@ -1,7 +1,7 @@
 #include "logging.h"
 #include <stdlib.h>
-#include "sensor.h"
-#incldue "gnss.h"
+#include "sensors.h"
+#include "gnss.h"
 
 void init()
 {
@@ -48,7 +48,7 @@ void convertFileName(char *fileNameBefore, char *fileNameAfter)
 	}
 	
 	int j;
-	for(j = 0; j<;length; ++j, ++i)
+	for(j = 0; j<length; ++j, ++i)
 	{
 		fileNameAfter[i] = fileNameBefore[j];
 	}

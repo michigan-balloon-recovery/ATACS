@@ -139,7 +139,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="FreeRTOS_Source/portable/MemMang/heap_2.c|FreeRTOS_Source/portable/MemMang/heap_5.c|FreeRTOS_Source/portable/MemMang/heap_4.c|FreeRTOS_Source/portable/MemMang/heap_1.c|FreeRTOS-Plus-FAT-191108a-MIT/ff_dev_support.c|FreeRTOS-Plus-FAT-191108a-MIT/portable" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/logging/logging.c|FreeRTOS_Source/portable/MemMang/heap_2.c|FreeRTOS_Source/portable/MemMang/heap_5.c|FreeRTOS_Source/portable/MemMang/heap_4.c|FreeRTOS_Source/portable/MemMang/heap_1.c|FreeRTOS-Plus-FAT-191108a-MIT/ff_dev_support.c|FreeRTOS-Plus-FAT-191108a-MIT/portable" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

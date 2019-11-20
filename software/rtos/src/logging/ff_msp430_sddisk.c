@@ -1,6 +1,6 @@
 #include "ff_msp430_sddisk.h"
 
-FF_Disk_t *FF_SDDiskInit(char *pcName, uint8_t *pucDataBuffer, uint32_t ulSectorCount, size_t xIOManagerCacheSize) {
+FF_Disk_t *FF_SDDiskInit(char *pcName, uint32_t ulSectorCount, size_t xIOManagerCacheSize) {
     FF_Error_t xError;
     FF_Disk_t *pxDisk = NULL;
     FF_CreationParameters_t xParameters;
@@ -18,6 +18,8 @@ FF_Disk_t *FF_SDDiskInit(char *pcName, uint8_t *pucDataBuffer, uint32_t ulSector
         // initialize the FF_Disk_t object to 0
         memset(pxDisk, 0,sizeof(FF_Disk_t));
 
+//        memset(pucDataBuffer, 0, ulSectorCount * sdSECTOR_SIZE);
+
         // sd card specific parameters stored in pxDisk->pvTag
 
         // sd card signature set in pxDisk->ulSignature
@@ -27,8 +29,8 @@ FF_Disk_t *FF_SDDiskInit(char *pcName, uint8_t *pucDataBuffer, uint32_t ulSector
         pxDisk->ulNumberOfSectors = ulSectorCount;
 
         // initialize parameters struct
-        memset(&xParameters, 0, sizeof(FF_CreationParameters_t));
-//        xParameters.pucCacheMemory = NULL;
+        memset(&xParameters, 0, sizeof(xParameters));
+        xParameters.pucCacheMemory = NULL;
         xParameters.ulMemorySize = xIOManagerCacheSize;
         xParameters.ulSectorSize = sdSECTOR_SIZE;
         xParameters.fnWriteBlocks = prvWriteSD;
@@ -57,12 +59,14 @@ FF_Disk_t *FF_SDDiskInit(char *pcName, uint8_t *pucDataBuffer, uint32_t ulSector
 //            xError = FF_Format(pxDisk, 0, pdTRUE, pdTRUE);
 
             // mount partition
-            xError = FF_Mount(pxDisk, sdPARTITION_NUMBER);
-            pxDisk->xStatus.bIsMounted = pdTRUE;
+            do {
+                xError = FF_Mount(pxDisk, sdPARTITION_NUMBER);
+                pxDisk->xStatus.bIsMounted = pdTRUE;
+            } while(FF_isERR(xError) != pdFALSE);
 
             if(FF_isERR(xError) == pdFALSE) {
                 // add to virtual file system
-                valid = FF_FS_Add(pcName, pxDisk->pxIOManager);
+                valid = FF_FS_Add(pcName, pxDisk);
             }
         }
         else {

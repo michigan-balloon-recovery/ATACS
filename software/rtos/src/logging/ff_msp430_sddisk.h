@@ -18,7 +18,7 @@ extern "C" {
 #define sdSIGNATURE                 0x12345678
 
 
-FF_Disk_t *FF_SDDiskInit(char *pcName, uint8_t *pucDataBuffer, uint32_t ulSectorCount, size_t xIOManagerCacheSize);
+FF_Disk_t *FF_SDDiskInit(char *pcName, uint32_t ulSectorCount, size_t xIOManagerCacheSize);
 
 int32_t prvReadSD(uint8_t *pucDestination, uint32_t ulSectorNumber, uint32_t ulSectorCount, FF_Disk_t *pxDisk);
 

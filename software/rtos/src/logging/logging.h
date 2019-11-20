@@ -1,3 +1,5 @@
+#include <stdint.h>
+#include "ff_headers.h"
 
 //max data points per file
 #define maxData 1000
