@@ -73,7 +73,7 @@
 #define _MMCLIB_C
 //
 //---------------------------------------------------------------
-#include "MMC.h"
+#include "mmc.h"
 #include "hal_SPI.h"
 #include "hal_hardware_board.h"
 
@@ -129,87 +129,7 @@ char mmcInit(void)
   for(i=0;i<=9;i++)
     spiSendByte(DUMMY_CHAR);
 
-  char response;
-
-  for(i = 0; i<10000; i++);
-
-  // set card to idle - CMD0
-  CS_LOW();
-  mmcSendCmd(MMC_GO_IDLE_STATE,0,0x95);
-//  CS_HIGH();
-//  for(i = 0; i<10000; i++);
-//  CS_LOW();
-  response = mmcGetResponse();
-  CS_HIGH();
-  if(response!=0x01) return MMC_INIT_ERROR;
-
-  for(i = 0; i<10000; i++);
-
-  return mmcGoIdle();
-
-
-  // set voltage range - CMD8
-  CS_LOW();
-  mmcSendCmd(MMC_SEND_IF_COND, 0x1AA, 0x87);
-//  CS_HIGH();
-//  for(i = 0; i<10000; i++);
-//  CS_LOW();
-  response = mmcGetResponse();
-  CS_HIGH();
-  if(response!=0x01) return MMC_INIT_ERROR;
-
-
-  for(i = 0; i<100; i++) {
-
-      // enter application command mode - CMD55
-      CS_LOW();
-      mmcSendCmd(MMC_APP_CMD, 0x0, 0x65);
-//      CS_HIGH();
-//      for(i = 0; i<10000; i++);
-//      CS_LOW();
-      response = mmcGetResponse();
-      CS_HIGH();
-
-      switch(response) {
-      case 0x00:
-          return MMC_SUCCESS;
-      case 0x01:    // normal response
-          break;
-      case 0x05:    // old card
-          return mmcGoIdle();
-          break;
-      default:      // unexpected response
-          return MMC_INIT_ERROR;
-          break;
-      }
-
-      for(i = 0; i<10000; i++);
-
-
-      // check SD card compatibility - ACMD41
-      CS_LOW();
-      mmcSendCmd(MMC_SEND_OP_COND, 0x40000000, 0x77);
-//      CS_HIGH();
-//      for(i = 0; i<10000; i++);
-//      CS_LOW();
-      response = mmcGetResponse();
-      CS_HIGH();
-
-      switch(response) {
-      case 0x00:    // successful initialization
-          return MMC_SUCCESS;
-          break;
-      case 0x01:    // repeat command
-          break;
-      case 0x05:    // old card
-          return mmcGoIdle();
-          break;
-      default:      // unexpected response
-          return MMC_INIT_ERROR;
-          break;
-      }
-  }
-  return MMC_INIT_ERROR;
+  return (mmcGoIdle());
 }
 
 
@@ -583,13 +503,13 @@ unsigned long mmcReadCardSize(void)
 }
 
 
-char mmcPing(void)
-{
-  if (!(MMC_CD_PxIN & MMC_CD))
-    return (MMC_SUCCESS);
-  else
-    return (MMC_INIT_ERROR);
-}
+//char mmcPing(void)
+//{
+//  if (!(MMC_CD_PxIN & MMC_CD))
+//    return (MMC_SUCCESS);
+//  else
+//    return (MMC_INIT_ERROR);
+//}
 
 
 #ifdef withDMA

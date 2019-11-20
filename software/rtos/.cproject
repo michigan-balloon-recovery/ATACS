@@ -57,6 +57,7 @@
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/aprs"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/gnss"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/logging"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/sddisk"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS_Source/include"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS_Source/portable/CCS/MSP430X"/>
@@ -90,7 +91,7 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.USE_HW_MPY.1644934507" name="Deprecated: Now a compiler option instead of linker option (--use_hw_mpy)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.USE_HW_MPY" value="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.USE_HW_MPY.F5" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.CINIT_HOLD_WDT.1444795165" name="Hold watchdog timer during cinit auto-initialization (--cinit_hold_wdt)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.CINIT_HOLD_WDT" value="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.CINIT_HOLD_WDT.on" valueType="enumerated"/>
-								<option id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.HEAP_SIZE.1648449135" name="Heap size for C/C++ dynamic memory allocation (--heap_size, -heap)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.HEAP_SIZE" value="320" valueType="string"/>
+								<option id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.HEAP_SIZE.1648449135" name="Heap size for C/C++ dynamic memory allocation (--heap_size, -heap)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.HEAP_SIZE" value="10000" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.STACK_SIZE.1580760699" name="Set C system stack size (--stack_size, -stack)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.STACK_SIZE" value="1000" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.OUTPUT_FILE.1369637294" name="Specify output file name (--output_file, -o)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.OUTPUT_FILE" value="RTOSDemo.out" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.MAP_FILE.79154597" name="Link information (map) listed into &lt;file&gt; (--map_file, -m)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_18.12.linkerID.MAP_FILE" value="&quot;RTOSDemo.map&quot;" valueType="string"/>
@@ -138,7 +139,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="FreeRTOS-Plus-FAT-191108a-MIT/ff_dev_support.c|FreeRTOS-Plus-FAT-191108a-MIT/portable" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="FreeRTOS_Source/portable/MemMang/heap_2.c|FreeRTOS_Source/portable/MemMang/heap_5.c|FreeRTOS_Source/portable/MemMang/heap_4.c|FreeRTOS_Source/portable/MemMang/heap_1.c|FreeRTOS-Plus-FAT-191108a-MIT/ff_dev_support.c|FreeRTOS-Plus-FAT-191108a-MIT/portable" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

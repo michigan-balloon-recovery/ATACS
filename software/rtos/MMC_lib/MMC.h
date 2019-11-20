@@ -49,7 +49,6 @@
 // commands: first bit 0 (start bit), second 1 (transmission bit); CMD-number + 0ffsett 0x40
 #define MMC_GO_IDLE_STATE          0x40     //CMD0
 #define MMC_SEND_OP_COND           0x41     //CMD1
-#define MMC_SEND_IF_COND           0x48     //CMD8
 #define MMC_READ_CSD               0x49     //CMD9
 #define MMC_SEND_CID               0x4a     //CMD10
 #define MMC_STOP_TRANSMISSION      0x4c     //CMD12
@@ -73,8 +72,6 @@
 #define MMC_EREASE                 0x66     //CMD38
 #define MMC_READ_OCR               0x67     //CMD39
 #define MMC_CRC_ON_OFF             0x68     //CMD40
-#define MMC_APP_CMD                0x77     //CMD55
-#define MMC_SEND_OP_COND           0x69     //ACMD41
 
 
 // mmc init

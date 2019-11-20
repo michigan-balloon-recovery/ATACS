@@ -4,6 +4,8 @@ FF_Disk_t *FF_SDDiskInit(char *pcName, uint8_t *pucDataBuffer, uint32_t ulSector
     FF_Error_t xError;
     FF_Disk_t *pxDisk = NULL;
     FF_CreationParameters_t xParameters;
+    FF_PartitionParameters_t xPartition;
+    BaseType_t valid;
 
     // check that the cache size is valid
     configASSERT( (xIOManagerCacheSize % sdSECTOR_SIZE) == 0 );
@@ -26,7 +28,7 @@ FF_Disk_t *FF_SDDiskInit(char *pcName, uint8_t *pucDataBuffer, uint32_t ulSector
 
         // initialize parameters struct
         memset(&xParameters, 0, sizeof(FF_CreationParameters_t));
-        xParameters.pucCacheMemory = NULL;
+//        xParameters.pucCacheMemory = NULL;
         xParameters.ulMemorySize = xIOManagerCacheSize;
         xParameters.ulSectorSize = sdSECTOR_SIZE;
         xParameters.fnWriteBlocks = prvWriteSD;
@@ -44,13 +46,23 @@ FF_Disk_t *FF_SDDiskInit(char *pcName, uint8_t *pucDataBuffer, uint32_t ulSector
             pxDisk->xStatus.bIsInitialised = pdTRUE;
             pxDisk->xStatus.bPartitionNumber = sdPARTITION_NUMBER;
 
+            memset(&xPartition, 0x00, sizeof(xPartition));
+            xPartition.ulSectorCount = pxDisk->ulNumberOfSectors;
+            xPartition.ulHiddenSectors = 8;
+            xPartition.ulInterSpace = 0;
+            xPartition.xPrimaryCount = 1;
+            xPartition.eSizeType = eSizeIsQuota;
+//            xError = FF_Partition(pxDisk, &xPartition);
+
+//            xError = FF_Format(pxDisk, 0, pdTRUE, pdTRUE);
+
             // mount partition
             xError = FF_Mount(pxDisk, sdPARTITION_NUMBER);
             pxDisk->xStatus.bIsMounted = pdTRUE;
 
             if(FF_isERR(xError) == pdFALSE) {
                 // add to virtual file system
-                FF_FS_Add(pcName, pxDisk->pxIOManager);
+                valid = FF_FS_Add(pcName, pxDisk->pxIOManager);
             }
         }
         else {

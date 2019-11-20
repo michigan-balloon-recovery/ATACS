@@ -176,7 +176,7 @@ void halSPISetup(void)
 {
   UCB0CTL0 = UCMST+UCCKPL+UCMSB+UCSYNC;     // 3-pin, 8-bit SPI master
   UCB0CTL1 = UCSSEL_2+UCSWRST;              // SMCLK
-  UCB0BR0 |= 0x28;                          // UCLK/2
+  UCB0BR0 |= 0x02;                          // UCLK/2
   UCB0BR1 = 0;
   //UCB0MCTL = 0;
   UCB0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**

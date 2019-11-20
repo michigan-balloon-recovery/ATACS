@@ -8,7 +8,6 @@
 #include "semphr.h"
 #include <stdbool.h>
 
-
 uint16_t c[8];
 
 typedef struct{
