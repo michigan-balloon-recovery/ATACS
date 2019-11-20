@@ -180,7 +180,7 @@ void task_rockblock(void) {
 
         if(msgReceived == 1) { // we received a message
             rb_retrieve_message(&rb);
-            // TODO: process message
+            rb_process_message(&rb.rx);
 
             while(msgsQueued > 0 && numRetries < RB_MAX_RX_RETRIES ) { // other messages to download
                 rb_start_session(&rb, &msgSent, &msgReceived, &msgsQueued);

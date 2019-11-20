@@ -25,6 +25,8 @@
 // add 30 bytes for overhead from message echos.
 #define RB_TX_SIZE 340+30
 #define RB_RX_SIZE 270+30
+#define RB_SOF '\0'
+#define RB_EOF '\0'
 
 typedef enum {
     AT = 0, // OK
@@ -33,6 +35,15 @@ typedef enum {
     SBDIX = 3, // start SBD session
     SBDRT = 4, // pull downloaded ASCI message from RockBLOCK
     SBDRB = 5 // pull downloaded binary message from RockBLOCK
+} rb_message_t;
+
+typedef enum {
+    CUT_FTU_NOW = 1, // immediately cut the ftu
+    GET_TELEM = 2, // get current data immediately
+    CONFIG_BUZZER = 3, // change how often the buzzer beeps
+    SET_FTU_TIMER = 4, // set the amount of time, in ms, that the ftu should wait to fire
+    START_FTU_TIMER = 5, // start counting down the ftu time
+    STOP_FTU_TIMER = 6 // stop counting down the ftu time
 } rb_command_t;
 
 typedef struct {
@@ -128,9 +139,13 @@ bool rb_tx_callback(void *param, uint8_t *txAddress);
 void rb_set_awake(bool awake);
 
 // Creates a rockblock telemetry packet which will hold all of our sensor data.
-// This message uses 2 credits to send.
+// This message uses at most 2 credits to send.
 void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
                        int32_t humidity, int32_t pTemp, int32_t hTemp, int32_t altitude,
                        gnss_time_t *time, gnss_coordinate_pair_t *location, bool *success);
+
+// processes the message from the rockblock buffer.
+// returns true if the message is a valid command, false if it is not a valid command.
+bool rb_process_message(rb_rx_buffer_t *rx);
 
 #endif /* SRC_ROCKBLOCK_ROCKBLOCK_H_ */

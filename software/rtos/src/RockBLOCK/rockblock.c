@@ -4,7 +4,7 @@
 #include "rockblock.h"
 
 // formats the command for the message sent to the RockBLOCK.
-static void rb_format_command(ROCKBLOCK_t *rb, rb_command_t cmd, volatile uint8_t *numReturns) {
+static void rb_format_command(ROCKBLOCK_t *rb, rb_message_t cmd, volatile uint8_t *numReturns) {
 
     *(rb->tx.cur_ptr++) = 'A';
     *(rb->tx.cur_ptr++) = 'T';
@@ -390,4 +390,40 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
         msg[cur_idx++] = '\n'; // end of message
     }
     *len = cur_idx;
+}
+
+bool rb_process_message(volatile rb_rx_buffer_t *rx) {
+
+    uint16_t len = rx->last_ptr - rx->buff;
+    uint16_t cur_idx = 0;
+    int i = 0;
+    for(i = 0; i < len; i++) {
+        if(rx->buff[i] == '\n') { // our data should be in the spot after the \n
+            cur_idx = i+1;
+        }
+    }
+
+    if(rx->buff[cur_idx++] != RB_SOF)
+        return false;
+
+    if(rx->buff[cur_idx++] != 0) { // use xbee and send this message
+        // TODO: use xbee to send message
+        return true;
+    }
+
+    switch(rx->buff[cur_idx]) {
+    case CUT_FTU_NOW:
+        break;
+    case GET_TELEM:
+        break;
+    case CONFIG_BUZZER:
+        break;
+    case SET_FTU_TIMER:
+        break;
+    case START_FTU_TIMER:
+        break;
+    case STOP_FTU_TIMER:
+        break;
+    }
+
 }
