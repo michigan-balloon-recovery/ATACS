@@ -17,6 +17,7 @@
 #include "uart.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
+#include "gnss.h"
 
 // maximum message sizes for our buffers.
 // We know TX is going to be be 340 bytes at most by the RockBLOCK spec.
@@ -24,6 +25,8 @@
 // add 30 bytes for overhead from message echos.
 #define RB_TX_SIZE 340+30
 #define RB_RX_SIZE 270+30
+#define RB_SOF '\0'
+#define RB_EOF '\0'
 
 typedef enum {
     AT = 0, // OK
@@ -32,27 +35,35 @@ typedef enum {
     SBDIX = 3, // start SBD session
     SBDRT = 4, // pull downloaded ASCI message from RockBLOCK
     SBDRB = 5 // pull downloaded binary message from RockBLOCK
+} rb_message_t;
+
+typedef enum {
+    CUT_FTU_NOW = 1, // immediately cut the ftu
+    GET_TELEM = 2, // get current data immediately
+    CONFIG_BUZZER = 3, // change how often the buzzer beeps
+    SET_FTU_TIMER = 4, // set the amount of time, in ms, that the ftu should wait to fire
+    START_FTU_TIMER = 5, // start counting down the ftu time
+    STOP_FTU_TIMER = 6 // stop counting down the ftu time
 } rb_command_t;
 
 typedef struct {
-    volatile uint8_t buff[RB_RX_SIZE]; // Don't need ring buffer for the RockBLOCK due its simplicity.
-    volatile uint8_t * volatile end_ptr; // indicates the end of the rb_rx_buff array, must not index past this point.
-    volatile uint8_t * volatile cur_ptr; // pointer to next spot in the rb_rx_buff, where newest values will be put when received.
-    volatile uint8_t * volatile last_ptr; // pointer to the final valid value in rb_rx_buff.
-    volatile uint8_t * volatile rx_ptr; // pointer to where the value being received in callback should be put.
+    volatile uint8_t buff[RB_RX_SIZE];      // Don't need ring buffer for the RockBLOCK due its simplicity.
+    volatile uint8_t * volatile end_ptr;    // indicates the end of the rb_rx_buff array, must not index past this point.
+    volatile uint8_t * volatile cur_ptr;    // pointer to next spot in the rb_rx_buff, where newest values will be put when received.
+    volatile uint8_t * volatile last_ptr;   // pointer to the final valid value in rb_rx_buff.
+    volatile uint8_t * volatile rx_ptr;     // pointer to where the value being received in callback should be put.
     volatile uint8_t numReturns;
     volatile bool finished;
     SemaphoreHandle_t rxSemaphore;
 } rb_rx_buffer_t;
 
 typedef struct {
-    volatile uint8_t buff[RB_TX_SIZE];
-    volatile uint8_t * volatile end_ptr; // indicates the end of the rb_tx_buff array, must not index past this point.
-    volatile uint8_t * volatile cur_ptr; // pointer to next spot in the rb_tx_buff, where newest values will be taken from when sending.
-    volatile uint8_t * volatile last_ptr; // pointer to the final valid value in rb_tx_buff.
-    volatile uint8_t * volatile tx_ptr; // pointer to the value being transmitted by callback.
+    uint8_t buff[RB_TX_SIZE];               // Don't need ring buffer for the RockBLOCK due its simplicity.
+    volatile uint8_t * volatile end_ptr;    // indicates the end of the rb_tx_buff array, must not index past this point.
+    volatile uint8_t * volatile cur_ptr;    // pointer to next spot in the rb_tx_buff, where newest values will be taken from when sending.
+    volatile uint8_t * volatile last_ptr;   // pointer to the final valid value in rb_tx_buff.
+    volatile uint8_t * volatile tx_ptr;     // pointer to the value being transmitted by callback.
     SemaphoreHandle_t txSemaphore;
-    volatile bool transmitting;
 } rb_tx_buffer_t;
 
 typedef struct {
@@ -126,5 +137,15 @@ bool rb_tx_callback(void *param, uint8_t *txAddress);
 
 // Controls the sleep/awake state of the RockBLOCK. If awake == 1, the RockBLOCK is set to awake, if 0 it is set to sleep.
 void rb_set_awake(bool awake);
+
+// Creates a rockblock telemetry packet which will hold all of our sensor data.
+// This message uses at most 2 credits to send.
+void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
+                       int32_t humidity, int32_t pTemp, int32_t hTemp, int32_t altitude,
+                       gnss_time_t *time, gnss_coordinate_pair_t *location, bool *success);
+
+// processes the message from the rockblock buffer.
+// returns true if the message is a valid command, false if it is not a valid command.
+bool rb_process_message(rb_rx_buffer_t *rx);
 
 #endif /* SRC_ROCKBLOCK_ROCKBLOCK_H_ */

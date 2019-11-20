@@ -102,6 +102,9 @@ bool gnss_get_location(gnss_t *gnss_obj, gnss_coordinate_pair_t *location);
 
 bool gnss_get_altitude(gnss_t *gnss_obj, int32_t *altitude);
 
+// converts location struct into a position decimal seconds.
+int32_t gnss_coord_to_decSec(gnss_coordinate_t *coordinate);
+
 #ifdef __cplusplus
 }
 #endif

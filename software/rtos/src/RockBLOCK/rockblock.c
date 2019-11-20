@@ -4,7 +4,7 @@
 #include "rockblock.h"
 
 // formats the command for the message sent to the RockBLOCK.
-static void rb_format_command(ROCKBLOCK_t *rb, rb_command_t cmd, uint8_t * numReturns) {
+static void rb_format_command(ROCKBLOCK_t *rb, rb_message_t cmd, volatile uint8_t *numReturns) {
 
     *(rb->tx.cur_ptr++) = 'A';
     *(rb->tx.cur_ptr++) = 'T';
@@ -56,8 +56,6 @@ static void rb_format_command(ROCKBLOCK_t *rb, rb_command_t cmd, uint8_t * numRe
 }
 
 static void rb_clear_buffers(ROCKBLOCK_t *rb) {
-    while(rb->tx.transmitting);
-    while(!rb->rx.finished);
     rb->tx.cur_ptr = rb->tx.buff;
     rb->tx.last_ptr = rb->tx.buff;
     rb->rx.cur_ptr = rb->rx.buff;
@@ -68,9 +66,7 @@ static void rb_clear_buffers(ROCKBLOCK_t *rb) {
 
 static void rb_wait_for_messages(ROCKBLOCK_t *rb) {
     xSemaphoreTake(rb->tx.txSemaphore, portMAX_DELAY);
-    while(rb->tx.transmitting);
     xSemaphoreTake(rb->rx.rxSemaphore, portMAX_DELAY);
-    while(!rb->rx.finished); // wait for response
 }
 
 void rb_init(ROCKBLOCK_t *rb) {
@@ -115,8 +111,6 @@ void rb_init(ROCKBLOCK_t *rb) {
     rb_set_awake(true); // TODO: might want to not just always be on, so add the ability to sleep...
     //rb_set_awake(false);
 
-    rb->tx.transmitting = false;
-    rb->rx.finished = false;
 }
 
 
@@ -180,8 +174,8 @@ bool rb_tx_callback(void *param, uint8_t *txAddress) {
     *txAddress= *(rb->tx.tx_ptr);
 
     if(rb->tx.tx_ptr == rb->tx.last_ptr) { // sent last byte.
-        rb->tx.transmitting = false;
         xSemaphoreGiveFromISR(rb->tx.txSemaphore, NULL);
+        rb->rx.finished = false;
         return false;
     }
 
@@ -189,7 +183,7 @@ bool rb_tx_callback(void *param, uint8_t *txAddress) {
     return true;
 }
 
-void rb_send_message(ROCKBLOCK_t *rb, uint8_t * msg, uint16_t len, bool *msgSent, int8_t *msgReceived, int8_t *msgsQueued) {
+void rb_send_message(ROCKBLOCK_t *rb, uint8_t *msg, uint16_t len, bool *msgSent, int8_t *msgReceived, int8_t *msgsQueued) {
 
     rb_clear_buffers(rb);
 
@@ -204,8 +198,6 @@ void rb_send_message(ROCKBLOCK_t *rb, uint8_t * msg, uint16_t len, bool *msgSent
     rb->tx.last_ptr = rb->tx.cur_ptr;
     *(rb->tx.cur_ptr++) = '\r'; // end message with carriage return.
 
-    rb->tx.transmitting = true; // we are transmitting
-    rb->rx.finished = false; // not done receiving response
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
     rb_wait_for_messages(rb);
@@ -221,8 +213,6 @@ void rb_start_session(ROCKBLOCK_t *rb, bool *msgSent, int8_t *msgReceived, int8_
 
     rb_clear_buffers(rb);
     rb_format_command(rb, SBDIX, &(rb->rx.numReturns));
-    rb->tx.transmitting = true;
-    rb->rx.finished = false;
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1;
 
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
@@ -306,7 +296,7 @@ void rb_start_session(ROCKBLOCK_t *rb, bool *msgSent, int8_t *msgReceived, int8_
                             break;
                         }
                     }
-                    *msgsQueued = atoi(rb->rx.buff + i);
+                    *msgsQueued = atoi((const char*) rb->rx.buff + i);
                     i = totalLen;
                 }
             break;
@@ -328,10 +318,112 @@ void rb_retrieve_message(ROCKBLOCK_t *rb) {
     rb_format_command(rb, SBDRT, &(rb->rx.numReturns));
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
 
-    rb->tx.transmitting = true;
-    rb->rx.finished = false;
-
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
     rb_wait_for_messages(rb);
+
+}
+
+static void put_int32_array(int32_t toInsert, uint8_t *msg, uint16_t *cur_idx, bool success) {
+    char str[15]; // 2^32 + 1 < 15 indexes, so should be able to fit entire int32_t inside of this.
+    uint16_t lenStr;
+    if(success) {
+        ltoa(toInsert, str);
+        lenStr = strlen(str);
+        memcpy(msg + *cur_idx, str, lenStr);
+        *cur_idx += lenStr;
+    } else {
+        msg[*(cur_idx)++] = '?';
+    }
+    msg[(*cur_idx)++] = ',';
+}
+
+void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
+                       int32_t humidity, int32_t pTemp, int32_t hTemp, int32_t altitude,
+                       gnss_time_t *time, gnss_coordinate_pair_t *location, bool *success)
+{
+    uint16_t cur_idx = 0;
+    char str[15];
+
+    size_t lenstr = strlen("ATACS,");
+    memcpy(msg, "ATACS,", lenstr); // header len = 6
+
+    put_int32_array(pressure, msg, &cur_idx, success[0]);
+    put_int32_array(humidity, msg, &cur_idx, success[1]);
+    put_int32_array(pTemp, msg, &cur_idx, success[2]);
+    put_int32_array(hTemp, msg, &cur_idx, success[3]);
+    put_int32_array(altitude, msg, &cur_idx, success[4]);
+
+    if(success[5]) { // time
+        ltoa(time->hour, str);
+        lenstr = strlen(str);
+        memcpy(msg+cur_idx, str, lenstr);
+        cur_idx += lenstr;
+        msg[cur_idx++] = ':';
+        ltoa(time->min, str);
+        lenstr = strlen(str);
+        memcpy(msg+cur_idx, str, lenstr);
+        cur_idx += lenstr;
+        msg[cur_idx++] = ',';
+    } else {
+        msg[cur_idx++] = '?';
+        msg[cur_idx++] = ',';
+    }
+
+    if(success[6]) {// location
+        int32_t decSecLat = gnss_coord_to_decSec(&location->latitude); // should be fine using signed integer here.
+        int32_t decSecLong = gnss_coord_to_decSec(&location->longitude);
+
+        put_int32_array(decSecLat, msg, &cur_idx, true);
+        msg[cur_idx++] = location->latitude.dir;
+        msg[cur_idx++] = ',';
+        put_int32_array(decSecLong, msg, &cur_idx, true);
+        msg[cur_idx++] = location->longitude.dir;
+        msg[cur_idx++] = '\n'; // end of message
+    } else {
+        msg[cur_idx++] = '?'; // lat
+        msg[cur_idx++] = ',';
+        msg[cur_idx++] = '?'; // lat dir
+        msg[cur_idx++] = ',';
+        msg[cur_idx++] = '?'; // long
+        msg[cur_idx++] = ',';
+        msg[cur_idx++] = '?'; // long dir
+        msg[cur_idx++] = '\n'; // end of message
+    }
+    *len = cur_idx;
+}
+
+bool rb_process_message(rb_rx_buffer_t *rx) {
+
+    uint16_t len = rx->last_ptr - rx->buff;
+    uint16_t cur_idx = 0;
+    int i = 0;
+    for(i = 0; i < len; i++) {
+        if(rx->buff[i] == '\n') { // our data should be in the spot after the \n
+            cur_idx = i+1;
+        }
+    }
+
+    if(rx->buff[cur_idx++] != RB_SOF)
+        return false;
+
+    if(rx->buff[cur_idx++] != 0) { // use xbee and send this message
+        // TODO: use xbee to send message
+        return true;
+    }
+
+    switch(rx->buff[cur_idx]) {
+    case CUT_FTU_NOW:
+        break;
+    case GET_TELEM:
+        break;
+    case CONFIG_BUZZER:
+        break;
+    case SET_FTU_TIMER:
+        break;
+    case START_FTU_TIMER:
+        break;
+    case STOP_FTU_TIMER:
+        break;
+    }
 
 }
