@@ -392,7 +392,7 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
     *len = cur_idx;
 }
 
-bool rb_process_message(volatile rb_rx_buffer_t *rx) {
+bool rb_process_message(rb_rx_buffer_t *rx) {
 
     uint16_t len = rx->last_ptr - rx->buff;
     uint16_t cur_idx = 0;

@@ -21,13 +21,14 @@
 #define RB_MAX_TX_RETRIES   10          // Retry at most 10 times. This means we try for 10*15=150 seconds.
 #define RB_MAX_RX_RETRIES   5           // retry at most 5 times. This means we try for 5*15=75 seconds.
 
-#define APRS_PERIOD_MS      60000
+#define APRS_PERIOD_MS      10000
 
 /*-----------------------------------------------------------*/
 
 static void prvSetupHardware( void );
+void task_heartbeat();
 void task_gnss();
-void task_ax25();
+void task_aprs();
 void task_getPressure();
 void task_getHumidity();
 void task_rockblock();
@@ -41,14 +42,14 @@ void main( void ) {
     /* Initialize Hardware */
     prvSetupHardware();
 
-//    gnss_init(&GNSS);
-
     /* Create Tasks */
+
+    xTaskCreate((TaskFunction_t) task_heartbeat,     "LED heartbeat",    128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t)task_gnss,         "gnss",                  128, NULL, 1, NULL);
-    xTaskCreate((TaskFunction_t) task_ax25,          "afsk_ax25",             128, NULL, 1, NULL);
-    xTaskCreate((TaskFunction_t) task_getPressure,   "getPressure",           128, NULL, 1, NULL);
-    xTaskCreate((TaskFunction_t) task_getHumidity,   "getHumidity",           128, NULL, 1, NULL);
-    xTaskCreate((TaskFunction_t) task_rockblock,     "RockBLOCK",             128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_aprs,          "aprs",             128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_getPressure,   "getPressure",           128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_getHumidity,   "getHumidity",           128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_rockblock,     "RockBLOCK",             128, NULL, 1, NULL);
 
     /* Start the scheduler. */
 
@@ -65,21 +66,47 @@ void main( void ) {
 
 /*-----------------------------------------------------------*/
 
-void task_gnss() {
+void task_heartbeat() {
+    portTickType xLastWakeTime;
+    const portTickType xFrequency = 100 / portTICK_RATE_MS;  // 100ms?
+    xLastWakeTime = xTaskGetTickCount();
+
+    volatile uint32_t i;
+
     while (1) {
-        xSemaphoreTake(GNSS.uart_semaphore, portMAX_DELAY);
-        gnss_nmea_decode(&GNSS);
+        P8OUT ^= 0x04;              // toggle P8.2
+        for(i=5000; i>0; i--);     // delay
+        P8OUT ^= 0x08;              // toggle P8.3
+        for(i=5000; i>0; i--);     // delay
+        P8OUT ^= 0x10;              // toggle P8.4
+        for(i=5000; i>0; i--);     // delay
+
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
 
-void task_ax25() {
+void task_gnss() {
+    gnss_init(&GNSS);
+
+    portTickType xLastWakeTime;
+    const portTickType xFrequency = 100 / portTICK_RATE_MS;  // 100ms?
+    xLastWakeTime = xTaskGetTickCount();
+
+    while (1) {
+        xSemaphoreTake(GNSS.uart_semaphore, portMAX_DELAY);
+        gnss_nmea_decode(&GNSS);
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+    }
+}
+
+void task_aprs() {
     portTickType xLastWakeTime;
     const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
     xLastWakeTime = xTaskGetTickCount();
     while (1){
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         vTaskSuspendAll();
-        aprs_beacon(0);
+        aprs_beacon(0);   //altitude 0m
         xTaskResumeAll();
     }
 }
@@ -215,26 +242,7 @@ static void prvSetupHardware( void ) {
 
 	/* I2C and Pressure Sensor */
 	initPressure();
-	
-    // UARTConfig a0_cnf;
-    // a0_cnf.moduleName = USCI_A0;
 
-    // // Use UART Pins P3.5 and P3.4
-    // a0_cnf.portNum = PORT_3;
-    // a0_cnf.RxPinNum = PIN5;
-    // a0_cnf.TxPinNum = PIN4;
-
-    // // 38400 Baud from 16MHz SMCLK
-    // a0_cnf.clkRate = configCPU_CLOCK_HZ;
-    // a0_cnf.baudRate = 38400L;
-    // a0_cnf.clkSrc = UART_CLK_SRC_SMCLK;
-
-    // // 8N1
-    // a0_cnf.databits = 8;
-    // a0_cnf.parity = UART_PARITY_NONE;
-    // a0_cnf.stopbits = 1;
-
-    // initUSCIUart(&a0_cnf, A0_TX, A0_RX);
 }
 /*-----------------------------------------------------------*/
 
@@ -242,6 +250,7 @@ static void prvSetupHardware( void ) {
 void vApplicationTickHook( void ) {
 	return;
 }
+
 /*-----------------------------------------------------------*/
 
 /* The MSP430X port uses this callback function to configure its tick interrupt.
