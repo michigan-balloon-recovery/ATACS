@@ -16,9 +16,6 @@
 #include "ff_msp430_sddisk.h"
 
 /*-----------------------------------------------------------*/
-#define APRS_PERIOD_MS      60000
-
-/*-----------------------------------------------------------*/
 
 static void prvSetupHardware(void);
 void task_led_breathe(void);
@@ -115,35 +112,6 @@ void task_led_breathe() {
         vTaskDelay(100 / portTICK_RATE_MS);
 
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-    }
-}
-
-void task_aprs() {
-    const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
-    portTickType xLastWakeTime = xTaskGetTickCount();
-
-    // P1.2 is PD (sleep)
-    // P1.3 is PTT (push-to-talk)
-    // MIC_IN is routed to P2.1 on board rev 1.0, but P2.1 and P2.2 are
-    // bridged on the board because PWM from T1.0(P2.1) is inconvenient
-    aprs_setup(GPIO_PORT_P1, GPIO_PIN2,
-               GPIO_PORT_P1, GPIO_PIN3,
-               GPIO_PORT_P2, GPIO_PIN2);
-
-    while (1) {
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-
-        // Fetch GPS and sensor data
-        gnss_time_t time;
-        gnss_coordinate_pair_t loc;
-        int32_t alt;
-        while(!gnss_get_time(&GNSS, &time));
-        while(!gnss_get_location(&GNSS, &loc));
-        while(!gnss_get_altitude(&GNSS, &alt));
-
-        vTaskSuspendAll();
-        aprs_beacon(&time, &loc, &alt);
-        xTaskResumeAll();
     }
 }
 
