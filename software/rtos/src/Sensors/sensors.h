@@ -3,9 +3,7 @@
 
 #include <msp430.h>
 #include "i2c_driver.h"
-#include "FreeRTOS.h"
 #include "task.h"
-#include "semphr.h"
 #include <stdbool.h>
 
 typedef struct{
