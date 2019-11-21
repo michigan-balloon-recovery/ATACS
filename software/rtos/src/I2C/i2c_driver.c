@@ -1,58 +1,3 @@
-/* --COPYRIGHT--,BSD
- * Copyright (c) 2016, Texas Instruments Incorporated
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * *  Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * *  Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * *  Neither the name of Texas Instruments Incorporated nor the names of
- *    its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * --/COPYRIGHT--*/
-//*****************************************************************************
-//  MSP430FR2311 eUSCI_B0 I2C Master
-//
-//  Description: This demo connects two MSP430's via the I2C bus. The master is
-//  MSP430FR2311 with hardware I2C(eUSCI_B0). The slave is MSP430FR2111 using GPIOs
-//  to implement software I2C. The master write to and read from the slave.
-//  This is the master code.
-//  ACLK = default REFO ~32768Hz, MCLK = SMCLK = default DCODIV ~1MHz.
-//
-//    *****used with "FR2111_SW_I2C_Slave.c"****
-//
-//                                /|\  /|\
-//               MSP430FR2311      10k  10k     MSP430FR2111
-//                   master         |    |        slave
-//             -----------------   |    |   -----------------
-//            |     P1.2/UCB0SDA|<-|----|->|P2.0(SW I2C)     |
-//            |                 |  |       |                 |
-//            |                 |  |       |                 |
-//            |     P1.3/UCB0SCL|<-|------>|P1.0(SW I2C)     |
-//            |                 |          |                 |
-//
-//   Texas Instruments Inc.
-//   June. 2016
-//******************************************************************************
 #include <msp430.h>
 #include "i2c_driver.h"
 
@@ -64,7 +9,7 @@ unsigned char TXByteCtr;
 unsigned char TotalTXBytes;
 char STATUS = 'i';
 
-int setup(void)
+int i2c_setup(void)
 {
     // Configure GPIO
     UCB0TXBUF = 0x1;
@@ -138,8 +83,6 @@ void i2c_read(uint8_t addr, uint8_t * data, uint8_t numBytes){
 	}
 }
 
-
-#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector = USCI_B0_VECTOR
 __interrupt void USCI_B0_ISR(void) {
   switch(__even_in_range(UCB0IV, USCI_I2C_UCTXIFG))

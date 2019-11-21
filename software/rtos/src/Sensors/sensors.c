@@ -8,15 +8,14 @@
  
 void initPressure()
 {
+	return; //TODO: get pressure sensor to work.
+	uint8_t cmd[1];
+	
     unsigned int j;
     volatile unsigned int i;
     for(i = 0; i < 8; i++)
         c[i] = 0;
 
-	setup();
-	return; //TODO: get pressure sensor to work.
-	uint8_t cmd[1];
-	
 	cmd[0] = 0x1E;
     i2c_write(0x77, cmd, 1);
     for(j = 0; j<8; j++) {

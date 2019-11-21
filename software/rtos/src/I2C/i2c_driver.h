@@ -9,7 +9,7 @@
 #define I2C_DRIVER_H_
 #include <stdint.h>
 
-int setup(void);
+int i2c_setup(void);
 
 void i2c_write(uint8_t addr, uint8_t * data, uint8_t numBytes);
 

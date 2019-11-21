@@ -47,7 +47,7 @@ void main( void ) {
     /* Create Tasks */
 
     xTaskCreate((TaskFunction_t) task_led_breathe,     "LED heartbeat",    128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t)task_gnss,           "gnss",             128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_gnss,           "gnss",             128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_aprs,          "aprs",             128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_getPressure,   "getPressure",      128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_getHumidity,   "getHumidity",      128, NULL, 1, NULL);
@@ -200,6 +200,7 @@ void task_getPressure(){
     portTickType xLastWakeTime = xTaskGetTickCount();
 
     sensor_data.pressureSemaphore = xSemaphoreCreateBinary();
+    initPressure();
 
 	while(1)
 	{
@@ -318,9 +319,8 @@ static void prvSetupHardware( void ) {
     /* UART */
     initUartDriver();
 
-	/* I2C and Pressure Sensor */
-    initPressure();
-
+    /* I2C and */
+    i2c_setup();
 }
 /*-----------------------------------------------------------*/
 
