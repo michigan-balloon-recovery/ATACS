@@ -103,8 +103,8 @@ void rb_init(ROCKBLOCK_t *rb) {
     initUartTxCallback(&USCI_A1_cnf, &rb_tx_callback, rb);
 
     // ring, network-available, and sleep pin initialization
-   // P8DIR &= ~(BIT0 | BIT1); // set ring and network-available pins to inputs. ON OUR MSP430
-    P8DIR &= ~(BIT0 | BIT2); // OLIMEX ring, netav pins
+    P8DIR &= ~(BIT0 | BIT1); // set ring and network-available pins to inputs. ON OUR MSP430
+    // P8DIR &= ~(BIT0 | BIT2); // OLIMEX ring, netav pins
 
     P7DIR |= BIT3; // set sleep to an output.
 
@@ -129,16 +129,10 @@ bool rb_check_ring(void) {
 }
 
 bool rb_check_netav(void){
-//    if(P8IN & BIT1) // checking P8.1, which is where NETAV pin is connected.
-//        return true; // this pin is active high.
-//    else
-//        return false; // no signal at the time.
-
-
-    if(P8IN & BIT2) // olimex using p8.2
-        return true;
+    if(P8IN & BIT1) // checking P8.1, which is where NETAV pin is connected.
+        return true; // this pin is active high.
     else
-        return false;
+        return false; // no signal at the time.
 }
 
 void rb_rx_callback(void *param, uint8_t datum) {

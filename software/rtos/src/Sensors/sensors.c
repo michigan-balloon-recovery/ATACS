@@ -14,6 +14,7 @@ void initPressure()
         c[i] = 0;
 
 	setup();
+	return; //TODO: get pressure sensor to work.
 	uint8_t cmd[1];
 	
 	cmd[0] = 0x1E;
@@ -33,6 +34,7 @@ void initPressure()
  
 void calculatePressure(int32_t* return_data)
 {
+    return;
     uint8_t data[4] = {0x0, 0x0, 0x0, 0x0};
     uint8_t cmd[1];
 
@@ -145,6 +147,7 @@ void calculateHumidity(int32_t *return_data)
 
 bool getPressure(int32_t* pressure)
 {
+    return false;
 	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTRUE)
 	{
 		*pressure = sensor_data.pressure;
@@ -157,6 +160,7 @@ bool getPressure(int32_t* pressure)
 
 bool getPTemp(int32_t* temp)
 {
+    return false;
 	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTRUE)
 	{
 		*temp = sensor_data.pTemp;
@@ -169,7 +173,7 @@ bool getPTemp(int32_t* temp)
 
 bool getHumidity(int32_t* humidity)
 {
-	if(xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY) == pdTRUE)
+	if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE)
 	{
 		*humidity = sensor_data.humidity;
 		xSemaphoreGive(sensor_data.humiditySemaphore);
@@ -181,7 +185,7 @@ bool getHumidity(int32_t* humidity)
 
 bool getHTemp(int32_t* temp)
 {
-    if(xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY) == pdTRUE)
+    if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE)
 	{
 		*temp = sensor_data.hTemp;
 		xSemaphoreGive(sensor_data.humiditySemaphore);
