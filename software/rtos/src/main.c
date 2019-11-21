@@ -11,7 +11,6 @@
 #include "uart.h"
 #include "gnss.h"
 #include "aprs.h"
-#include "afsk.h"
 #include "rockblock.h"
 #include "sensors.h"
 #include "ff_msp430_sddisk.h"
@@ -23,7 +22,7 @@
 #define RB_MAX_TX_RETRIES   10          // Retry at most 10 times. This means we try for 10*15=150 seconds.
 #define RB_MAX_RX_RETRIES   5           // retry at most 5 times. This means we try for 5*15=75 seconds.
 
-#define APRS_PERIOD_MS      5000
+#define APRS_PERIOD_MS      60000
 
 /*-----------------------------------------------------------*/
 
@@ -156,14 +155,27 @@ void task_aprs() {
     const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
     xLastWakeTime = xTaskGetTickCount();
 
-    GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN2); // PTT
-    GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN3); // PD
-    afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P1, GPIO_PIN3);
+    // P1.2 is PD (sleep)
+    // P1.3 is PTT (push-to-talk)
+    // MIC_IN is routed to P2.1 on board rev 1.0, but P2.1 and P2.2 are
+    // bridged on the board because PWM from T1.0(P2.1) is inconvenient
+    aprs_setup(GPIO_PORT_P1, GPIO_PIN2,
+               GPIO_PORT_P1, GPIO_PIN3,
+               GPIO_PORT_P2, GPIO_PIN2);
 
     while (1){
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
+        // Fetch GPS and sensor data
+        gnss_time_t time;
+        gnss_coordinate_pair_t loc;
+        int32_t alt;
+        while(!gnss_get_time(&GNSS, &time));
+        while(!gnss_get_location(&GNSS, &loc));
+        while(!gnss_get_altitude(&GNSS, &alt));
+
         vTaskSuspendAll();
-        aprs_beacon(0);   //altitude 0m
+        aprs_beacon(&time, &loc, &alt);
         xTaskResumeAll();
     }
 }
@@ -288,7 +300,8 @@ static void prvSetupHardware( void ) {
 	
 	/* Disable the watchdog. */
 	WDTCTL = WDTPW + WDTHOLD;
-  
+
+	/* Set DCO to 16MHz, uses configCPU_CLOCK_HZ, but PMM_CORE_LEVEL_x is hardcoded */
 	GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P1, GPIO_PIN6);
 	GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2, GPIO_PIN0);
 

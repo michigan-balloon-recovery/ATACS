@@ -120,13 +120,13 @@ void ax25_send_header(const address_t* addresses, uint8_t num){
     send_byte(AX25_PROTOCOL);
 }
 
-void ax25_send_byte(uint8_t byte){
+void ax25_send_byte(const char byte){
     send_byte(byte);
 }
 
-void ax25_send_string(const uint8_t* buf, const uint16_t buflen){
+void ax25_send_string(const char* buf){
     uint8_t i;
-    for(i = 0 ; i < buflen ; i++){
+    for(i = 0 ; buf[i] ; i++){
         send_byte(buf[i]);
     }
 }
@@ -140,9 +140,6 @@ void ax25_send_footer(){
 }
 
 void ax25_flush_frame(){
-    // P2.0 is PTT, MIC_IN is technically connected to P2.1, but P2.1 and P2.2 are
-    // bridged on the board because PWM from T1.0(P2.1) is harder than we realized
-    afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P2, GPIO_PIN0);
     afsk_send(ax25_state.packet, ax25_state.packet_len);
     afsk_transmit();
 }

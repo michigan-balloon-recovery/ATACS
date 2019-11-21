@@ -47,8 +47,8 @@ const uint8_t AFSK_SINE_TABLE[AFSK_TABLE_SIZE_100/100] = {
  */
 
 typedef struct {
-    uint16_t ptt_port, tx_port;
-    uint8_t  ptt_pin, tx_pin;
+    uint16_t pd_port, ptt_port;
+    uint8_t  pd_pin,  ptt_pin;
 
     uint16_t sine_idx_100;
     uint16_t stride_100;
@@ -73,30 +73,31 @@ void afsk_timer_stop();
 /*
  * Exported Functions Definitions
  */
-void afsk_setup(const uint16_t tx_port, const uint8_t tx_pin,
-                const uint16_t ptt_port, const uint8_t ptt_pin){
+void afsk_setup(const uint16_t pd_port,  const uint8_t pd_pin,
+                const uint16_t ptt_port, const uint8_t ptt_pin,
+                const uint16_t tx_port,  const uint8_t tx_pin){
     // Setup radio GPIO
+    afsk_state.pd_port = pd_port;
+    afsk_state.pd_pin = pd_port;
+    GPIO_setOutputHighOnPin(pd_port, pd_pin);
+
     afsk_state.ptt_port = ptt_port;
     afsk_state.ptt_pin = ptt_pin;
     GPIO_setOutputHighOnPin(ptt_port, ptt_pin);
 
-    afsk_state.tx_port = tx_port;
-    afsk_state.tx_pin  = tx_pin;
     GPIO_setAsPeripheralModuleFunctionOutputPin(tx_port, tx_pin);
 
     // Setup timer ISR
     afsk_timer_setup();
 
-    // Reset tx flag
+    // Reset TX flag
     afsk_state.tx_flag = false;
 }
 
-void afsk_reset(){
-    if (afsk_state.packet_buf) {
-        free(afsk_state.packet_buf);
-        afsk_state.packet_buf = 0;
-    }
+void afsk_clear(){
+    afsk_state.packet_buf = 0;
     afsk_state.packet_len = 0;
+    afsk_state.current_byte = 0;
 }
 
 void afsk_send(uint8_t* buf, uint16_t len) {
@@ -108,9 +109,8 @@ void afsk_transmit(){
     if (afsk_state.packet_buf == 0 || afsk_state.packet_len == 0)
         return;
 
-    // Put radio in TX mode (active low), wait 1ms
-//    GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
-//    __delay_cycles(configCPU_CLOCK_HZ / 10);
+    // Put radio in TX mode (active low)
+    GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
 
     // Reset metadata
     afsk_state.tx_idx             = 0;
@@ -118,16 +118,15 @@ void afsk_transmit(){
     afsk_state.stride_100         = AFSK_STRIDE_SPACE_100;    // initially 2200 Hz
     afsk_state.current_byte       = afsk_state.packet_buf[0];
 
-    // Set tx flag and start timers
+    // Set TX flag and start timers
     afsk_state.tx_flag            = true;
     afsk_timer_start();
 
     // Block until ISR resets tx flag
     while(afsk_state.tx_flag);
 
-    // Wait 1ms, then put radio back in RX mode
-//    __delay_cycles(configCPU_CLOCK_HZ / 1000);
-//    GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    // Return to RX mode
+    GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
 }
 
 /*
