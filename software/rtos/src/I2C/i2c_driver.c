@@ -9,8 +9,7 @@ unsigned char TXByteCtr;
 unsigned char TotalTXBytes;
 char STATUS = 'i';
 
-int i2c_setup(void)
-{
+int i2c_setup(void) {
     // Configure GPIO
     UCB0TXBUF = 0x1;
     P3SEL = BIT1 | BIT2;                  // I2C pins
@@ -33,7 +32,7 @@ int i2c_setup(void)
     return 0;
 }
 
-void i2c_write(uint8_t addr, uint8_t * data, uint8_t numBytes){
+void i2c_write(uint8_t addr, uint8_t * data, uint8_t numBytes) {
 	
 	// check for inactive condition here
 	while(STATUS != 'i');
@@ -57,7 +56,7 @@ void i2c_write(uint8_t addr, uint8_t * data, uint8_t numBytes){
 	while(STATUS == 'w');
 }
 
-void i2c_read(uint8_t addr, uint8_t * data, uint8_t numBytes){
+void i2c_read(uint8_t addr, uint8_t * data, uint8_t numBytes) {
 	
 	// check for inactive condition here
 	while(STATUS != 'i');
@@ -78,15 +77,14 @@ void i2c_read(uint8_t addr, uint8_t * data, uint8_t numBytes){
 	
 	// create reading condition here
 	while(STATUS == 'r');
-	for(i = 0; i < numBytes; i++){
+	for(i = 0; i < numBytes; i++) {
 	    data[i] = RXData[i];
 	}
 }
 
 #pragma vector = USCI_B0_VECTOR
 __interrupt void USCI_B0_ISR(void) {
-  switch(__even_in_range(UCB0IV, USCI_I2C_UCTXIFG))
-  {
+  switch(__even_in_range(UCB0IV, USCI_I2C_UCTXIFG)) {
     case USCI_NONE: break;                  // Vector 0: No interrupts
     case USCI_I2C_UCALIFG: break;           // Vector 2: ALIFG
     case USCI_I2C_UCNACKIFG:                // Vector 4: NACKIFG

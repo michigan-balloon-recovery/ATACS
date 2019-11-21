@@ -8,8 +8,6 @@
 #include "semphr.h"
 #include <stdbool.h>
 
-uint16_t c[8];
-
 typedef struct{
 	int32_t pressure;
 	int32_t humidity;
@@ -19,22 +17,26 @@ typedef struct{
 	SemaphoreHandle_t humiditySemaphore;
 } sensor_data_t;
 
-
+uint16_t c[8];
 sensor_data_t sensor_data;
 
-void initPressure();
+void task_pressure(void);
 
-void calculatePressure(int32_t* return_data);
+void task_humidity(void);
 
-void calculateHumidity(int32_t* return_data);
+void sens_init_pres(void);
 
-bool getPressure(int32_t* pressure);
+void sens_calc_pres(int32_t* return_data);
 
-bool getPTemp(int32_t* temp);
+void sens_calc_humidity(int32_t* return_data);
 
-bool getHumidity(int32_t* humidity);
+bool sens_get_pres(int32_t* pressure);
 
-bool getHTemp(int32_t* temp);
+bool sens_get_ptemp(int32_t* temp);
+
+bool sens_get_humid(int32_t* humidity);
+
+bool sens_get_htemp(int32_t* temp);
 
 
 #endif

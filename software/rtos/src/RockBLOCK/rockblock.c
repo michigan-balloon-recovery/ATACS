@@ -69,6 +69,93 @@ static void rb_wait_for_messages(ROCKBLOCK_t *rb) {
     xSemaphoreTake(rb->rx.rxSemaphore, portMAX_DELAY);
 }
 
+static void put_int32_array(int32_t toInsert, uint8_t *msg, uint16_t *cur_idx, bool success) {
+    char str[15]; // 2^32 + 1 < 15 indexes, so should be able to fit entire int32_t inside of this.
+    uint16_t lenStr;
+    if(success) {
+        ltoa(toInsert, str);
+        lenStr = strlen(str);
+        memcpy(msg + *cur_idx, str, lenStr);
+        *cur_idx += lenStr;
+    } else {
+        msg[*(cur_idx)++] = '?';
+    }
+    msg[(*cur_idx)++] = ',';
+}
+
+
+void task_rockblock(void) {
+    const portTickType xTaskFrequency =  (uint16_t) ((uint32_t) RB_TRANSMIT_RATE_MS / (uint32_t) portTICK_RATE_MS);
+    const portTickType xRetryFrequency = RB_RETRY_RATE_MS / portTICK_RATE_MS;
+    portTickType xLastWakeTime = xTaskGetTickCount();
+
+    uint8_t msg[RB_TX_SIZE];
+    uint16_t len = 0;
+    bool msgSent = false;
+    int8_t msgReceived = 0;
+    int8_t msgsQueued = 0;
+    uint8_t numRetries = 0;
+    uint8_t i = 0;
+
+    int32_t pressure, humidity, hTemp, pTemp;
+    int32_t altitude;
+    gnss_time_t time;
+    gnss_coordinate_pair_t location;
+    bool success[7];
+
+    for(i = 0; i < 7; i++)
+        success[i] = true;
+
+    rb_init(&rb);
+
+    while(1) {
+        vTaskDelayUntil(&xLastWakeTime, xTaskFrequency);
+
+        i = 0;
+        success[i++] = sens_get_pres(&pressure);
+        success[i++] = sens_get_humid(&humidity);
+        success[i++] = sens_get_htemp(&hTemp);
+        success[i++] = sens_get_ptemp(&pTemp);
+        success[i++] = gnss_get_altitude(&GNSS, &altitude);
+        success[i++] = gnss_get_time(&GNSS, &time);
+        success[i++] = gnss_get_location(&GNSS, &location);
+
+        rb_create_telemetry_packet(msg, &len, pressure, humidity, pTemp, hTemp, altitude, &time, &location, success);
+
+        msgSent = false;
+        msgReceived = 0;
+        msgsQueued = 0;
+        numRetries = 0;
+
+        rb_send_message(&rb, msg, len, &msgSent, &msgReceived, &msgsQueued);
+
+        while(!msgSent && numRetries < RB_MAX_TX_RETRIES) {
+            numRetries++;
+            vTaskDelayUntil(&xLastWakeTime, xRetryFrequency);
+            rb_start_session(&rb, &msgSent, &msgReceived, &msgsQueued);
+        }
+
+        numRetries = 0;
+
+        if(msgReceived == 1) { // we received a message
+            rb_retrieve_message(&rb);
+            rb_process_message(&rb.rx);
+
+            while(msgsQueued > 0 && numRetries < RB_MAX_RX_RETRIES ) { // other messages to download
+                rb_start_session(&rb, &msgSent, &msgReceived, &msgsQueued);
+                if(msgReceived == 1) {
+                    numRetries = 0;
+                    rb_retrieve_message(&rb);
+                    // TODO: process message
+                } else {
+                    numRetries++;
+                    vTaskDelayUntil(&xLastWakeTime, xRetryFrequency);
+                }
+            }
+        }
+    }
+}
+
 void rb_init(ROCKBLOCK_t *rb) {
 
     // initialize buffers with appropriate start values and end values.
@@ -317,20 +404,6 @@ void rb_retrieve_message(ROCKBLOCK_t *rb) {
 
 }
 
-static void put_int32_array(int32_t toInsert, uint8_t *msg, uint16_t *cur_idx, bool success) {
-    char str[15]; // 2^32 + 1 < 15 indexes, so should be able to fit entire int32_t inside of this.
-    uint16_t lenStr;
-    if(success) {
-        ltoa(toInsert, str);
-        lenStr = strlen(str);
-        memcpy(msg + *cur_idx, str, lenStr);
-        *cur_idx += lenStr;
-    } else {
-        msg[*(cur_idx)++] = '?';
-    }
-    msg[(*cur_idx)++] = ',';
-}
-
 void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
                        int32_t humidity, int32_t pTemp, int32_t hTemp, int32_t altitude,
                        gnss_time_t *time, gnss_coordinate_pair_t *location, bool *success)
@@ -419,5 +492,5 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
     case STOP_FTU_TIMER:
         break;
     }
-
+    return false;
 }
