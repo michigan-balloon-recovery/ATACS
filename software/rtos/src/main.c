@@ -11,7 +11,6 @@
 #include "uart.h"
 #include "gnss.h"
 #include "aprs.h"
-#include "afsk.h"
 #include "rockblock.h"
 #include "sensors.h"
 #include "ff_msp430_sddisk.h"
@@ -23,12 +22,12 @@
 #define RB_MAX_TX_RETRIES   10          // Retry at most 10 times. This means we try for 10*15=150 seconds.
 #define RB_MAX_RX_RETRIES   5           // retry at most 5 times. This means we try for 5*15=75 seconds.
 
-#define APRS_PERIOD_MS      5000
+#define APRS_PERIOD_MS      60000
 
 /*-----------------------------------------------------------*/
 
 static void prvSetupHardware( void );
-void task_heartbeat();
+void task_led_breathe();
 void task_gnss();
 void task_aprs();
 void task_getPressure();
@@ -47,7 +46,7 @@ void main( void ) {
 
     /* Create Tasks */
 
-    xTaskCreate((TaskFunction_t) task_heartbeat,     "LED heartbeat",    128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_led_breathe,     "LED heartbeat",    128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t)task_gnss,           "gnss",             128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_aprs,          "aprs",             128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_getPressure,   "getPressure",      128, NULL, 1, NULL);
@@ -70,52 +69,49 @@ void main( void ) {
 /*-----------------------------------------------------------*/
 
 //uint8_t buff[2048];
-uint8_t wbuf[512];
-uint8_t rbuf[512];
+//uint8_t wbuf[512];
+//uint8_t rbuf[512];
+//
+//void task_logging() {
+//    uint16_t i;
+//    uint32_t num;
+//    uint32_t sd_size;
+//    uint8_t status = 1;
+//    uint32_t timeout = 0;
+//    FF_Disk_t *disk;
+//    FF_FILE *file;
+//    FF_Error_t *error;
+//    //Initialisation of the MMC/SD-card
+//    while (status != 0)                       // if return in not NULL an error did occur and the
+//                                              // MMC/SD-card will be initialized again
+//    {
+//      status = mmcInit();
+//      timeout++;
+//      if (timeout == 150)                      // Try 50 times till error
+//      {
+//        //printf ("No MMC/SD-card found!! %x\n", status);
+//        break;
+//      }
+//    }
+//    sd_size = mmcReadCardSize();
+//
+//    disk = FF_SDDiskInit("/", sd_size, 2048);
+//
+//    status = ff_mkdir("/sd", 0);
+//
+//    file = ff_fopen("/sd/data", "w");
+//
+//    memset(wbuf, 't', 512);
+//    num = ff_fwrite(wbuf, sizeof(uint8_t), 512, file);
+//    ff_rewind(file);
+//    num = ff_fread(rbuf, sizeof(uint8_t), 512, file);
+//
+//    ff_fclose(file);
+//}
 
-void task_logging() {
-    uint16_t i;
-    uint32_t num;
-    uint32_t sd_size;
-    uint8_t status = 1;
-    uint32_t timeout = 0;
-    FF_Disk_t *disk;
-    FF_FILE *file;
-    FF_Error_t *error;
-    //Initialisation of the MMC/SD-card
-    while (status != 0)                       // if return in not NULL an error did occur and the
-                                              // MMC/SD-card will be initialized again
-    {
-      status = mmcInit();
-      timeout++;
-      if (timeout == 150)                      // Try 50 times till error
-      {
-        //printf ("No MMC/SD-card found!! %x\n", status);
-        break;
-      }
-    }
-    sd_size = mmcReadCardSize();
-
-    disk = FF_SDDiskInit("/", sd_size, 2048);
-
-    status = ff_mkdir("/sd", 0);
-
-    file = ff_fopen("/sd/data", "w");
-
-    memset(wbuf, 't', 512);
-    num = ff_fwrite(wbuf, sizeof(uint8_t), 512, file);
-    ff_rewind(file);
-    num = ff_fread(rbuf, sizeof(uint8_t), 512, file);
-
-    ff_fclose(file);
-}
-
-void task_heartbeat() {
-    portTickType xLastWakeTime;
-    const portTickType xFrequency = 1000 / portTICK_RATE_MS;  // 1000ms?
-    xLastWakeTime = xTaskGetTickCount();
-
-    volatile uint32_t i;
+void task_led_breathe() {
+    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
+    portTickType xLastWakeTime = xTaskGetTickCount();
 
     GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN2);
     GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN3);
@@ -138,11 +134,10 @@ void task_heartbeat() {
 }
 
 void task_gnss() {
-    gnss_init(&GNSS);
-
-    portTickType xLastWakeTime;
     const portTickType xFrequency = 100 / portTICK_RATE_MS;  // 100ms?
-    xLastWakeTime = xTaskGetTickCount();
+    portTickType xLastWakeTime = xTaskGetTickCount();
+
+    gnss_init(&GNSS);
 
     while (1) {
         xSemaphoreTake(GNSS.uart_semaphore, portMAX_DELAY);
@@ -152,28 +147,39 @@ void task_gnss() {
 }
 
 void task_aprs() {
-    portTickType xLastWakeTime;
     const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
-    xLastWakeTime = xTaskGetTickCount();
+    portTickType xLastWakeTime = xTaskGetTickCount();
 
-    GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN2); // PTT
-    GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN3); // PD
-    afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P1, GPIO_PIN3);
+    // P1.2 is PD (sleep)
+    // P1.3 is PTT (push-to-talk)
+    // MIC_IN is routed to P2.1 on board rev 1.0, but P2.1 and P2.2 are
+    // bridged on the board because PWM from T1.0(P2.1) is inconvenient
+    aprs_setup(GPIO_PORT_P1, GPIO_PIN2,
+               GPIO_PORT_P1, GPIO_PIN3,
+               GPIO_PORT_P2, GPIO_PIN2);
 
     while (1){
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
+        // Fetch GPS and sensor data
+        gnss_time_t time;
+        gnss_coordinate_pair_t loc;
+        int32_t alt;
+        while(!gnss_get_time(&GNSS, &time));
+        while(!gnss_get_location(&GNSS, &loc));
+        while(!gnss_get_altitude(&GNSS, &alt));
+
         vTaskSuspendAll();
-        aprs_beacon(0);   //altitude 0m
+        aprs_beacon(&time, &loc, &alt);
         xTaskResumeAll();
     }
 }
 
 void task_getHumidity(){
+    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
+    portTickType xLastWakeTime = xTaskGetTickCount();
 
     sensor_data.humiditySemaphore = xSemaphoreCreateBinary();
-    portTickType xLastWakeTime;
-    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
-    xLastWakeTime = xTaskGetTickCount();
 
     while(1){
 	vTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -190,10 +196,10 @@ void task_getHumidity(){
 }
 
 void task_getPressure(){
-	sensor_data.pressureSemaphore = xSemaphoreCreateBinary();
-	portTickType xLastWakeTime;
-  	const portTickType xFrequency = 1000 / portTICK_RATE_MS;
-  	xLastWakeTime = xTaskGetTickCount();
+    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
+    portTickType xLastWakeTime = xTaskGetTickCount();
+
+    sensor_data.pressureSemaphore = xSemaphoreCreateBinary();
 
 	while(1)
 	{
@@ -209,10 +215,9 @@ void task_getPressure(){
 }
 
 void task_rockblock(void) {
-    portTickType xLastWakeTime;
     const portTickType xTaskFrequency =  (uint16_t) ((uint32_t) RB_TRANSMIT_RATE_MS / (uint32_t) portTICK_RATE_MS);
     const portTickType xRetryFrequency = RB_RETRY_RATE_MS / portTICK_RATE_MS;
-    xLastWakeTime = xTaskGetTickCount();
+    portTickType xLastWakeTime = xTaskGetTickCount();
 
     uint8_t msg[RB_TX_SIZE];
     uint16_t len = 0;
@@ -288,7 +293,8 @@ static void prvSetupHardware( void ) {
 	
 	/* Disable the watchdog. */
 	WDTCTL = WDTPW + WDTHOLD;
-  
+
+	/* Set DCO to 16MHz, uses configCPU_CLOCK_HZ, but PMM_CORE_LEVEL_x is hardcoded */
 	GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P1, GPIO_PIN6);
 	GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2, GPIO_PIN0);
 

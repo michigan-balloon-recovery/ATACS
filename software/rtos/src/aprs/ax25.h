@@ -24,8 +24,8 @@ typedef struct {
  * Exported Function Declarations
  */
 void ax25_send_header(const address_t* addresses, uint8_t num);
-void ax25_send_byte(uint8_t byte);
-void ax25_send_string(const uint8_t* buf, const uint16_t buflen);
+void ax25_send_byte(const char byte);
+void ax25_send_string(const char* buf);
 void ax25_send_footer();
 void ax25_flush_frame();
 
