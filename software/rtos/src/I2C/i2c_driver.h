@@ -8,6 +8,9 @@
 #ifndef I2C_DRIVER_H_
 #define I2C_DRIVER_H_
 #include <stdint.h>
+#include "FreeRTOS.h"
+
+SemaphoreHandle_t i2cSemaphore;
 
 int i2c_setup(void);
 
