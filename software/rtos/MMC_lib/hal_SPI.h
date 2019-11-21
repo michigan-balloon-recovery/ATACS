@@ -87,6 +87,17 @@
  #define halSPI_PxIN  SPI_USART0_PxIN
  #define halSPI_SOMI  SPI_USART0_SOMI
 
+ #elif SPI_SER_INTF == SER_INTF_USCIB3
+ #define halSPIRXBUF  UCB3RXBUF
+ #define halSPI_SEND(x) UCB3TXBUF=x
+// #define halSPITXREADY  (UC0IFG&UCB0TXIFG)     /* Wait for TX to be ready */
+ #define halSPITXREADY  (UCB3IFG&UCTXIFG)     /* Wait for TX to be ready */
+ #define halSPITXDONE  (UCB3STAT&UCBUSY)       /* Wait for TX to finish */
+ #define halSPIRXREADY (UCB3IFG&UCRXIFG)      /* Wait for TX to be ready */
+// #define halSPIRXFG_CLR UC0IFG &= ~UCB3RXIFG
+// #define halSPI_PxIN  SPI_USART0_PxIN
+// #define halSPI_SOMI  SPI_USART0_SOMI
+
  #elif SPI_SER_INTF == SER_INTF_USI
  #define halSPIRXBUF  USISRL
  #define halSPI_SEND(x) USISRL = x; USICNT = 8
