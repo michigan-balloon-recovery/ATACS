@@ -54,6 +54,7 @@ FF_Disk_t *FF_SDDiskInit(char *pcName, uint32_t ulSectorCount, size_t xIOManager
             xPartition.ulInterSpace = 0;
             xPartition.xPrimaryCount = 1;
             xPartition.eSizeType = eSizeIsQuota;
+
 //            xError = FF_Partition(pxDisk, &xPartition);
 
 //            xError = FF_Format(pxDisk, 0, pdTRUE, pdTRUE);
