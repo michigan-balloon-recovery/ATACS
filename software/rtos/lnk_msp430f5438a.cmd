@@ -1,5 +1,5 @@
 /* ============================================================================ */
-/* Copyright (c) 2018, Texas Instruments Incorporated                           */
+/* Copyright (c) 2019, Texas Instruments Incorporated                           */
 /*  All rights reserved.                                                        */
 /*                                                                              */
 /*  Redistribution and use in source and binary forms, with or without          */
@@ -31,7 +31,7 @@
 /* ============================================================================ */
 
 /******************************************************************************/
-/* lnk_msp430f5438.cmd - LINKER COMMAND FILE FOR LINKING MSP430F5438 PROGRAMS     */
+/* lnk_msp430f5438a.cmd - LINKER COMMAND FILE FOR LINKING MSP430F5438A PROGRAMS     */
 /*                                                                            */
 /*   Usage:  lnk430 <obj files...>    -o <out file> -m <map file> lnk.cmd     */
 /*           cl430  <src files...> -z -o <out file> -m <map file> lnk.cmd     */
@@ -44,7 +44,7 @@
 /* -heap   0x0100                                   HEAP AREA SIZE            */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
-/* Version: 1.206                                                             */
+/* Version: 1.207                                                             */
 /*----------------------------------------------------------------------------*/
 
 /****************************************************************************/
@@ -63,7 +63,7 @@ MEMORY
     INFOC                   : origin = 0x1880, length = 0x0080
     INFOD                   : origin = 0x1800, length = 0x0080
     FLASH                   : origin = 0x5C00, length = 0xA380
-    FLASH2                  : origin = 0x10000,length = 0x35BFC
+    FLASH2                  : origin = 0x10000,length = 0x35C00
     INT00                   : origin = 0xFF80, length = 0x0002
     INT01                   : origin = 0xFF82, length = 0x0002
     INT02                   : origin = 0xFF84, length = 0x0002
@@ -247,5 +247,5 @@ SECTIONS
 /* Include peripherals memory map                                           */
 /****************************************************************************/
 
--l msp430f5438.cmd
+-l msp430f5438a.cmd
 

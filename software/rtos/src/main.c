@@ -182,15 +182,15 @@ void task_getHumidity(){
     sensor_data.humiditySemaphore = xSemaphoreCreateBinary();
 
     while(1){
-	vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
     	int32_t data[1];
         calculateHumidity(data);
 
-	xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY);
-	sensor_data.humidity = data[0];
-	sensor_data.hTemp = data[1];
-	xSemaphoreGive(sensor_data.humiditySemaphore);
+        xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY);
+        sensor_data.humidity = data[0];
+        sensor_data.hTemp = data[1];
+        xSemaphoreGive(sensor_data.humiditySemaphore);
     }
 
 }

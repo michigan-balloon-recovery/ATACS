@@ -66,10 +66,6 @@ char STATUS = 'i';
 
 int setup(void)
 {
-    WDTCTL = WDTPW | WDTHOLD;
-
-    //PM5CTL0 &= ~LOCKLPM5;
-
     // Configure GPIO
     UCB0TXBUF = 0x1;
     P3SEL = BIT1 | BIT2;                  // I2C pins
@@ -89,29 +85,7 @@ int setup(void)
     UCB0CTL1 &= ~UCSWRST;
     UCB0IE |= UCTXIE | UCRXIE | UCNACKIE;
 
-    __bis_SR_register(GIE);
-    __no_operation();
-    __no_operation();
-
     return 0;
-/*
-    while (1)
-    {
-        __delay_cycles(1000);               // Delay between transmissions
-        TXByteCtr = 4;                      // Load TX byte counter
-        while (UCB0CTLW0 & UCTXSTP);        // Ensure stop condition got sent
-        UCB0CTLW0 |= UCTR | UCTXSTT;        // I2C TX, start condition
-
-        __bis_SR_register(LPM0_bits | GIE); // Enter LPM0 w/ interrupts
-                                            // Remain in LPM0 until all data
-                                            // is TX'd
-    	__delay_cycles(1000);               // Delay between transmissions
-        while (UCB0CTL1 & UCTXSTP);         // Ensure stop condition got sent
-        UCB0CTLW0 &= ~UCTR;                 // I2C RX
-        UCB0CTLW0 |= UCTXSTT;               // I2C start condition
-        __bis_SR_register(LPM0_bits|GIE);   // Enter LPM0 w/ interrupt
-    }
-*/
 }
 
 void i2c_write(uint8_t addr, uint8_t * data, uint8_t numBytes){
@@ -123,7 +97,6 @@ void i2c_write(uint8_t addr, uint8_t * data, uint8_t numBytes){
 	STATUS = 'w';
 	
 	UCB0I2CSA = addr;
-//	TXData[0] = addr;
 	TXByteCtr = numBytes;
 	TotalTXBytes = TXByteCtr;
 	int i;
@@ -168,13 +141,7 @@ void i2c_read(uint8_t addr, uint8_t * data, uint8_t numBytes){
 
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector = USCI_B0_VECTOR
-__interrupt void USCI_B0_ISR(void)
-#elif defined(__GNUC__)
-void __attribute__ ((interrupt(USCI_B0_VECTOR))) USCI_B0_ISR (void)
-#else
-#error Compiler not supported!
-#endif
-{
+__interrupt void USCI_B0_ISR(void) {
   switch(__even_in_range(UCB0IV, USCI_I2C_UCTXIFG))
   {
     case USCI_NONE: break;                  // Vector 0: No interrupts
