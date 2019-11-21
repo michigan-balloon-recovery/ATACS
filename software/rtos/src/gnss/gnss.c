@@ -3,6 +3,16 @@
 extern UARTConfig * prtInfList[5];
 
 // ----- public API ----- //
+
+void task_gnss(void) {
+    gnss_init(&GNSS);
+
+    while (1) {
+        xSemaphoreTake(GNSS.uart_semaphore, portMAX_DELAY);
+        gnss_nmea_decode(&GNSS);
+    }
+}
+
 void gnss_init(gnss_t *gnss_obj) {
     gnss_obj->decoding_message = false;
     gnss_obj->uart_module = USCI_A0;

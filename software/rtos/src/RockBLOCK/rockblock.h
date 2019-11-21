@@ -18,6 +18,7 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "gnss.h"
+#include "sensors.h"
 
 // maximum message sizes for our buffers.
 // We know TX is going to be be 340 bytes at most by the RockBLOCK spec.
@@ -27,6 +28,11 @@
 #define RB_RX_SIZE 270+30
 #define RB_SOF '\0'
 #define RB_EOF '\0'
+
+#define RB_TRANSMIT_RATE_MS (uint32_t) 300000      // this is 5 minutes (1000 ms/sec * 60 sec/min * 5min)
+#define RB_RETRY_RATE_MS    15000       // this is 15 seconds (1000 ms/sec / * 15 sec)
+#define RB_MAX_TX_RETRIES   10          // Retry at most 10 times. This means we try for 10*15=150 seconds.
+#define RB_MAX_RX_RETRIES   5           // retry at most 5 times. This means we try for 5*15=75 seconds.
 
 typedef enum {
     AT = 0, // OK
@@ -71,7 +77,11 @@ typedef struct {
     rb_rx_buffer_t rx; // all rx info is stored here
 } ROCKBLOCK_t;
 
-// Initializes the RockBLOCK module and uart ports on the msp430 to what we need.
+ROCKBLOCK_t rb; // global rockblock object for the task.
+
+void task_rockblock();
+
+// Initializes the RockBLOCK module and UART ports on the msp430 to what we need.
 void rb_init(ROCKBLOCK_t *rb);
 
 // Queries and determines if we have a message on satellite ready to be received.

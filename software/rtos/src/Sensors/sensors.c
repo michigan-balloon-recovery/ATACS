@@ -4,18 +4,53 @@
  * sensors.c
  */
 
+void task_pres(void) {
+    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
+    portTickType xLastWakeTime = xTaskGetTickCount();
 
+    sensor_data.pressureSemaphore = xSemaphoreCreateBinary();
+    sens_init_pres();
+
+    while(1) {
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        int32_t data[1];
+        sens_calc_pres(data);
+
+        xSemaphoreTake(sensor_data.pressureSemaphore,portMAX_DELAY);
+        sensor_data.pressure = data[0];
+        sensor_data.pTemp = data[1];
+        xSemaphoreGive(sensor_data.pressureSemaphore);
+    }
+}
+
+void task_humid(void) {
+    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
+    portTickType xLastWakeTime = xTaskGetTickCount();
+
+    sensor_data.humiditySemaphore = xSemaphoreCreateBinary();
+
+    while(1) {
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
+        int32_t data[1];
+        sens_calc_humid(data);
+
+        xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY);
+        sensor_data.humidity = data[0];
+        sensor_data.hTemp = data[1];
+        xSemaphoreGive(sensor_data.humiditySemaphore);
+    }
+}
  
-void initPressure()
-{
+void sens_init_pres(void) {
+	return; //TODO: get pressure sensor to work.
+	uint8_t cmd[1];
+	
     unsigned int j;
     volatile unsigned int i;
     for(i = 0; i < 8; i++)
         c[i] = 0;
 
-	setup();
-	uint8_t cmd[1];
-	
 	cmd[0] = 0x1E;
     i2c_write(0x77, cmd, 1);
     for(j = 0; j<8; j++) {
@@ -31,8 +66,8 @@ void initPressure()
     }
 }
  
-void calculatePressure(int32_t* return_data)
-{
+void sens_calc_pres(int32_t* return_data) {
+    return;
     uint8_t data[4] = {0x0, 0x0, 0x0, 0x0};
     uint8_t cmd[1];
 
@@ -114,8 +149,7 @@ void calculatePressure(int32_t* return_data)
     return_data[1] = pTemp;
 }
 
-void calculateHumidity(int32_t *return_data)
-{
+void sens_calc_humid(int32_t *return_data) {
     uint32_t hum = 0;
     uint8_t data[4] = {0x0, 0x0, 0x0, 0x0};
     uint32_t temp = 0;
@@ -143,10 +177,9 @@ void calculateHumidity(int32_t *return_data)
     return_data[1] = temp;
 }
 
-bool getPressure(int32_t* pressure)
-{
-	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTRUE)
-	{
+bool sens_get_pres(int32_t* pressure) {
+    return false;
+	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTRUE) {
 		*pressure = sensor_data.pressure;
 		xSemaphoreGive(sensor_data.pressureSemaphore);
 		return true;
@@ -155,8 +188,8 @@ bool getPressure(int32_t* pressure)
 	return false;
 }
 
-bool getPTemp(int32_t* temp)
-{
+bool sens_get_ptemp(int32_t* temp) {
+    return false;
 	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTRUE)
 	{
 		*temp = sensor_data.pTemp;
@@ -167,10 +200,8 @@ bool getPTemp(int32_t* temp)
 	return false; 
 }
 
-bool getHumidity(int32_t* humidity)
-{
-	if(xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY) == pdTRUE)
-	{
+bool sens_get_humid(int32_t* humidity) {
+	if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
 		*humidity = sensor_data.humidity;
 		xSemaphoreGive(sensor_data.humiditySemaphore);
 		return true;
@@ -179,10 +210,8 @@ bool getHumidity(int32_t* humidity)
 	return false; 
 }
 
-bool getHTemp(int32_t* temp)
-{
-    if(xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY) == pdTRUE)
-	{
+bool sens_get_htemp(int32_t* temp) {
+    if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
 		*temp = sensor_data.hTemp;
 		xSemaphoreGive(sensor_data.humiditySemaphore);
 		return true; 

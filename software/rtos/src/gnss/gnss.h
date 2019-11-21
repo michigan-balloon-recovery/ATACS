@@ -80,6 +80,8 @@ typedef struct {
     bool decoding_message;
 } gnss_t;
 
+gnss_t GNSS;
+
 #ifdef GNSS_NMEA
 #include "nmea.h"
 #endif
@@ -94,6 +96,9 @@ typedef struct {
  * @param gnss_obj the GNSS object to be initialized
  * \return None
  */
+
+void task_gnss(void);
+
 void gnss_init(gnss_t *gnss_obj);
 
 bool gnss_get_time(gnss_t *gnss_obj, gnss_time_t *time);
