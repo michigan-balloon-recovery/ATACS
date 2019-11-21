@@ -47,8 +47,8 @@ const uint8_t AFSK_SINE_TABLE[AFSK_TABLE_SIZE_100/100] = {
  */
 
 typedef struct {
-    uint16_t pd_port, ptt_port;
-    uint8_t  pd_pin,  ptt_pin;
+    uint16_t ptt_port;
+    uint8_t  ptt_pin;
 
     uint16_t sine_idx_100;
     uint16_t stride_100;
@@ -73,17 +73,13 @@ void afsk_timer_stop();
 /*
  * Exported Functions Definitions
  */
-void afsk_setup(const uint16_t pd_port,  const uint8_t pd_pin,
-                const uint16_t ptt_port, const uint8_t ptt_pin,
+void afsk_setup(const uint16_t ptt_port, const uint8_t ptt_pin,
                 const uint16_t tx_port,  const uint8_t tx_pin){
     // Setup radio GPIO
-    afsk_state.pd_port = pd_port;
-    afsk_state.pd_pin = pd_port;
-    GPIO_setOutputHighOnPin(pd_port, pd_pin);
-
     afsk_state.ptt_port = ptt_port;
     afsk_state.ptt_pin = ptt_pin;
-    GPIO_setOutputHighOnPin(ptt_port, ptt_pin);
+    GPIO_setAsOutputPin(ptt_port, ptt_pin);
+    GPIO_setOutputHighOnPin(ptt_port, ptt_pin); // Low->TX High->RX
 
     GPIO_setAsPeripheralModuleFunctionOutputPin(tx_port, tx_pin);
 

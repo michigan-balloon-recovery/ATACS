@@ -1,15 +1,62 @@
 #include "aprs.h"
 
+#include "FreeRTOS.h"
 #include "afsk.h"
 #include "ax25.h"
+#include "uart.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
 
+void configDRA818V(const char* freq_str);
+
+/*
+ * Exported Functions Definitions
+ */
+
+void task_aprs() {
+    const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
+    portTickType xLastWakeTime = xTaskGetTickCount();
+
+    // P1.2 is PD (sleep)
+    // P1.3 is PTT (push-to-talk)
+    // MIC_IN is routed to P2.1 on board rev 1.0, but P2.1 and P2.2 are
+    // bridged on the board because PWM from T1.0(P2.1) is inconvenient
+    aprs_setup(GPIO_PORT_P1, GPIO_PIN2,
+               GPIO_PORT_P1, GPIO_PIN3,
+               GPIO_PORT_P2, GPIO_PIN2);
+
+    while (1){
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
+        // Fetch GPS and sensor data
+        gnss_time_t time;
+        gnss_coordinate_pair_t loc;
+        int32_t alt;
+        while(!gnss_get_time(&GNSS, &time));
+        while(!gnss_get_location(&GNSS, &loc));
+        while(!gnss_get_altitude(&GNSS, &alt));
+
+        // Disable scheduler so that transmission is not interrupted by FreeRTOS ticks
+        vTaskSuspendAll();
+        aprs_beacon(&time, &loc, &alt);
+        xTaskResumeAll();
+    }
+}
+
 void aprs_setup(const uint16_t pd_port,  const uint8_t pd_pin,
                 const uint16_t ptt_port, const uint8_t ptt_pin,
                 const uint16_t tx_port,  const uint8_t tx_pin){
-    afsk_setup(pd_port, pd_pin, ptt_port, ptt_pin, tx_port, tx_pin);
+    // Turn on radio
+    GPIO_setAsOutputPin(pd_port, pd_pin);
+    GPIO_setOutputHighOnPin(pd_port, pd_pin);
+    __delay_cycles(2 * configCPU_CLOCK_HZ);
+
+    // Send configuration command to radio
+    configDRA818V("144.390");
+
+    // Initialize AFSK library
+    afsk_setup(ptt_port, ptt_pin, tx_port, tx_pin);
 }
 
 address_t addresses[2] = {
@@ -65,3 +112,35 @@ void aprs_beacon(gnss_time_t* time, gnss_coordinate_pair_t* loc, int32_t* alt){
     // Send!
     ax25_flush_frame();
 }
+
+/*
+ * Local Functions Definitions
+ */
+void configDRA818V(const char* freq_str){
+    // UART initialization
+    UARTConfig a3_cnf = {
+                    .moduleName = USCI_A3,
+                    .portNum = PORT_10,
+                    .RxPinNum = PIN5,
+                    .TxPinNum = PIN4,
+                    .clkRate = configCPU_CLOCK_HZ,
+                    .baudRate = 9600,
+                    .clkSrc = UART_CLK_SRC_SMCLK,
+                    .databits = 8,
+                    .parity = UART_PARITY_NONE,
+                    .stopbits = 1
+    };
+
+    uint8_t buf[50];
+    ring_buff_t txbuf;
+    ring_buff_init(&txbuf, buf, 50);
+    initUSCIUart(&a3_cnf, &txbuf, NULL);
+
+    char cmd[50];
+    sprintf(cmd, "AT+DMOSETGROUP=0,%s,%s,0000,4,0000\r\n", freq_str, freq_str);
+
+    uartSendDataInt(&USCI_A3_cnf, (uint8_t*)cmd, strlen(cmd));
+}
+
+
+
