@@ -8,7 +8,7 @@ void task_pressure(void) {
     const portTickType xFrequency = 1000 / portTICK_RATE_MS;
     portTickType xLastWakeTime = xTaskGetTickCount();
 
-    sensor_data.pressureSemaphore = xSemaphoreCreateBinary();
+    sensor_data.pressureSemaphore = xSemaphoreCreateMutex();
     sens_init_pres();
 
     while(1) {
@@ -16,10 +16,11 @@ void task_pressure(void) {
         int32_t data[1];
         sens_calc_pres(data);
 
-        xSemaphoreTake(sensor_data.pressureSemaphore,portMAX_DELAY);
-        sensor_data.pressure = data[0];
-        sensor_data.pTemp = data[1];
-        xSemaphoreGive(sensor_data.pressureSemaphore);
+        if(xSemaphoreTake(sensor_data.pressureSemaphore,100/portTICK_RATE_MS) == pdTRUE) {
+            sensor_data.pressure = data[0];
+            sensor_data.pTemp = data[1];
+            xSemaphoreGive(sensor_data.pressureSemaphore);
+        }
     }
 }
 
@@ -27,7 +28,7 @@ void task_humidity(void) {
     const portTickType xFrequency = 1000 / portTICK_RATE_MS;
     portTickType xLastWakeTime = xTaskGetTickCount();
 
-    sensor_data.humiditySemaphore = xSemaphoreCreateBinary();
+    sensor_data.humiditySemaphore = xSemaphoreCreateMutex();
 
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -35,10 +36,11 @@ void task_humidity(void) {
         int32_t data[1];
         sens_calc_humid(data);
 
-        xSemaphoreTake(sensor_data.humiditySemaphore, portMAX_DELAY);
-        sensor_data.humidity = data[0];
-        sensor_data.hTemp = data[1];
-        xSemaphoreGive(sensor_data.humiditySemaphore);
+        if(xSemaphoreTake(sensor_data.humiditySemaphore, 100/portTICK_RATE_MS) == pdTRUE) {
+            sensor_data.humidity = data[0];
+            sensor_data.hTemp = data[1];
+            xSemaphoreGive(sensor_data.humiditySemaphore);
+        }
     }
 }
  
@@ -55,10 +57,10 @@ void sens_init_pres(void) {
     i2c_write(0x77, cmd, 1);
     for(j = 0; j<8; j++) {
         uint8_t data[2];
-        for(i=1000; i>0; i--);
+        vTaskDelay(100/portTICK_PERIOD_MS);
         cmd[0] = 0xA0 + j;
         i2c_write(0x77, cmd, 1);
-        for(i=1000; i>0; i--);
+        vTaskDelay(100/portTICK_PERIOD_MS);
         i2c_read(0x77, data, 2);
         c[j] = data[0];
         c[j] = c[j] << 8;
@@ -79,13 +81,13 @@ void sens_calc_pres(int32_t* return_data) {
     int64_t offset, sens;
 
     //retrieves digital pressure value
-    vTaskDelay(1/portTICK_PERIOD_MS);
+    vTaskDelay(100/portTICK_PERIOD_MS);
     cmd[0] = 0x48;
     i2c_write(0x77, cmd, 1);
-    vTaskDelay(1/portTICK_PERIOD_MS);
+    vTaskDelay(100/portTICK_PERIOD_MS);
     cmd[0] = 0x00;
     i2c_write(0x77, cmd, 1);
-    vTaskDelay(1/portTICK_PERIOD_MS);
+    vTaskDelay(100/portTICK_PERIOD_MS);
     i2c_read(0x77, data, 3);
     d1 = data[0];
     d1 = d1 << 8;
@@ -96,10 +98,10 @@ void sens_calc_pres(int32_t* return_data) {
     //retrieves digital temperature value
     cmd[0] = 0x58;
     i2c_write(0x77, cmd, 1);
-    vTaskDelay(1/portTICK_PERIOD_MS);
+    vTaskDelay(100/portTICK_PERIOD_MS);
     cmd[0] = 0x00;
     i2c_write(0x77, cmd, 1);
-    vTaskDelay(1/portTICK_PERIOD_MS);
+    vTaskDelay(100/portTICK_PERIOD_MS);
     i2c_read(0x77, data, 3);
     d2 = data[0];
     d2 = d2 << 8;
@@ -152,26 +154,25 @@ void sens_calc_pres(int32_t* return_data) {
 void sens_calc_humid(int32_t *return_data) {
     uint32_t hum = 0;
     uint8_t data[4] = {0x0, 0x0, 0x0, 0x0};
-    uint32_t temp = 0;
+    int32_t temp = 0;
 
     i2c_write(0x27, 0, 0);
-    vTaskDelay(1/portTICK_PERIOD_MS);
+    vTaskDelay(100/portTICK_PERIOD_MS);
     i2c_read(0x27, data, 4);
 
     hum = data[0] & 0x3F;
     hum = hum << 8;
     hum += data[1];
     hum = 100*hum;
-    hum += 8191; // add 1/2 LSB for accurate rounding
+    //hum += 8191; // add 1/2 LSB for accurate rounding
     hum = hum/16382;
     temp = data[2];
     temp = temp << 6;
     temp += (data[3] >> 2);
     temp = 165*temp;
-    temp += 8191; // add 1/2 LSB for accurate rounding
+    //temp += 8191; // add 1/2 LSB for accurate rounding
     temp = temp / 16382;
     temp -= 40;
-    temp = 1.8*temp + 32;
 
     return_data[0] = hum;
     return_data[1] = temp;

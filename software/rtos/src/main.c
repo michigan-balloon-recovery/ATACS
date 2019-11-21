@@ -29,11 +29,11 @@ void main( void ) {
     /* Create Tasks */
 
     xTaskCreate((TaskFunction_t) task_led_breathe,      "LED heartbeat",    128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_gnss,           "gnss",             128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_gnss,           "gnss",             128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_aprs,           "aprs",             128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_pressure,       "pressure",         128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_humidity,       "humidity",         128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_rockblock,      "RockBLOCK",        128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_humidity,       "humidity",         128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_rockblock,      "RockBLOCK",        512, NULL, 3, NULL);
 //    xTaskCreate((TaskFunction_t) task_logging,        "Logging"           512, NULL, 1, NULL);
 
     /* Start the scheduler. */

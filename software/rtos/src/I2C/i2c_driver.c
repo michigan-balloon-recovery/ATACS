@@ -11,7 +11,6 @@ char STATUS = 'i';
 
 int i2c_setup(void) {
     // Configure GPIO
-    UCB0TXBUF = 0x1;
     P3SEL = BIT1 | BIT2;                  // I2C pins
     P3OUT = BIT1 | BIT2;
     P3REN = BIT1 | BIT2;
