@@ -140,7 +140,8 @@ void ax25_send_footer(){
 }
 
 void ax25_flush_frame(){
-    // P2.2 TX, P2.0 PTT
+    // P2.0 is PTT, MIC_IN is technically connected to P2.1, but P2.1 and P2.2 are
+    // bridged on the board because PWM from T1.0(P2.1) is harder than we realized
     afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P2, GPIO_PIN0);
     afsk_send(ax25_state.packet, ax25_state.packet_len);
     afsk_transmit();

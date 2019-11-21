@@ -79,6 +79,7 @@ void afsk_setup(const uint16_t tx_port, const uint8_t tx_pin,
     afsk_state.ptt_port = ptt_port;
     afsk_state.ptt_pin = ptt_pin;
     GPIO_setOutputHighOnPin(ptt_port, ptt_pin);
+
     afsk_state.tx_port = tx_port;
     afsk_state.tx_pin  = tx_pin;
     GPIO_setAsPeripheralModuleFunctionOutputPin(tx_port, tx_pin);
@@ -108,8 +109,8 @@ void afsk_transmit(){
         return;
 
     // Put radio in TX mode (active low), wait 1ms
-    GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
-    __delay_cycles(configCPU_CLOCK_HZ / 10);
+//    GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+//    __delay_cycles(configCPU_CLOCK_HZ / 10);
 
     // Reset metadata
     afsk_state.tx_idx             = 0;
@@ -125,8 +126,8 @@ void afsk_transmit(){
     while(afsk_state.tx_flag);
 
     // Wait 1ms, then put radio back in RX mode
-    __delay_cycles(configCPU_CLOCK_HZ / 1000);
-    GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+//    __delay_cycles(configCPU_CLOCK_HZ / 1000);
+//    GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
 }
 
 /*
@@ -141,20 +142,20 @@ void afsk_timer_setup(){
 
 void afsk_timer_start(){
     TA1CTL   |= MC__UP;
-    TA1CCTL0 |= CCIE;
+    TA1CCTL1 |= CCIE;
 }
 
 void afsk_timer_stop(){
     TA1CTL   &= ~MC__STOP;
-    TA1CCTL0 &= ~CCIE;
+    TA1CCTL1 &= ~CCIE;
 }
 
 /*
  * AFSK ISR
  */
 uint16_t sample_ctr = 0;
-#pragma vector=TIMER1_A0_VECTOR
-__interrupt void TIMER1_A0_ISR (void) {
+#pragma vector=TIMER1_A1_VECTOR
+__interrupt void TIMER1_A1_ISR (void) {
     // Read TAIV to reset interrupt flag
     uint16_t taiv = TA1IV;
 
