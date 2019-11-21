@@ -11,6 +11,7 @@
 #include "uart.h"
 #include "gnss.h"
 #include "aprs.h"
+#include "afsk.h"
 #include "rockblock.h"
 #include "sensors.h"
 #include "ff_msp430_sddisk.h"
@@ -22,7 +23,7 @@
 #define RB_MAX_TX_RETRIES   10          // Retry at most 10 times. This means we try for 10*15=150 seconds.
 #define RB_MAX_RX_RETRIES   5           // retry at most 5 times. This means we try for 5*15=75 seconds.
 
-#define APRS_PERIOD_MS      10000
+#define APRS_PERIOD_MS      5000
 
 /*-----------------------------------------------------------*/
 
@@ -46,18 +47,17 @@ void main( void ) {
 
     /* Create Tasks */
 
-//    xTaskCreate((TaskFunction_t) task_heartbeat,     "LED heartbeat",    128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t)task_gnss,         "gnss",                  128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_heartbeat,     "LED heartbeat",    128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t)task_gnss,           "gnss",             128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_aprs,          "aprs",             128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_getPressure,   "getPressure",           128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_getHumidity,   "getHumidity",           128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_rockblock,     "RockBLOCK",             128, NULL, 1, NULL);
-    xTaskCreate((TaskFunction_t) task_logging,      "Logging",              512, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_getPressure,   "getPressure",      128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_getHumidity,   "getHumidity",      128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_rockblock,     "RockBLOCK",        128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_logging,       "Logging"           512, NULL, 1, NULL);
 
     /* Start the scheduler. */
 
-    __bis_SR_register(GIE);
-
+    __bis_SR_register(GIE); // Global interrupt enable
     vTaskStartScheduler();
 
     /* If all is well then this line will never be reached.  If it is reached
@@ -112,18 +112,26 @@ void task_logging() {
 
 void task_heartbeat() {
     portTickType xLastWakeTime;
-    const portTickType xFrequency = 100 / portTICK_RATE_MS;  // 100ms?
+    const portTickType xFrequency = 1000 / portTICK_RATE_MS;  // 1000ms?
     xLastWakeTime = xTaskGetTickCount();
 
     volatile uint32_t i;
 
+    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN2);
+    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN3);
+    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN4);
+
+    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
+
     while (1) {
-        P8OUT ^= 0x04;              // toggle P8.2
-        for(i=5000; i>0; i--);     // delay
-        P8OUT ^= 0x08;              // toggle P8.3
-        for(i=5000; i>0; i--);     // delay
-        P8OUT ^= 0x10;              // toggle P8.4
-        for(i=5000; i>0; i--);     // delay
+        GPIO_toggleOutputOnPin(GPIO_PORT_P8, GPIO_PIN2);
+        vTaskDelay(100 / portTICK_RATE_MS);
+        GPIO_toggleOutputOnPin(GPIO_PORT_P8, GPIO_PIN3);
+        vTaskDelay(100 / portTICK_RATE_MS);
+        GPIO_toggleOutputOnPin(GPIO_PORT_P8, GPIO_PIN4);
+        vTaskDelay(100 / portTICK_RATE_MS);
 
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
@@ -147,6 +155,11 @@ void task_aprs() {
     portTickType xLastWakeTime;
     const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
     xLastWakeTime = xTaskGetTickCount();
+
+    GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN2); // PTT
+    GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN3); // PD
+    afsk_setup(GPIO_PORT_P2, GPIO_PIN2, GPIO_PORT_P1, GPIO_PIN3);
+
     while (1){
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         vTaskSuspendAll();
@@ -276,16 +289,31 @@ static void prvSetupHardware( void ) {
 	/* Disable the watchdog. */
 	WDTCTL = WDTPW + WDTHOLD;
   
-	halBoardInit();
+	GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P1, GPIO_PIN6);
+	GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2, GPIO_PIN0);
 
-	// LFXT_Start( XT1DRIVE_0 );
-	hal430SetSystemClock( configCPU_CLOCK_HZ, configLFXT_CLOCK_HZ );
+	//Set VCore = 2 for 16MHz clock
+    PMM_setVCore(PMM_CORE_LEVEL_2);
+
+    //Set DCO FLL reference = REFO
+    UCS_initClockSignal(
+        UCS_FLLREF,
+        UCS_REFOCLK_SELECT,
+        UCS_CLOCK_DIVIDER_1
+        );
+
+    UCS_initFLLSettle(
+            configCPU_CLOCK_HZ / 1000,
+            configCPU_CLOCK_HZ / 32768
+    );
+
+    halBoardInit();
 
     /* UART */
     initUartDriver();
 
 	/* I2C and Pressure Sensor */
-//	initPressure();
+    initPressure();
 
 }
 /*-----------------------------------------------------------*/
@@ -361,4 +389,3 @@ void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
 	for( ;; );
 }
 /*-----------------------------------------------------------*/
-
