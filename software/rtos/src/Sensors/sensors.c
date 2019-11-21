@@ -4,7 +4,7 @@
  * sensors.c
  */
 
-void task_pres(void) {
+void task_pressure(void) {
     const portTickType xFrequency = 1000 / portTICK_RATE_MS;
     portTickType xLastWakeTime = xTaskGetTickCount();
 
@@ -23,7 +23,7 @@ void task_pres(void) {
     }
 }
 
-void task_humid(void) {
+void task_humidity(void) {
     const portTickType xFrequency = 1000 / portTICK_RATE_MS;
     portTickType xLastWakeTime = xTaskGetTickCount();
 

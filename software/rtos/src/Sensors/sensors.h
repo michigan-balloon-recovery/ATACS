@@ -28,7 +28,7 @@ void sens_init_pres(void);
 
 void sens_calc_pres(int32_t* return_data);
 
-void sens_calc_humidity(int32_t* return_data);
+void sens_calc_humid(int32_t* return_data);
 
 bool sens_get_pres(int32_t* pressure);
 
