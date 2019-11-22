@@ -189,7 +189,7 @@ void writeSensor(char *fileName)
 	{
 		//write pressure data
 		int32_t *pressure; 
-		if(getPressure(pressure))
+		if(sens_get_pres(pressure))
 		{
 			char *pStr;
 			ltoa(pStr,pressure);
@@ -204,7 +204,7 @@ void writeSensor(char *fileName)
 		
 		//write pressure temperature data
 		int32_t *temp; 
-		if(getPTemp(temp))
+		if(sens_get_ptemp(temp))
 		{
 			char *tStr;
 			ltoa(tStr,temp);
@@ -219,7 +219,7 @@ void writeSensor(char *fileName)
 		
 		//write humidity data
 		int32_t *humidity; 
-		if(getHumidity(humidity))
+		if(sens_get_humid(humidity))
 		{
 			char *hStr;
 			ltoa(hStr,humidity);
@@ -234,7 +234,7 @@ void writeSensor(char *fileName)
 		
 		//write humidity temperature data
 		int32_t *temp2; 
-		if(getHTemp(temp2))
+		if(sens_get_htemp(temp2))
 		{
 			char *t2Str;
 			ltoa(t2Str,temp2);
