@@ -13,7 +13,6 @@
 #include "aprs.h"
 #include "rockblock.h"
 #include "sensors.h"
-#include "ff_msp430_sddisk.h"
 
 /*-----------------------------------------------------------*/
 
