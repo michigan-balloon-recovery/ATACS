@@ -3,15 +3,23 @@
 #include "sensors.h"
 #include "gnss.h"
 
-void init()
+FATFS file_sys;
+
+void task_log() {
+
+}
+
+void log_init()
 {
+    // mount drive
+    f_mount(&file_sys, "", 1);
 	//initialize all directories
-	ff_mkdir("data");
+	f_mkdir("data");
 	//create folders for each data source
-	ff_mkdir("data/rb");
-	ff_mkdir("data/gps");
-	ff_mkdir("data/sensor");
-	ff_mkdir("data/aprs");
+	f_mkdir("data/rb");
+	f_mkdir("data/gps");
+	f_mkdir("data/sensor");
+	f_mkdir("data/aprs");
 	
 	char rbLastFile [7] = "000000";
 	char gpsLastFile [7] = "000000";
@@ -29,7 +37,7 @@ void init()
 	convertFileName(aprsLastFileName, aprsFileName);	
 }
 
-void convertFileName(char *fileNameBefore, char *fileNameAfter)
+void log_convert_file_name(char *fileNameBefore, char *fileNameAfter)
 {
 	int toConvert = atoi(fileNameBefore);
 	
@@ -55,15 +63,17 @@ void convertFileName(char *fileNameBefore, char *fileNameAfter)
 }
 
 
-void getLastFileName(char *directory, char *fileName)
+void log_get_last_filename(char *directory, char *fileName)
 {
+    DIR dir;
 	//figure out what file number we are on 
 	FF_FindData_t *findStuct;
 	findStruct = (FF_FindData_t *) pvPortMalloc(sizeof(FF_FindData_t));
 	memset(findStruct, 0x00, sizeof(FF_FindData_t));
 	char *temp
 	
-	if(ff_findfirst(directory,findStruct) == 0)
+//	if(ff_findfirst(directory,findStruct) == 0)
+	if(f_findfirst(&dir, ))
 	{
 		while(ff_findnext(findStruct) == 0)
 		{
@@ -80,10 +90,8 @@ void getLastFileName(char *directory, char *fileName)
 	vPortFree(findStruct);
 }
 
-void writeRB(char *fileName)
+void log_RB(char *fileName)
 {
-	//go to rock block directory 
-	ff_chdir("data/rb");
 	
 	//open file for writing. If exist append data else create file
 	rbSourceFile = ff_fopen(fileName,"a");
@@ -98,7 +106,7 @@ void writeRB(char *fileName)
 	}
 }
 
-void writeGPS(char *fileName)
+void log_GNSS(char *fileName)
 {
 	//go to gps directory 
 	ff_chdir("data/gps");
@@ -178,11 +186,9 @@ void writeGPS(char *fileName)
 	}
 }
 
-void writeSensor(char *fileName)
+void log_sensor(char *fileName)
 {
-	//go to sensor directory 
-	ff_chdir("data/sensor");
-	
+
 	sensorSourceFile = ff_fopen(fileName, "a");
 	
 	if(sensorSourceFile != NULL)
@@ -253,7 +259,7 @@ void writeSensor(char *fileName)
 	}
 }
 
-void writeAPRS(char *fileName)
+void log_APRS(char *fileName)
 {
 	//go to aprs directory 
 	ff_chdir("data/aprs");
@@ -270,7 +276,7 @@ void writeAPRS(char *fileName)
 	}
 }
 
-void writeToFiles()
+void log_write_to_files()
 {
 	/*need to add functionality to check if files should be written to
 	  these may need to be in separate functions */
@@ -302,40 +308,3 @@ void writeToFiles()
 	}
 	writeAPRS(aprsFileName);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

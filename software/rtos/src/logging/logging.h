@@ -18,18 +18,18 @@ char aprsFileName [11] = "000000.txt";
 
 
 
-void init();
+void log_init();
 
-void getLastFileName(char *directory, char *fileName);
+void log_get_last_filename(char *directory, char *fileName);
 
-void writeRB(char *fileName);
+void log_RB(char *fileName);
 
-void writeGPS(char *fileName);
+void log_GNSS(char *fileName);
 
-void writeSensor(char *fileName);
+void log_sensor(char *fileName);
 
-void writeAPRS(char *fileName);
+void log_APRS(char *fileName);
 
-void writeToFiles();
+void log_write_to_files();
 
-void convertFileName(char *fileNameBefore, char *fileNameAfter);
+void log_convert_file_name(char *fileNameBefore, char *fileNameAfter);
