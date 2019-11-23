@@ -3,33 +3,24 @@
 
 //max data points per file
 #define maxData 1000
+#define maxFileNameLength 15
 
-//variables to keep track of how much data has been written to the files
-uint32_t rbDataCount = 0;
-uint32_t gpsDataCount = 0;
-uint32_t sensorDataCount = 0;
-uint32_t aprsDataCount = 0;
+typedef struct {
+    uint16_t num_entries;
+    uint8_t current_log [11];
+} log_t;
 
-//file name for data
-char rbFileName [11] = "000000.txt";
-char gpsFileName [11] = "000000.txt";
-char sensorFileName [11] = "000000.txt";
-char aprsFileName [11] = "000000.txt"; 
-
-
+log_t rb_log;
+log_t gnss_log;
+log_t aprs_log;
+log_t sens_log;
 
 void log_init();
 
-void log_get_last_filename(char *directory, char *fileName);
+void log_rb();
 
-void log_RB(char *fileName);
+void log_gnss();
 
-void log_GNSS(char *fileName);
+void log_sens();
 
-void log_sensor(char *fileName);
-
-void log_APRS(char *fileName);
-
-void log_write_to_files();
-
-void log_convert_file_name(char *fileNameBefore, char *fileNameAfter);
+void log_aprs();
