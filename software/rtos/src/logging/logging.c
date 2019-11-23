@@ -141,13 +141,13 @@ void log_gnss()
     if(res == FR_OK)
     {
 		//write gps time
-		gnss_time_t *time;
-		if(gnss_get_time(&GNSS,time))
+		gnss_time_t time;
+		if(gnss_get_time(&GNSS,&time))
 		{
 			char hStr[20];
 			char mStr[20];
-			ltoa(time->hour,hStr);
-			ltoa(time->min,mStr);
+			ltoa(time.hour,hStr);
+			ltoa(time.min,mStr);
 			//writes hours:minutes
 			int length = strlen(hStr);
 			f_write(&file,hStr,length,&bw);
@@ -162,14 +162,14 @@ void log_gnss()
 		f_write(&file,",",1,&bw);
 		
 		//write gps location 
-		gnss_coordinate_pair_t *location; 
-		if(gnss_get_location(&GNSS,location))
+		gnss_coordinate_pair_t location;
+		if(gnss_get_location(&GNSS,&location))
 		{
 			//int32_t gnss_coord_to_decSec(gnss_coordinate_t *coordinate);
 			int32_t latitude;
 			int32_t longitude;
-			latitude = gnss_coord_to_decSec(&location->latitude);
-			longitude = gnss_coord_to_decSec(&location->longitude);
+			latitude = gnss_coord_to_decSec(&location.latitude);
+			longitude = gnss_coord_to_decSec(&location.longitude);
 			
 			char lat[10];
 			char lon[10];
@@ -188,11 +188,11 @@ void log_gnss()
         f_write(&file,",",1,&bw);
 		
 		//write gps altitude
-		int32_t *altitude;
-		if(gnss_get_altitude(&GNSS,altitude))
+		int32_t altitude;
+		if(gnss_get_altitude(&GNSS,&altitude))
 		{
 			char aStr[20];
-			ltoa(*altitude,aStr);
+			ltoa(altitude,aStr);
 			int length = strlen(aStr);
 			f_write(&file,aStr,length,&bw);
 		}
@@ -228,11 +228,11 @@ void log_sens()
 	if(res == FR_OK)
 	{
 		//write pressure data
-		int32_t *pressure; 
-		if(sens_get_pres(pressure))
+		int32_t pressure;
+		if(sens_get_pres(&pressure))
 		{
-			char *pStr;
-			ltoa(*pressure,pStr);
+			char pStr[20];
+			ltoa(pressure,pStr);
 			int length = strlen(pStr);
 			f_write(&file,pStr,length,&bw);
 		}
@@ -243,11 +243,11 @@ void log_sens()
 		f_write(&file,",",1,&bw);
 		
 		//write pressure temperature data
-		int32_t *temp; 
-		if(sens_get_ptemp(temp))
+		int32_t temp;
+		if(sens_get_ptemp(&temp))
 		{
-			char *tStr;
-			ltoa(*temp,tStr);
+			char tStr[20];
+			ltoa(temp,tStr);
 			int length = strlen(tStr);
 			f_write(&file,tStr,length,&bw);
 		}
@@ -259,8 +259,7 @@ void log_sens()
 		
 		//write humidity data
 		int32_t humidity;
-		humidity = sens_get_humid();
-		if(humidity)
+		if(sens_get_humid(&humidity))
 		{
 			char hStr[20];
 			ltoa(humidity,hStr);
@@ -275,8 +274,7 @@ void log_sens()
 		
 		//write humidity temperature data
 		int32_t temp2;
-		temp2 = sens_get_htemp();
-		if(temp2)
+		if(sens_get_htemp(&temp2))
 		{
 			char t2Str[20];
 			ltoa(temp2,t2Str);

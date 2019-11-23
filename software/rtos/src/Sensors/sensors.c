@@ -205,43 +205,23 @@ bool sens_get_ptemp(int32_t* temp) {
 	return false;
 }
 
-//bool sens_get_humid(int32_t* humidity) {
-//	if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
-//		*humidity = sensor_data.humidity;
-//		xSemaphoreGive(sensor_data.humiditySemaphore);
-//		return true;
-//	}
-//
-//	return false;
-//}
-int32_t sens_get_humid() {
-    if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
-        int32_t temp = sensor_data.humidity;
-        xSemaphoreGive(sensor_data.humiditySemaphore);
-        return temp;
-    }
+bool sens_get_humid(int32_t* humidity) {
+	if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
+		*humidity = sensor_data.humidity;
+		xSemaphoreGive(sensor_data.humiditySemaphore);
+		return true;
+	}
 
-    return 0;
+	return false;
 }
 
-//bool sens_get_htemp(int32_t* temp) {
-//    if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
-//		*temp = sensor_data.hTemp;
-//		xSemaphoreGive(sensor_data.humiditySemaphore);
-//		return true;
-//	}
-//
-//    return false;
-//}
 
-int32_t sens_get_htemp() {
+bool sens_get_htemp(int32_t* temp) {
     if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
-      int32_t temp = sensor_data.hTemp;
-      xSemaphoreGive(sensor_data.humiditySemaphore);
-      return temp;
-  }
+		*temp = sensor_data.hTemp;
+		xSemaphoreGive(sensor_data.humiditySemaphore);
+		return true;
+	}
 
-    return 0;
+    return false;
 }
- 
-
