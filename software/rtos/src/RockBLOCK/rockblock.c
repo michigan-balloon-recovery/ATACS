@@ -78,9 +78,11 @@ static void put_int32_array(int32_t toInsert, uint8_t *msg, uint16_t *cur_idx, b
         memcpy(msg + *cur_idx, str, lenStr);
         *cur_idx += lenStr;
     } else {
-        msg[*(cur_idx)++] = '?';
+        msg[*cur_idx] = '?';
+        *cur_idx = *cur_idx + 1;
     }
-    msg[(*cur_idx)++] = ',';
+    msg[*cur_idx] = ',';
+    *cur_idx = *cur_idx + 1;
 }
 
 
@@ -413,11 +415,12 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
 
     size_t lenstr = strlen("ATACS,");
     memcpy(msg, "ATACS,", lenstr); // header len = 6
+    cur_idx += lenstr;
 
     put_int32_array(pressure, msg, &cur_idx, success[0]);
     put_int32_array(humidity, msg, &cur_idx, success[1]);
-    put_int32_array(pTemp, msg, &cur_idx, success[2]);
-    put_int32_array(hTemp, msg, &cur_idx, success[3]);
+    put_int32_array(hTemp, msg, &cur_idx, success[2]);
+    put_int32_array(pTemp, msg, &cur_idx, success[3]);
     put_int32_array(altitude, msg, &cur_idx, success[4]);
 
     if(success[5]) { // time
