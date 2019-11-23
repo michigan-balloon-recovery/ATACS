@@ -148,9 +148,9 @@ void afsk_timer_stop(){
 /*
  * AFSK ISR
  */
-uint16_t sample_ctr = 0;
 #pragma vector=TIMER1_A1_VECTOR
 __interrupt void TIMER1_A1_ISR (void) {
+    static uint16_t sample_ctr = 0;
     // Read TAIV to reset interrupt flag
     uint16_t taiv = TA1IV;
 
