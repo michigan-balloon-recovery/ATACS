@@ -28,7 +28,7 @@ extern "C" {
 #ifdef GNSS_NMEA
 
 #define GNSS_TX_BUFF_SIZE               100
-#define GNSS_RX_BUFF_SIZE               100
+#define GNSS_RX_BUFF_SIZE               512
 #define GNSS_RX_MAX_PAYLOAD             100
 
 #endif /* GNSS_NMEA */
@@ -89,15 +89,15 @@ typedef struct {
 #include "ubx.h"
 #endif
 
+
+void task_gnss(void);
+
 /*!
  * \brief initializes the GNSS object
  * 
  * @param gnss_obj the GNSS object to be initialized
  * \return None
  */
-
-void task_gnss(void);
-
 void gnss_init(gnss_t *gnss_obj);
 
 bool gnss_get_time(gnss_t *gnss_obj, gnss_time_t *time);

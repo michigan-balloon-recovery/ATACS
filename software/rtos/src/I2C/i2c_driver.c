@@ -1,5 +1,6 @@
 #include <msp430.h>
 #include "i2c_driver.h"
+#include <driverlib.h>
 
 unsigned char RXData[9];                 // RX data
 unsigned char RXByteCtr;
@@ -12,7 +13,7 @@ char STATUS = 'i';
 int i2c_setup(void) {
     // Configure GPIO
     P3SEL = BIT1 | BIT2;                  // I2C pins
-    i2cSemaphore = xSemaphoreCreateMutex();
+    i2cSemaphore = xSemaphoreCreateBinary();
     P3OUT = BIT1 | BIT2;
     P3REN = BIT1 | BIT2;
     P4DIR |= BIT7;
@@ -25,7 +26,7 @@ int i2c_setup(void) {
     UCB0CTL0 |= UCMODE_3 | UCMST | UCSYNC; // I2C mode, Master mode, sync
     UCB0CTL1 |=  UCSSEL__SMCLK;
                                             // after UCB0TBCNT is reached
-    UCB0BRW = 8;                           // baudrate = SMCLK / 40
+    UCB0BRW = 40;                           // baudrate = SMCLK / 40
     UCB0CTL1 &= ~UCSWRST;
     UCB0IE |= UCTXIE | UCRXIE | UCNACKIE;
 
@@ -50,7 +51,9 @@ void i2c_write(uint8_t addr, uint8_t * data, uint8_t numBytes) {
 	}
 	
 	while (UCB0CTL1 & UCTXSTP);        // Ensure stop condition got sent
-    UCB0CTLW0 |= UCTR | UCTXSTT;        // I2C TX, start condition
+	UCB0CTLW0 |= UCTR;
+//	while(UCB0STAT & UCBBUSY);
+    UCB0CTLW0 |= UCTXSTT;        // I2C TX, start condition
 	
 	// create writing condition here
 	if(xSemaphoreTake(i2cSemaphore,1000/portTICK_RATE_MS) == pdTRUE){
@@ -75,7 +78,8 @@ void i2c_read(uint8_t addr, uint8_t * data, uint8_t numBytes) {
 	TotalTXBytes = TXByteCtr;
 	RXByteCtr = numBytes;
 	TotalRXBytes = RXByteCtr;
-		
+
+	UCB0CTL1 &= ~UCTXSTP;
 	while (UCB0CTL1 & UCTXSTP);        // Ensure stop condition got sent
 	UCB0CTLW0 &= ~UCTR;
     UCB0CTLW0 |= UCTXSTT;        // I2C TX, start condition
@@ -95,6 +99,7 @@ void i2c_read(uint8_t addr, uint8_t * data, uint8_t numBytes) {
 
 #pragma vector = USCI_B0_VECTOR
 __interrupt void USCI_B0_ISR(void) {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   switch(__even_in_range(UCB0IV, USCI_I2C_UCTXIFG)) {
     case USCI_NONE: break;                  // Vector 0: No interrupts
     case USCI_I2C_UCALIFG: break;           // Vector 2: ALIFG
@@ -116,7 +121,7 @@ __interrupt void USCI_B0_ISR(void) {
          RXByteCtr--;
          if(RXByteCtr == 0){           // Clear lpm0 on return from interrupt
              UCB0IFG &= ~UCRXIFG;
-             xSemaphoreGive(i2cSemaphore);
+             xSemaphoreGiveFromISR(i2cSemaphore, &xHigherPriorityTaskWoken);
              // STATUS = 'i';			   // change status to inactive
              __bic_SR_register_on_exit(LPM0_bits);
              __no_operation();
@@ -125,7 +130,7 @@ __interrupt void USCI_B0_ISR(void) {
          }
      } else{                           // Set debug flag and kill interrupt flag
          UCB0IFG &= ~UCRXIFG;
-         xSemaphoreGive(i2cSemaphore);
+         xSemaphoreGiveFromISR(i2cSemaphore, &xHigherPriorityTaskWoken);
          // STATUS = 'i';				   // change status to inactive
          __bic_SR_register_on_exit(LPM0_bits);
          __no_operation();
@@ -138,21 +143,21 @@ __interrupt void USCI_B0_ISR(void) {
          UCB0TXBUF = TXData[TotalTXBytes - TXByteCtr];   // Load TX buffer (starting from 0)
          TXByteCtr--;                       // Decrement TX byte counter
      }
-	 else if(STATUS == 'r'){				//reading status
-		 UCB0CTLW0 &= ~UCTR;
-		 if(TotalRXBytes > 1){
-			 UCB0CTLW0 |= UCTXSTT;          // I2C start condition
-		 }
-		 else{		//according to Scott, single byte read needs start/stop simultaneously
-			 UCB0CTLW0 |= UCTXSTT;          // I2C start condition
-			 while(UCB0CTLW0 & UCTXSTT);
-			 UCB0CTLW0 |= UCTXSTP;
-		 }
-	 }
+//	 else if(STATUS == 'r'){				//reading status
+//		 UCB0CTLW0 &= ~UCTR;
+//		 if(TotalRXBytes > 1){
+//			 UCB0CTLW0 |= UCTXSTT;          // I2C start condition
+//		 }
+//		 else{		//according to Scott, single byte read needs start/stop simultaneously
+//			 UCB0CTLW0 |= UCTXSTT;          // I2C start condition
+//			 while(UCB0CTLW0 & UCTXSTT);
+//			 UCB0CTLW0 |= UCTXSTP;
+//		 }
+//	 }
      else{
          UCB0CTLW0 |= UCTXSTP;              // I2C stop condition
          UCB0IFG &= ~UCTXIFG;               // Clear USCI_B0 TX int flag
-         xSemaphoreGive(i2cSemaphore);
+         xSemaphoreGiveFromISR(i2cSemaphore, &xHigherPriorityTaskWoken);
 		 // STATUS = 'i';						// change status to inactive
          __bic_SR_register_on_exit(LPM0_bits);// Exit LPM0
          __no_operation();
@@ -162,4 +167,5 @@ __interrupt void USCI_B0_ISR(void) {
 
     default: break;
   }
+  portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }

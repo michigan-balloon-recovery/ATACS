@@ -1,4 +1,5 @@
 #include "sensors.h"
+#include <driverlib.h>
 
 /**
  * sensors.c
@@ -27,15 +28,13 @@ void task_pressure(void) {
 }
 
 void task_humidity(void) {
-    const portTickType xFrequency = pdMS_TO_TICKS(1000);
-    portTickType xLastWakeTime = xTaskGetTickCount();
+    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
 
     sensor_data.humiditySemaphore = xSemaphoreCreateMutex();
     sensor_data.is_valid = true;
 
     while(1) {
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-
+        GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN3);
         int32_t data[1];
         sens_calc_humid(data);
 
@@ -44,6 +43,8 @@ void task_humidity(void) {
             sensor_data.hTemp = data[1];
             xSemaphoreGive(sensor_data.humiditySemaphore);
         }
+        GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
+        vTaskDelay(xFrequency);
     }
 }
  
@@ -161,7 +162,7 @@ void sens_calc_humid(int32_t *return_data) {
     int32_t temp = 0;
 
     i2c_write(0x27, 0, 0);
-    vTaskDelay(100/portTICK_PERIOD_MS);
+    vTaskDelay(50/portTICK_PERIOD_MS);
     i2c_read(0x27, data, 4);
 
     hum = data[0] & 0x3F;

@@ -65,7 +65,7 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
     // read in address
     uint16_t talker;
     uint32_t sentence;
-    uint8_t i;
+    uint8_t i = 0;
     for(i = 0; i < 5; i++) {
         if(!ring_buff_read(buff, address + i)) {
             return EMPTY_BUFFER;
@@ -158,6 +158,7 @@ int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uin
             if( (current_fix.quality != no_fix) && (current_fix.quality != 0xFFFF)) {
                 gnss_obj->last_fix = current_fix;
             }
+//            ring_buff_clear_buff(&gnss_obj->gnss_rx_buff);
             // gnss_nmea_decode_field(payload, &ptr, NULL, NULL);
             break;
         // lattitude and longitude, with time of position fix and status
@@ -202,7 +203,7 @@ int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uin
             break;
         // text transmission
         case SENTENCE_TXT:
-
+            __no_operation();
             break;
         // dual ground/water distance
         case SENTENCE_VLW:

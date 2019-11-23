@@ -144,6 +144,14 @@ static void prvSetupHardware(void) {
 
     halBoardInit();
 
+    /* debug LEDs */
+    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN2);
+    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN3);
+    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN4);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
+
     /* UART */
     initUartDriver();
 

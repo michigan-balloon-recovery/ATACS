@@ -11,39 +11,32 @@ void log_create_new(log_t *log_obj);
 void log_convert_file_name(char *fileName);
 
 void task_log() {
-    taskENTER_CRITICAL();
-    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN2);
-    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN3);
-    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN4);
-    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
-    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
     log_init();
-    taskEXIT_CRITICAL();
     while(1){
+        GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
         if(rb.is_valid) {
             log_rb();
         }
         if(GNSS.is_valid) {
-            GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
+//            GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
             log_gnss();
-            GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-            if(GNSS.last_fix.quality != no_fix) {
-                GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN4);
-            }
-            else {
-                GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
-            }
+//            GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+//            if(GNSS.last_fix.quality != no_fix) {
+//                GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN4);
+//            }
+//            else {
+//                GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
+//            }
         }
         if(sensor_data.is_valid) {
-            GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN3);
+//            GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN3);
             log_sens();
-            GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
+//            GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
         }
 //        log_aprs();
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
-
 }
 
 void log_init()
@@ -107,7 +100,6 @@ void log_rb()
 
     FIL file;
     UINT bw;
-//    taskENTER_CRITICAL();
     res = f_open(&file, rb_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
     res = f_lseek(&file, rb_log.fpointer);
 
@@ -119,7 +111,6 @@ void log_rb()
 		
         rb_log.fpointer = file.fptr;
 		f_close(&file);
-//		taskEXIT_CRITICAL();
 	}
 }
 

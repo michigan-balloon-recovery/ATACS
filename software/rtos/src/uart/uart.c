@@ -25,6 +25,8 @@
 #include <math.h>
 #include <string.h>
 #include "uart.h"
+#include <driverlib.h>
+
 
 // Port Information List so user isn't forced to pass information all the time
 UARTConfig * prtInfList[5];
