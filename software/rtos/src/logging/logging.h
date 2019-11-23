@@ -5,6 +5,12 @@
 #include "rockblock.h"
 #include <string.h>
 #include <stdint.h>
+#include "ff.h"
+#include <stdlib.h>
+#include "sensors.h"
+#include "gnss.h"
+#include "rockblock.h"
+#include <string.h>
 
 //max data points per file
 #define maxData 5
