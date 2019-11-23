@@ -1,10 +1,4 @@
-#include "ff.h"
 #include "logging.h"
-#include <stdlib.h>
-#include "sensors.h"
-#include "gnss.h"
-#include "rockblock.h"
-#include <string.h>
 
 
 FATFS file_sys;
