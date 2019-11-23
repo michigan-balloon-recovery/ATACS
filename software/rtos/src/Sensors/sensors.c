@@ -4,6 +4,8 @@
  * sensors.c
  */
 
+sensor_data_t sensor_data = {.is_valid = false};
+
 void task_pressure(void) {
     const portTickType xFrequency = 1000 / portTICK_RATE_MS;
     portTickType xLastWakeTime = xTaskGetTickCount();
@@ -66,6 +68,7 @@ void sens_init_pres(void) {
         c[j] = c[j] << 8;
         c[j] += data[1];
     }
+    sensor_data.is_valid = true;
 }
  
 void sens_calc_pres(int32_t* return_data) {

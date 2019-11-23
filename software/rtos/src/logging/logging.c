@@ -1,36 +1,52 @@
+#include "ff.h"
 #include "logging.h"
 #include <stdlib.h>
 #include "sensors.h"
 #include "gnss.h"
+#include "rockblock.h"
 #include <string.h>
+
 
 FATFS file_sys;
 
-char* log_create_new(char* initial_log);
+extern ROCKBLOCK_t rb;
+extern gnss_t GNSS;
+extern sensor_data_t sensor_data;
+
+
+void log_create_new(char* initial_log);
 void log_convert_file_name(char *fileName);
 
 void task_log() {
     log_init();
     while(1){
-        log_rb();
-        log_gnss();
-        log_sens();
-        log_aprs();
+        if(rb.is_valid) {
+            log_rb();
+        }
+        if(GNSS.is_valid) {
+            log_gnss();
+        }
+        if(sensor_data.is_valid) {
+            log_sens();
+        }
+//        log_aprs();
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
 }
 
 void log_init()
 {
+    FRESULT res;
     // mount drive
-    f_mount(&file_sys, "", 1);
+    res = f_mount(&file_sys, "", 1);
 	//initialize all directories
-	f_mkdir("data");
+	res = f_mkdir("data");
 	//create folders for each data source
-	f_mkdir("data/rb");
-	f_mkdir("data/gnss");
-	f_mkdir("data/sens");
-	f_mkdir("data/aprs");
+	res = f_mkdir("data/rb");
+	res = f_mkdir("data/gnss");
+	res = f_mkdir("data/sens");
+	res = f_mkdir("data/aprs");
 
 	rb_log.num_entries = maxFileNameLength + 1;
 	gnss_log.num_entries = maxFileNameLength + 1;
@@ -82,11 +98,9 @@ void log_gnss()
 
     if(res == FR_OK)
     {
-		gnss_t *gpsObj; 
-		
 		//write gps time
 		gnss_time_t *time;
-		if(gnss_get_time(gpsObj,time))
+		if(gnss_get_time(&GNSS,time))
 		{
 			char *hStr;
 			char *mStr;
@@ -107,16 +121,16 @@ void log_gnss()
 		
 		//write gps location 
 		gnss_coordinate_pair_t *location; 
-		if(gnss_get_location(gpsObj,location))
+		if(gnss_get_location(&GNSS,location))
 		{
 			//int32_t gnss_coord_to_decSec(gnss_coordinate_t *coordinate);
 			int32_t latitude;
 			int32_t longitude;
-			latitude = gnss_coord_to_decSec(location->latitude);
-			longitude = gnss_coord_to_decSec(location->longitude);
+			latitude = gnss_coord_to_decSec(&location->latitude);
+			longitude = gnss_coord_to_decSec(&location->longitude);
 			
-			char *lat
-			char *lon
+			char *lat;
+			char *lon;
 			ltoa(lat,latitude);
 			ltoa(lon,longitude);
 			int length = strlen(lat);
@@ -133,7 +147,7 @@ void log_gnss()
 		
 		//write gps altitude
 		int32_t *altitude;
-		if(gnss_get_altitude(gnss_obj,altitude))
+		if(gnss_get_altitude(&GNSS,altitude))
 		{
 			char *aStr;
 			ltoa(aStr,altitude);

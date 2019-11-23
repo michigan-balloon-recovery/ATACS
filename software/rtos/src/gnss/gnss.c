@@ -2,6 +2,8 @@
 
 extern UARTConfig * prtInfList[5];
 
+gnss_t GNSS = {.is_valid = false};
+
 // ----- public API ----- //
 
 void task_gnss(void) {
@@ -41,6 +43,7 @@ void gnss_init(gnss_t *gnss_obj) {
     initUSCIUart(&a0_cnf, &gnss_obj->gnss_tx_buff, &gnss_obj->gnss_rx_buff);
 
     initUartRxCallback(&USCI_A0_cnf, &gnss_nmea_rx_callback, gnss_obj);
+    gnss_obj->is_valid = true;
 }
 
 bool gnss_get_time(gnss_t *gnss_obj, gnss_time_t *time) {

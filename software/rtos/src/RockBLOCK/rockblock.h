@@ -75,9 +75,9 @@ typedef struct {
 typedef struct {
     rb_tx_buffer_t tx; // all tx info is stored here
     rb_rx_buffer_t rx; // all rx info is stored here
+    bool is_valid;
 } ROCKBLOCK_t;
 
-ROCKBLOCK_t rb; // global rockblock object for the task.
 
 void task_rockblock();
 
