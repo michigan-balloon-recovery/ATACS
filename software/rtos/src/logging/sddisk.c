@@ -2,8 +2,6 @@
 #include "diskio.h"
 #include "MMC.h"
 
-static DWORD sddisk_size = 0;
-
 static DSTATUS sddisk_status = STA_NOINIT;
 
 DSTATUS disk_status (BYTE pdrv) {
@@ -12,7 +10,6 @@ DSTATUS disk_status (BYTE pdrv) {
 
 DSTATUS disk_initialize (BYTE pdrv) {
     BYTE status, timeout = 0;
-    DWORD sd_size;
 
     do {
         status = mmcInit();
@@ -20,11 +17,8 @@ DSTATUS disk_initialize (BYTE pdrv) {
         if (timeout == 150) {
             sddisk_status = STA_NOINIT;
             return sddisk_status;
-            break;
         }
     } while(status != 0);
-
-    sddisk_size = mmcReadCardSize();
 
     sddisk_status = 0;
 
@@ -44,7 +38,7 @@ DRESULT disk_write (BYTE pdrv, const BYTE* buff, LBA_t sector, UINT count) {
     WORD i;
     BYTE rval;
     for(i = 0; i < count; i++) {
-        rval = mmcWriteSector((sector + i), (buff + 512*i));
+        rval = mmcWriteSector((sector + i), (unsigned char *)(buff + 512*i));
     }
     return (rval == MMC_SUCCESS) ? RES_OK : RES_ERROR;
 }

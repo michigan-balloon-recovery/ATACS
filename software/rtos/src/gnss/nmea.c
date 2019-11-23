@@ -67,7 +67,9 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
     uint32_t sentence;
     uint8_t i;
     for(i = 0; i < 5; i++) {
-        ring_buff_read(buff, address + i);
+        if(!ring_buff_read(buff, address + i)) {
+            return EMPTY_BUFFER;
+        }
     }
     talker = TALKER(address[0], address[1]);
     sentence = SENTENCE(address[2], address[3], address[4]);
@@ -75,7 +77,9 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
     // read in payload
     i = 0;
     do {
-        ring_buff_read(buff, payload + i);
+        if(!ring_buff_read(buff, payload + i)) {
+            return EMPTY_BUFFER;
+        }
         i++;
 
         // enure payload isn't too long
@@ -83,10 +87,10 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
     } while(payload[i-1] != '*');
 
     // read in checksum
-    uint8_t checksum_ascii[3] = {'0','0','\0'};
+    char checksum_ascii[3] = {'0','0','\0'};
     uint8_t checksum;
-    ring_buff_read(buff, checksum_ascii);
-    ring_buff_read(buff, checksum_ascii + 1);
+    ring_buff_read(buff, (uint8_t*)checksum_ascii);
+    ring_buff_read(buff, (uint8_t*)(checksum_ascii + 1));
     checksum = strtol(checksum_ascii, NULL, 16);
 
     // mark packet as read
@@ -95,41 +99,32 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
     switch (talker) {
     // GPS message
     case TALKER_GPS:
-        gnss_nmea_decode_standard_msg(gnss_obj, sentence, payload);
-        break;
+        return gnss_nmea_decode_standard_msg(gnss_obj, sentence, payload);
     // GLONASS message
     case TALKER_GLONASS:
-        gnss_nmea_decode_standard_msg(gnss_obj, sentence, payload);
-        break;
+        return gnss_nmea_decode_standard_msg(gnss_obj, sentence, payload);
     // Galileo message
     case TALKER_GALILEO:
-        gnss_nmea_decode_standard_msg(gnss_obj, sentence, payload);
-        break;
+        return gnss_nmea_decode_standard_msg(gnss_obj, sentence, payload);
     // BeiDou message
     case TALKER_BEIDOU:
-        gnss_nmea_decode_standard_msg(gnss_obj, sentence, payload);
-        break;
+        return gnss_nmea_decode_standard_msg(gnss_obj, sentence, payload);
     // multiple GNSS combination message
     case TALKER_GNSS:
-        gnss_nmea_decode_standard_msg(gnss_obj, sentence, payload);
-        break;
+        return gnss_nmea_decode_standard_msg(gnss_obj, sentence, payload);
     // proprietary PUBX message
     case TALKER_UBX:
         switch (sentence) {
         // all PUBX messages have the same sentence format field
         case SENTENCE_UBX:
-            
-            break;
+            return UNKNOWN_PROPRIETARY;
         // invalid proprietary sentence format
         default:
             return UNKNOWN_PROPRIETARY;
-            break;
         }
-        break;
     // unknown talker
     default:
         return UNKNOWN_TALKER;
-        break;
     }
 }
 
@@ -224,8 +219,8 @@ int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uin
         // unknown sentence format
         default:
             return UNKNOWN_SENTENCE;
-            break;
     }
+    return NO_FAULT;
 }
 
 int8_t gnss_nmea_decode_PUBX() {
@@ -257,7 +252,8 @@ bool gnss_nmea_decode_field(uint8_t *payload, uint8_t **field, bool (*format_dat
 }
 
 // ----- field formatting decoders ----- //
-bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, gnss_coordinate_t *data) {
+bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, void *data) {
+    gnss_coordinate_t *coord = (gnss_coordinate_t*)data;
     uint8_t temp[6];
 
     // ensure the correct length
@@ -266,22 +262,23 @@ bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, gnss_coordinate_t *d
     }
 
     // initialize direction to be invalid
-    data->dir = 'e';
+    coord->dir = 'e';
 
     // degrees
-    data->deg = gnss_nmea_atoi(temp, start, 2);
+    coord->deg = gnss_nmea_atoi(temp, start, 2);
     start += 2;
     // minutes
-    data->min = gnss_nmea_atoi(temp, start, 2);
+    coord->min = gnss_nmea_atoi(temp, start, 2);
     start += 2;
 
     // milliseconds
     start++; // skip decimal place
-    data->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
+    coord->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
     return true;
 }
 
-bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, gnss_coordinate_t *data) {
+bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, void *data) {
+    gnss_coordinate_t *coord = (gnss_coordinate_t*)data;
     uint8_t temp[6];
 
 
@@ -291,32 +288,34 @@ bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, gnss_coordinate_t *
     }
 
     // initialize direction to be invalid
-    data->dir = 'e';
+    coord->dir = 'e';
 
     // degrees
-    data->deg = gnss_nmea_atoi(temp, start, 3);
+    coord->deg = gnss_nmea_atoi(temp, start, 3);
     start += 3;
     // minutes
-    data->min = gnss_nmea_atoi(temp, start, 2);
+    coord->min = gnss_nmea_atoi(temp, start, 2);
     start += 2;
 
     // milliseconds
     start++; // skip decimal place
-    data->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
+    coord->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
     return true;
 }
 
-bool gnss_nmea_field_direction(uint8_t *start, uint8_t *end, gnss_coordinate_t *data) {
+bool gnss_nmea_field_direction(uint8_t *start, uint8_t *end, void *data) {
+    gnss_coordinate_t *coord = (gnss_coordinate_t*)data;
     // ensure correct length
     if( (end - start) != 1) {
         return false;
     }
 
-    data->dir = *start;
+    coord->dir = *start;
     return true;
 }
 
-bool gnss_nmea_field_time(uint8_t *start, uint8_t *end, gnss_time_t *data) {
+bool gnss_nmea_field_time(uint8_t *start, uint8_t *end, void *data) {
+    gnss_time_t *time = (gnss_time_t*)data;
     uint8_t temp[3];
 
     // ensure correct length
@@ -325,24 +324,25 @@ bool gnss_nmea_field_time(uint8_t *start, uint8_t *end, gnss_time_t *data) {
     }
 
     // hours
-    data->hour = gnss_nmea_atoi(temp, start, 2);
+    time->hour = gnss_nmea_atoi(temp, start, 2);
     start += 2;
 
     // minutes
-    data->min = gnss_nmea_atoi(temp, start, 2);
+    time->min = gnss_nmea_atoi(temp, start, 2);
     start += 2;
 
     // seconds
-    data->msec = 1000 * gnss_nmea_atoi(temp, start, 2);
+    time->msec = 1000 * gnss_nmea_atoi(temp, start, 2);
     start += 2;
 
     // milliseconds
     start++; // skip decimal place
-    data->msec += 10 * gnss_nmea_atoi(temp, start, 2);
+    time->msec += 10 * gnss_nmea_atoi(temp, start, 2);
     return true;
 }
 
-bool gnss_nmea_field_char(uint8_t *start, uint8_t *end, char *output) {
+bool gnss_nmea_field_char(uint8_t *start, uint8_t *end, void *data) {
+    char *output = (char *)data;
     // ensure correct length
     if( (end - start) != 1) {
         *output = 0;
@@ -353,7 +353,8 @@ bool gnss_nmea_field_char(uint8_t *start, uint8_t *end, char *output) {
     return true;
 }
 
-bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, int32_t *output) {
+bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, void *data) {
+    int32_t *output = (int32_t *)data;
     uint8_t temp[10];
     if( (end - start) == 0) {
         *output = 0xFFFFFFFF;
@@ -364,10 +365,11 @@ bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, int32_t *output) {
     return true;
 }
 
-bool gnss_nmea_field_int8(uint8_t *start, uint8_t *end, uint8_t *output) {
+bool gnss_nmea_field_int8(uint8_t *start, uint8_t *end, void *data) {
+    uint8_t *output = (uint8_t*)data;
     uint8_t temp[10];
     if( (end - start) == 0) {
-        *output = 0xFFFF;
+        *output = 0xFF;
         return false;
     }
 
@@ -380,6 +382,6 @@ bool gnss_nmea_field_int8(uint8_t *start, uint8_t *end, uint8_t *output) {
 static inline long gnss_nmea_atoi(uint8_t *temp, uint8_t *ascii, uint8_t length) {
     temp[length] = '\0';
     memcpy(temp, ascii, length);
-    return atol(temp);
+    return atol((char *)temp);
 }
 

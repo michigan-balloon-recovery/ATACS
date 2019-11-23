@@ -1,12 +1,18 @@
+#include "ff.h"
+#include <stdlib.h>
+#include "sensors.h"
+#include "gnss.h"
+#include "rockblock.h"
+#include <string.h>
 #include <stdint.h>
 
 //max data points per file
-#define maxData 1000
-#define maxFileNameLength 15
+#define maxData 5
+#define maxFileNameLength 30
 
 typedef struct {
     uint16_t num_entries;
-    uint8_t current_log [11];
+    char current_log [maxFileNameLength];
     FSIZE_t fpointer;
 } log_t;
 

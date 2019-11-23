@@ -32,9 +32,12 @@ bool sens_get_pres(int32_t* pressure);
 
 bool sens_get_ptemp(int32_t* temp);
 
-bool sens_get_humid(int32_t* humidity);
+//bool sens_get_humid(int32_t* humidity);
+int32_t sens_get_humid();
 
-bool sens_get_htemp(int32_t* temp);
+//bool sens_get_htemp(int32_t* temp);
+int32_t sens_get_htemp();
+
 
 
 #endif

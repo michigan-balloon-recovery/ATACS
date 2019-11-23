@@ -27,10 +27,11 @@ void task_pressure(void) {
 }
 
 void task_humidity(void) {
-    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
+    const portTickType xFrequency = pdMS_TO_TICKS(1000);
     portTickType xLastWakeTime = xTaskGetTickCount();
 
     sensor_data.humiditySemaphore = xSemaphoreCreateMutex();
+    sensor_data.is_valid = true;
 
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -200,28 +201,47 @@ bool sens_get_ptemp(int32_t* temp) {
 		xSemaphoreGive(sensor_data.pressureSemaphore);
 		return true;
 	}
-	
-	return false; 
+
+	return false;
 }
 
-bool sens_get_humid(int32_t* humidity) {
-	if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
-		*humidity = sensor_data.humidity;
-		xSemaphoreGive(sensor_data.humiditySemaphore);
-		return true;
-	}
-
-	return false; 
-}
-
-bool sens_get_htemp(int32_t* temp) {
+//bool sens_get_humid(int32_t* humidity) {
+//	if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
+//		*humidity = sensor_data.humidity;
+//		xSemaphoreGive(sensor_data.humiditySemaphore);
+//		return true;
+//	}
+//
+//	return false;
+//}
+int32_t sens_get_humid() {
     if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
-		*temp = sensor_data.hTemp;
-		xSemaphoreGive(sensor_data.humiditySemaphore);
-		return true; 
-	}
+        int32_t temp = sensor_data.humidity;
+        xSemaphoreGive(sensor_data.humiditySemaphore);
+        return temp;
+    }
 
-    return false;
+    return 0;
+}
+
+//bool sens_get_htemp(int32_t* temp) {
+//    if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
+//		*temp = sensor_data.hTemp;
+//		xSemaphoreGive(sensor_data.humiditySemaphore);
+//		return true;
+//	}
+//
+//    return false;
+//}
+
+int32_t sens_get_htemp() {
+    if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
+      int32_t temp = sensor_data.hTemp;
+      xSemaphoreGive(sensor_data.humiditySemaphore);
+      return temp;
+  }
+
+    return 0;
 }
  
 
