@@ -3,6 +3,10 @@
 
 #include "rockblock.h"
 
+extern gnss_t GNSS;
+
+ROCKBLOCK_t rb = {.is_valid = false}; // global rockblock object for the task.
+
 // formats the command for the message sent to the RockBLOCK.
 static void rb_format_command(ROCKBLOCK_t *rb, rb_message_t cmd, volatile uint8_t *numReturns) {
 
@@ -197,7 +201,7 @@ void rb_init(ROCKBLOCK_t *rb) {
 
     rb_set_awake(true); // TODO: might want to not just always be on, so add the ability to sleep...
     //rb_set_awake(false);
-
+    rb->is_valid = true;
 }
 
 

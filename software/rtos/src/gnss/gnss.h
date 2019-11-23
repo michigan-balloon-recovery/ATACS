@@ -78,9 +78,8 @@ typedef struct {
     SemaphoreHandle_t uart_semaphore;
     SemaphoreHandle_t data_mutex;
     bool decoding_message;
+    bool is_valid;
 } gnss_t;
-
-gnss_t GNSS;
 
 #ifdef GNSS_NMEA
 #include "nmea.h"
