@@ -302,7 +302,7 @@ void rb_send_message(ROCKBLOCK_t *rb, uint8_t *msg, uint16_t len, bool *msgSent,
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
     rb->rx.finished = false;
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
-
+    rb_wait_for_messages(rb);
     rb_start_session(rb, msgSent, msgReceived, msgsQueued);
 
     // process response to see if message succeeded.
