@@ -329,11 +329,11 @@ void log_convert_file_name(char *fileName)
 
 void log_create_new(log_t *log_obj)
 {
-    taskENTER_CRITICAL();
+//    taskENTER_CRITICAL();
     log_obj->fpointer = 0;
     while(f_stat(log_obj->current_log, NULL) == FR_OK){
         log_convert_file_name(log_obj->current_log);
     }
     log_obj->num_entries = 0;
-    taskEXIT_CRITICAL();
+//    taskEXIT_CRITICAL();
 }

@@ -122,6 +122,8 @@ void task_rockblock(void) {
 
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xTaskFrequency);
+        GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN4);
+
 
         i = 0;
 
@@ -144,7 +146,7 @@ void task_rockblock(void) {
 
         while(!msgSent && numRetries < RB_MAX_TX_RETRIES) {
             numRetries++;
-            vTaskDelayUntil(&xLastWakeTime, xRetryFrequency);
+            vTaskDelay(xRetryFrequency);
             rb_start_session(&rb, &msgSent, &msgReceived, &msgsQueued);
         }
 
@@ -162,10 +164,11 @@ void task_rockblock(void) {
                     // TODO: process message
                 } else {
                     numRetries++;
-                    vTaskDelayUntil(&xLastWakeTime, xRetryFrequency);
+                    vTaskDelay(xRetryFrequency);
                 }
             }
         }
+        GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
         xLastWakeTime = xTaskGetTickCount();
     }
 
@@ -269,9 +272,11 @@ bool rb_tx_callback(void *param, uint8_t *txAddress) {
 
     *txAddress= *(rb->tx.tx_ptr);
 
+    if(rb->tx.tx_ptr == rb->tx.buff)
+        rb->rx.finished = false;
+
     if(rb->tx.tx_ptr == rb->tx.last_ptr) { // sent last byte.
         xSemaphoreGiveFromISR(rb->tx.txSemaphore, NULL);
-        rb->rx.finished = false;
         return false;
     }
 

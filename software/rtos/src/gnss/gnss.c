@@ -11,9 +11,9 @@ void task_gnss(void) {
 
     while (1) {
         xSemaphoreTake(GNSS.uart_semaphore, portMAX_DELAY);
-        GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN4);
+//        GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN4);
         gnss_nmea_decode(&GNSS);
-        GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
+//        GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
     }
 }
 
