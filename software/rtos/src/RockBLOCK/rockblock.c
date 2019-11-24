@@ -66,7 +66,6 @@ static void rb_clear_buffers(ROCKBLOCK_t *rb) {
     rb->rx.cur_ptr = rb->rx.buff;
     rb->rx.last_ptr = rb->rx.buff;
     rb->tx.tx_ptr = rb->tx.buff;
-    rb->rx.rx_ptr = rb->rx.buff;
 }
 
 static void rb_wait_for_messages(ROCKBLOCK_t *rb) {
@@ -179,11 +178,9 @@ void rb_init(ROCKBLOCK_t *rb) {
     // initialize buffers with appropriate start values and end values.
     rb->rx.cur_ptr = rb->rx.buff;
     rb->rx.last_ptr = rb->rx.buff;
-    rb->rx.end_ptr = rb->rx.buff + RB_RX_SIZE - 1;
 
     rb->tx.cur_ptr = rb->tx.buff;
     rb->tx.last_ptr = rb->tx.buff;
-    rb->tx.end_ptr = rb->tx.buff + RB_TX_SIZE - 1;
 
     rb->rx.rxSemaphore = xSemaphoreCreateCounting(1, 0);
     rb->tx.txSemaphore = xSemaphoreCreateCounting(1, 0);
@@ -245,7 +242,7 @@ void rb_rx_callback(void *param, uint8_t datum) {
     ROCKBLOCK_t *rb = (ROCKBLOCK_t *) param;
 
     if(rb->rx.finished == false) {
-        *(rb->rx.rx_ptr) = datum; // take the data, we assume we have room here.
+        *(rb->rx.cur_ptr) = datum; // take the data, we assume we have room here.
 
         if(datum == (uint8_t) '\r') { // all message responses end with '\r', but there might be multiple '\r' per message.
             numReturns++;
@@ -253,17 +250,15 @@ void rb_rx_callback(void *param, uint8_t datum) {
             if(numReturns == rb->rx.numReturns) {
                 numReturns = 0;
                 rb->rx.finished = true;
-                rb->rx.last_ptr = rb->rx.rx_ptr;
+                rb->rx.last_ptr = rb->rx.cur_ptr;
                 xSemaphoreGiveFromISR(rb->rx.rxSemaphore, NULL);
             }
         }
 
-        rb->rx.rx_ptr++; // increment the index.
+        if(datum == (uint8_t) ')' || datum == (uint8_t) '(')
+            numReturns = 200;
 
-        if(rb->rx.rx_ptr >= rb->rx.end_ptr) { // we are full! Message must be complete.
-            //TODO: Handle this case in a reasonable way.
-        }
-
+        rb->rx.cur_ptr++; // increment the index.
     }
 }
 
@@ -271,9 +266,6 @@ bool rb_tx_callback(void *param, uint8_t *txAddress) {
     ROCKBLOCK_t *rb = (ROCKBLOCK_t *) param;
 
     *txAddress= *(rb->tx.tx_ptr);
-
-    if(rb->tx.tx_ptr == rb->tx.buff)
-        rb->rx.finished = false;
 
     if(rb->tx.tx_ptr == rb->tx.last_ptr) { // sent last byte.
         xSemaphoreGiveFromISR(rb->tx.txSemaphore, NULL);
@@ -300,6 +292,7 @@ void rb_send_message(ROCKBLOCK_t *rb, uint8_t *msg, uint16_t len, bool *msgSent,
     *(rb->tx.cur_ptr++) = '\r'; // end message with carriage return.
 
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
+    rb->rx.finished = false;
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
     rb_wait_for_messages(rb);
 
@@ -315,7 +308,7 @@ void rb_start_session(ROCKBLOCK_t *rb, bool *msgSent, int8_t *msgReceived, int8_
     rb_clear_buffers(rb);
     rb_format_command(rb, SBDIX, &(rb->rx.numReturns));
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1;
-
+    rb->rx.finished = false;
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
     rb_wait_for_messages(rb);
 
