@@ -4,6 +4,7 @@
 #include "rockblock.h"
 
 extern gnss_t GNSS;
+extern sensor_data_t sensor_data;
 
 ROCKBLOCK_t rb = {.is_valid = false}; // global rockblock object for the task.
 
@@ -114,10 +115,16 @@ void task_rockblock(void) {
 
     rb_init(&rb);
 
+    // wait for all sensors to initialize.
+    while(!sensor_data.humid_init);
+    while(!sensor_data.pres_init);
+    while(!GNSS.is_valid);
+
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xTaskFrequency);
 
         i = 0;
+
         success[i++] = sens_get_pres(&pressure);
         success[i++] = sens_get_humid(&humidity);
         success[i++] = sens_get_htemp(&hTemp);
@@ -159,7 +166,9 @@ void task_rockblock(void) {
                 }
             }
         }
+        xLastWakeTime = xTaskGetTickCount();
     }
+
 }
 
 void rb_init(ROCKBLOCK_t *rb) {
