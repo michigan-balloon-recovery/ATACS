@@ -44,7 +44,7 @@ static void rb_format_command(ROCKBLOCK_t *rb, rb_message_t cmd, volatile uint8_
         case SBDRT: // download ASCII message
             *(rb->tx.cur_ptr++) = 'R';
             *(rb->tx.cur_ptr++) = 'T';
-            *numReturns = 5;
+            *numReturns = 4;
         break;
         default:
             *numReturns = 0;
@@ -68,9 +68,15 @@ static void rb_clear_buffers(ROCKBLOCK_t *rb) {
     rb->tx.tx_ptr = rb->tx.buff;
 }
 
-static void rb_wait_for_messages(ROCKBLOCK_t *rb) {
-    xSemaphoreTake(rb->tx.txSemaphore, portMAX_DELAY);
-    xSemaphoreTake(rb->rx.rxSemaphore, portMAX_DELAY);
+static bool rb_wait_for_messages(ROCKBLOCK_t *rb) {
+
+    if(xSemaphoreTake(rb->tx.txSemaphore, 20000 / portTICK_RATE_MS) == pdFALSE)
+        return false;
+
+    if(xSemaphoreTake(rb->rx.rxSemaphore, 20000 / portTICK_RATE_MS) == pdFALSE)
+        return false;
+
+    return true;
 }
 
 static void put_int32_array(int32_t toInsert, uint8_t *msg, uint16_t *cur_idx, bool success) {
@@ -152,15 +158,16 @@ void task_rockblock(void) {
         numRetries = 0;
 
         if(msgReceived == 1) { // we received a message
-            rb_retrieve_message(&rb);
-            rb_process_message(&rb.rx);
+            if(rb_retrieve_message(&rb))
+                rb_process_message(&rb.rx);
 
             while(msgsQueued > 0 && numRetries < RB_MAX_RX_RETRIES ) { // other messages to download
                 rb_start_session(&rb, &msgSent, &msgReceived, &msgsQueued);
                 if(msgReceived == 1) {
                     numRetries = 0;
-                    rb_retrieve_message(&rb);
-                    // TODO: process message
+                    if(rb_retrieve_message(&rb))
+                        rb_process_message(&rb.rx);
+
                 } else {
                     numRetries++;
                     vTaskDelay(xRetryFrequency);
@@ -295,7 +302,6 @@ void rb_send_message(ROCKBLOCK_t *rb, uint8_t *msg, uint16_t len, bool *msgSent,
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
     rb->rx.finished = false;
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
-    rb_wait_for_messages(rb);
 
     rb_start_session(rb, msgSent, msgReceived, msgsQueued);
 
@@ -311,7 +317,13 @@ void rb_start_session(ROCKBLOCK_t *rb, bool *msgSent, int8_t *msgReceived, int8_
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1;
     rb->rx.finished = false;
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
-    rb_wait_for_messages(rb);
+
+    if(rb_wait_for_messages(rb) == false) {
+        *msgSent = false;
+        *msgReceived = 0;
+        *msgsQueued = 0;
+        return;
+    }
 
     totalLen = rb->rx.last_ptr - rb->rx.buff + 1;
 
@@ -407,14 +419,14 @@ uint8_t rb_check_mailbox(ROCKBLOCK_t *rb, int8_t *msgsQueued) {
     return msgReceived;
 }
 
-void rb_retrieve_message(ROCKBLOCK_t *rb) {
+bool rb_retrieve_message(ROCKBLOCK_t *rb) {
 
     rb_clear_buffers(rb);
     rb_format_command(rb, SBDRT, &(rb->rx.numReturns));
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
 
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
-    rb_wait_for_messages(rb);
+    return rb_wait_for_messages(rb);
 
 }
 
@@ -484,6 +496,23 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
             cur_idx = i+1;
         }
     }
+
+    char msg[] = "FTUPLZ";
+    bool cut = true;
+    for(i = 0; i < strlen("FTUPLZ"); i++) {
+        if(msg[i] != rx->buff[cur_idx++]) {
+            cut = false;
+            break;
+        }
+    }
+
+    if(cut) {
+        rb_cut_ftu(true);
+        vTaskDelay(10000 / portTICK_RATE_MS);
+        rb_cut_ftu(false);
+    }
+
+    return cut;
 
     if(rx->buff[cur_idx++] != RB_SOF)
         return false;

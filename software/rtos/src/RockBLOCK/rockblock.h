@@ -128,7 +128,7 @@ void rb_start_session(ROCKBLOCK_t *rb, bool *msgSent, int8_t *msgReceived, int8_
 // Grabs message from the RockBLOCK.
 // Must have already been downloaded onto RockBLOCK. Does not consume credits, as we are polling our RockBLOCK's memory.
 // value will be in rb->rx.buff
-void rb_retrieve_message(ROCKBLOCK_t *rb);
+bool rb_retrieve_message(ROCKBLOCK_t *rb);
 
 // This is the function that will be used by the UART driver when we receive RX messages.
 // Pass this into the driver via the initUartRxCallback function.
