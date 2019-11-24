@@ -28,7 +28,7 @@ void task_log() {
 //                GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
 //            }
         }
-        if(sensor_data.is_valid) {
+        if(sensor_data.humid_init && sensor_data.pres_init) {
 //            GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN3);
             log_sens();
 //            GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);

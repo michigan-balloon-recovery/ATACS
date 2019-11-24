@@ -13,7 +13,8 @@ typedef struct{
 	int32_t hTemp;
 	SemaphoreHandle_t pressureSemaphore;
 	SemaphoreHandle_t humiditySemaphore;
-	bool is_valid;
+	bool humid_init;
+	bool pres_init;
 } sensor_data_t;
 
 uint16_t c[8];

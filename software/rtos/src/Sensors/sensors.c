@@ -5,17 +5,15 @@
  * sensors.c
  */
 
-sensor_data_t sensor_data = {.is_valid = false};
+sensor_data_t sensor_data = {.humid_init = false, .pres_init = false};
 
 void task_pressure(void) {
-    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
-    portTickType xLastWakeTime = xTaskGetTickCount();
+//    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
 
     sensor_data.pressureSemaphore = xSemaphoreCreateMutex();
     sens_init_pres();
 
     while(1) {
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
         int32_t data[1];
         sens_calc_pres(data);
 
@@ -24,6 +22,7 @@ void task_pressure(void) {
             sensor_data.pTemp = data[1];
             xSemaphoreGive(sensor_data.pressureSemaphore);
         }
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
 }
 
@@ -31,7 +30,7 @@ void task_humidity(void) {
     const portTickType xFrequency = 1000 / portTICK_RATE_MS;
 
     sensor_data.humiditySemaphore = xSemaphoreCreateMutex();
-    sensor_data.is_valid = true;
+    sensor_data.humid_init = true;
 
     while(1) {
         GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN3);
@@ -49,7 +48,6 @@ void task_humidity(void) {
 }
  
 void sens_init_pres(void) {
-	return; //TODO: get pressure sensor to work.
 	uint8_t cmd[1];
 	
     unsigned int j;
@@ -70,11 +68,10 @@ void sens_init_pres(void) {
         c[j] = c[j] << 8;
         c[j] += data[1];
     }
-    sensor_data.is_valid = true;
+    sensor_data.pres_init = true;
 }
  
 void sens_calc_pres(int32_t* return_data) {
-    return;
     uint8_t data[4] = {0x0, 0x0, 0x0, 0x0};
     uint8_t cmd[1];
 
@@ -184,7 +181,6 @@ void sens_calc_humid(int32_t *return_data) {
 }
 
 bool sens_get_pres(int32_t* pressure) {
-    return false;
 	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTRUE) {
 		*pressure = sensor_data.pressure;
 		xSemaphoreGive(sensor_data.pressureSemaphore);
@@ -195,7 +191,6 @@ bool sens_get_pres(int32_t* pressure) {
 }
 
 bool sens_get_ptemp(int32_t* temp) {
-    return false;
 	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTRUE)
 	{
 		*temp = sensor_data.pTemp;
