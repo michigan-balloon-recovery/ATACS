@@ -130,7 +130,7 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
 
 int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uint8_t *payload) {
     uint8_t *ptr = payload;
-    gnss_fix_t current_fix;
+    gnss_fix_t current_fix = {.quality = no_fix};
     switch (sentence_id) {
         // datum reference
         case SENTENCE_DTM:

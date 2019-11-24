@@ -12,14 +12,17 @@ void log_convert_file_name(char *fileName);
 
 void task_log() {
     log_init();
+    vTaskDelay(10);
     while(1){
         GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
         if(rb.is_valid) {
             log_rb();
+            vTaskDelay(10);
         }
         if(GNSS.is_valid) {
 //            GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
             log_gnss();
+            vTaskDelay(10);
 //            GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
 //            if(GNSS.last_fix.quality != no_fix) {
 //                GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN4);
@@ -31,6 +34,7 @@ void task_log() {
         if(sensor_data.humid_init && sensor_data.pres_init) {
 //            GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN3);
             log_sens();
+            vTaskDelay(10);
 //            GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
         }
 //        log_aprs();
@@ -46,34 +50,28 @@ void log_init()
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
     res = f_mount(&file_sys, "", 1);
 //    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-    vTaskDelay(1000);
 	//initialize all directories
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
 //	res = f_mkdir("data");
 //	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-    vTaskDelay(1000);
 
 
 	//create folders for each data source
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
 	res = f_mkdir("rb");
 //	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-    vTaskDelay(1000);
 
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
 	res = f_mkdir("gnss");
 //	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-    vTaskDelay(1000);
 
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
 	res = f_mkdir("sens");
 //	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-    vTaskDelay(1000);
 
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
 	res = f_mkdir("aprs");
 //	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-    vTaskDelay(1000);
 
 
 
@@ -329,11 +327,11 @@ void log_convert_file_name(char *fileName)
 
 void log_create_new(log_t *log_obj)
 {
-//    taskENTER_CRITICAL();
+    taskENTER_CRITICAL();
     log_obj->fpointer = 0;
     while(f_stat(log_obj->current_log, NULL) == FR_OK){
         log_convert_file_name(log_obj->current_log);
     }
     log_obj->num_entries = 0;
-//    taskEXIT_CRITICAL();
+    taskEXIT_CRITICAL();
 }

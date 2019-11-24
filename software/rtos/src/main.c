@@ -36,6 +36,7 @@ void main( void ) {
     xTaskCreate((TaskFunction_t) task_rockblock,      "RockBLOCK",        512, NULL, 1, NULL);
     xTaskCreate((TaskFunction_t) task_log,            "Logging",          512, NULL, 1, NULL);
 
+
     /* Start the scheduler. */
 
     __bis_SR_register(GIE); // Global interrupt enable
@@ -202,7 +203,7 @@ void vApplicationSetupTimerInterrupt(void) {
 void vApplicationIdleHook(void) {
 	/* Called on each iteration of the idle task.  In this case the idle task
 	just enters a low(ish) power mode. */
-	__bis_SR_register( LPM1_bits + GIE );
+//	__bis_SR_register( LPM1_bits + GIE );
 }
 /*-----------------------------------------------------------*/
 

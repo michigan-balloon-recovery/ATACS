@@ -29,7 +29,7 @@
 #define RB_SOF '\0'
 #define RB_EOF '\0'
 
-#define RB_TRANSMIT_RATE_MS (uint32_t) 6000//300000      // this is 5 minutes (1000 ms/sec * 60 sec/min * 5min)
+#define RB_TRANSMIT_RATE_MS (uint32_t) 60000//300000      // this is 5 minutes (1000 ms/sec * 60 sec/min * 5min)
 #define RB_RETRY_RATE_MS    15000       // this is 15 seconds (1000 ms/sec / * 15 sec)
 #define RB_MAX_TX_RETRIES   10          // Retry at most 10 times. This means we try for 10*15=150 seconds.
 #define RB_MAX_RX_RETRIES   5           // retry at most 5 times. This means we try for 5*15=75 seconds.
@@ -154,5 +154,7 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
 // processes the message from the rockblock buffer.
 // returns true if the message is a valid command, false if it is not a valid command.
 bool rb_process_message(rb_rx_buffer_t *rx);
+
+void rb_cut_ftu(bool cut);
 
 #endif /* SRC_ROCKBLOCK_ROCKBLOCK_H_ */

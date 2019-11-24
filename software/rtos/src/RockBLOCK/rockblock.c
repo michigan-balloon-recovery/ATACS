@@ -206,6 +206,7 @@ void rb_init(ROCKBLOCK_t *rb) {
 
     // ring, network-available, and sleep pin initialization
     P8DIR &= ~(BIT0 | BIT1); // set ring and network-available pins to inputs. ON OUR MSP430
+    P8DIR |= BIT5;
     // P8DIR &= ~(BIT0 | BIT2); // OLIMEX ring, netav pins
 
     P7DIR |= BIT3; // set sleep to an output.
@@ -244,7 +245,7 @@ void rb_rx_callback(void *param, uint8_t datum) {
     if(rb->rx.finished == false) {
         *(rb->rx.cur_ptr) = datum; // take the data, we assume we have room here.
 
-        if(datum == (uint8_t) '\r') { // all message responses end with '\r', but there might be multiple '\r' per message.
+        if( (datum == (uint8_t) '\r') || (datum == (uint8_t) ')')) { // all message responses end with '\r', but there might be multiple '\r' per message.
             numReturns++;
 
             if(numReturns == rb->rx.numReturns) {
@@ -255,8 +256,8 @@ void rb_rx_callback(void *param, uint8_t datum) {
             }
         }
 
-        if(datum == (uint8_t) ')' || datum == (uint8_t) '(')
-            numReturns = 200;
+//        if(datum == (uint8_t) ')' || datum == (uint8_t) '(')
+//            numReturns = 200;
 
         rb->rx.cur_ptr++; // increment the index.
     }
@@ -494,6 +495,9 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
 
     switch(rx->buff[cur_idx]) {
     case CUT_FTU_NOW:
+        rb_cut_ftu(true);
+        vTaskDelay(2000 / portTICK_RATE_MS);
+        rb_cut_ftu(false);
         break;
     case GET_TELEM:
         break;
@@ -507,4 +511,11 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
         break;
     }
     return false;
+}
+
+void rb_cut_ftu(bool cut) {
+    if(cut)
+        P8OUT |= BIT5;
+    else
+        P8OUT &= ~BIT5;
 }

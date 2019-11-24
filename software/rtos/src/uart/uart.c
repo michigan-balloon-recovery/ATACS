@@ -861,10 +861,14 @@ __interrupt void USCI0RX_ISR(void)
 __interrupt void USCI_A1_ISR(void)
 {
 	UARTConfig * prtInf = prtInfList[USCI_A1];
+	uint8_t datum;
 	switch(__even_in_range(UCA1IV,4))
 	{
 	  case 0:break;                             // Vector 0 - no interrupt
 	  case 2:                                   // Vector 2 - RXIFG
+
+//	    if(UCA1RXBUF == '\r')
+//	        datum = 200;
 		uartRxIsr(prtInf);
 		break;
 	  case 4:                                   // Vector 4 - TXIFG
