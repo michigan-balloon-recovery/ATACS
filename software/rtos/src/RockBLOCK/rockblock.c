@@ -423,6 +423,7 @@ bool rb_retrieve_message(ROCKBLOCK_t *rb) {
 
     rb_clear_buffers(rb);
     rb_format_command(rb, SBDRT, &(rb->rx.numReturns));
+    rb->rx.finished = false;
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
 
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
