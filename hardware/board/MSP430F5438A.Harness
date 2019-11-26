@@ -1,7 +1,7 @@
 APRS Transmitter=PD,PTT,Master==>Slave,Slave==>Master,MIC_IN
 I2C=SDA,SCL
 JTAG=\R\S\T/NMI/SBWTDIO,TCK,TMS,TDI/TCLK,TDO,TEST/SBWTCK
-RockBLOCK=ON/OFF,Slave==>Master,RI,NETAV,RTS,CTS,Master==>Slave
+RockBLOCK=ON/OFF,Master==>Slave,RI,NETAV,RTS,CTS,Slave==>Master
 SD=CS,MOSI,CLK,MISO,SWA,SWB
 Short-Range XBee=Master==>Slave,Slave==>Master,SLEEP
 UART=Master==>Slave,Slave==>Master
