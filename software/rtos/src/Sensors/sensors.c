@@ -5,7 +5,7 @@
  * sensors.c
  */
 
-sensor_data_t sensor_data = {.humid_init = false, .pres_init = false};
+sensor_data_t sensor_data = {.humid_init = false, .pres_init = false, .pressureSemaphore = 0, .humiditySemaphore = 0};
 
 void task_pressure(void) {
 //    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
@@ -181,43 +181,38 @@ void sens_calc_humid(int32_t *return_data) {
 }
 
 bool sens_get_pres(int32_t* pressure) {
-	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTRUE) {
-		*pressure = sensor_data.pressure;
-		xSemaphoreGive(sensor_data.pressureSemaphore);
-		return true;
-	}
-	
-	return false;
+	if(sensor_data.pressureSemaphore == 0 || xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdFALSE)
+		return false;
+
+	*pressure = sensor_data.pressure;
+    xSemaphoreGive(sensor_data.pressureSemaphore);
+    return true;
 }
 
 bool sens_get_ptemp(int32_t* temp) {
-	if(xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdTRUE)
-	{
-		*temp = sensor_data.pTemp;
-		xSemaphoreGive(sensor_data.pressureSemaphore);
-		return true;
-	}
+	if(sensor_data.pressureSemaphore == 0 || xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdFALSE)
+	    return false;
 
-	return false;
+	*temp = sensor_data.pTemp;
+    xSemaphoreGive(sensor_data.pressureSemaphore);
+    return true;
 }
 
 bool sens_get_humid(int32_t* humidity) {
-	if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
-		*humidity = sensor_data.humidity;
-		xSemaphoreGive(sensor_data.humiditySemaphore);
-		return true;
-	}
+	if(sensor_data.humiditySemaphore == 0 || xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdFALSE)
+	    return false;
 
-	return false;
+    *humidity = sensor_data.humidity;
+    xSemaphoreGive(sensor_data.humiditySemaphore);
+    return true;
 }
 
 
 bool sens_get_htemp(int32_t* temp) {
-    if(xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdTRUE) {
-		*temp = sensor_data.hTemp;
-		xSemaphoreGive(sensor_data.humiditySemaphore);
-		return true;
-	}
+    if(sensor_data.humiditySemaphore == 0 || xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdFALSE)
+        return false;
 
-    return false;
+    *temp = sensor_data.hTemp;
+    xSemaphoreGive(sensor_data.humiditySemaphore);
+    return true;
 }
