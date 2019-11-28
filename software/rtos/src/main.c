@@ -13,7 +13,7 @@
 #include "aprs.h"
 #include "rockblock.h"
 #include "sensors.h"
-#include "ff_msp430_sddisk.h"
+#include "logging.h"
 
 /*-----------------------------------------------------------*/
 
@@ -28,13 +28,14 @@ void main( void ) {
 
     /* Create Tasks */
 
-    xTaskCreate((TaskFunction_t) task_led_breathe,      "LED heartbeat",    128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_gnss,           "gnss",             128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_led_breathe,      "LED heartbeat",    128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_gnss,           "gnss",             128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_aprs,           "aprs",             128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_pressure,       "pressure",         128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_humidity,       "humidity",         128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_rockblock,      "RockBLOCK",        128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_logging,        "Logging"           512, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_pressure,       "pressure",         128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_humidity,       "humidity",         128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_rockblock,      "RockBLOCK",        512, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_log,            "Logging",          512, NULL, 1, NULL);
+
 
     /* Start the scheduler. */
 
@@ -144,6 +145,14 @@ static void prvSetupHardware(void) {
 
     halBoardInit();
 
+    /* debug LEDs */
+    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN2);
+    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN3);
+    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN4);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
+
     /* UART */
     initUartDriver();
 
@@ -194,7 +203,7 @@ void vApplicationSetupTimerInterrupt(void) {
 void vApplicationIdleHook(void) {
 	/* Called on each iteration of the idle task.  In this case the idle task
 	just enters a low(ish) power mode. */
-	__bis_SR_register( LPM1_bits + GIE );
+//	__bis_SR_register( LPM1_bits + GIE );
 }
 /*-----------------------------------------------------------*/
 

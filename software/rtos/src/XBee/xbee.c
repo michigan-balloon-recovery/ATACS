@@ -9,8 +9,8 @@
 
 void xb_init(XBEE_t *xb) {
 
-    ring_buff_init(&xb->rx_buff, &xb->rx_mem, XBEE_RX_BUFF_SIZE);
-    ring_buff_init(&xb->tx_buff, &xb->tx_mem, XBEE_TX_BUFF_SIZE);
+    ring_buff_init(&xb->rx_buff, xb->rx_mem, XBEE_RX_BUFF_SIZE);
+    ring_buff_init(&xb->tx_buff, xb->tx_mem, XBEE_TX_BUFF_SIZE);
 
     // initialize semaphore
     //vSemaphoreCreateBinary(xb->uart_semaphore);

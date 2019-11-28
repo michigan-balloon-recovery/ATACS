@@ -1,341 +1,337 @@
 #include "logging.h"
-#include <stdlib.h>
-#include "sensors.h"
-#include "gnss.h"
 
-void init()
+FATFS file_sys;
+
+extern ROCKBLOCK_t rb;
+extern gnss_t GNSS;
+extern sensor_data_t sensor_data;
+
+
+void log_create_new(log_t *log_obj);
+void log_convert_file_name(char *fileName);
+
+void task_log() {
+    log_init();
+    vTaskDelay(10);
+    while(1){
+        GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
+        if(rb.is_valid) {
+            log_rb();
+            vTaskDelay(10);
+        }
+        if(GNSS.is_valid) {
+//            GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
+            log_gnss();
+            vTaskDelay(10);
+//            GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+//            if(GNSS.last_fix.quality != no_fix) {
+//                GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN4);
+//            }
+//            else {
+//                GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
+//            }
+        }
+        if(sensor_data.humid_init && sensor_data.pres_init) {
+//            GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN3);
+            log_sens();
+            vTaskDelay(10);
+//            GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
+        }
+//        log_aprs();
+        GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+        vTaskDelay(1000 / portTICK_RATE_MS);
+    }
+}
+
+void log_init()
 {
+    FRESULT res;
+    // mount drive
+//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
+    res = f_mount(&file_sys, "", 1);
+//    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
 	//initialize all directories
-	ff_mkdir("data");
+//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
+//	res = f_mkdir("data");
+//	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+
+
 	//create folders for each data source
-	ff_mkdir("data/rb");
-	ff_mkdir("data/gps");
-	ff_mkdir("data/sensor");
-	ff_mkdir("data/aprs");
-	
-	char rbLastFile [7] = "000000";
-	char gpsLastFile [7] = "000000";
-	char sensorLastFile [7] = "000000";
-	char aprsLastFile [7] = "000000";
-	
-	getLastFileName("data/rb",rbLastFile);
-	getLastFileName("data/gps",gpsLastFile);
-	getLastFileName("data/sensor",sensorLastFile);
-	getLastFileName("data/aprs",aprsLastFile);
-	
-	convertFileName(rbLastFileName, rbFileName);
-	convertFileName(gpsLastFileName, gpsFileName);
-	convertFileName(sensorLastFileName, sensorFileName);
-	convertFileName(aprsLastFileName, aprsFileName);	
+//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
+	res = f_mkdir("rb");
+//	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+
+//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
+	res = f_mkdir("gnss");
+//	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+
+//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
+	res = f_mkdir("sens");
+//	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+
+//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
+	res = f_mkdir("aprs");
+//	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+
+
+
+	rb_log.num_entries = maxFileNameLength + 1;
+	gnss_log.num_entries = maxFileNameLength + 1;
+    sens_log.num_entries = maxFileNameLength + 1;
+	aprs_log.num_entries = maxFileNameLength + 1;
+
+	strcpy(rb_log.current_log, "rb/000000.txt");
+    strcpy(gnss_log.current_log, "gnss/000000.txt");
+    strcpy(sens_log.current_log, "sens/000000.txt");
+    strcpy(aprs_log.current_log, "aprs/000000.txt");
 }
 
-void convertFileName(char *fileNameBefore, char *fileNameAfter)
+void log_rb()
 {
-	int toConvert = atoi(fileNameBefore);
-	
-	toConvert++;
-	
-	ltoa(toConvert,fileNameBefore);	
-	
-	int length = strlen(fileNameBefore);
-	//6 is number of 0's in file name
-	int zeros = 6-length; 
-	
-	int i;
-	for(i = 0; i<length; ++i)
-	{
-		fileNameAfter[i] = 0; 
-	}
-	
-	int j;
-	for(j = 0; j<length; ++j, ++i)
-	{
-		fileNameAfter[i] = fileNameBefore[j];
-	}
-}
-
-
-void getLastFileName(char *directory, char *fileName)
-{
-	//figure out what file number we are on 
-	FF_FindData_t *findStuct;
-	findStruct = (FF_FindData_t *) pvPortMalloc(sizeof(FF_FindData_t));
-	memset(findStruct, 0x00, sizeof(FF_FindData_t));
-	char *temp
-	
-	if(ff_findfirst(directory,findStruct) == 0)
-	{
-		while(ff_findnext(findStruct) == 0)
-		{
-			temp = findStuct->pcFileName;
-		}
-		
-		int i;
-		for(i = 0; i<6; ++i)
-		{
-			fileName[i] = temp[i];
-		}
-	}
-	
-	vPortFree(findStruct);
-}
-
-void writeRB(char *fileName)
-{
-	//go to rock block directory 
-	ff_chdir("data/rb");
 	
 	//open file for writing. If exist append data else create file
-	rbSourceFile = ff_fopen(fileName,"a");
-	
-	if(rbSourceFile != NULL)
-	{
+    FRESULT res;
+
+    if(rb_log.num_entries > maxFileNameLength){
+        log_create_new(&rb_log);
+    }
+
+    FIL file;
+    UINT bw;
+    res = f_open(&file, rb_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+    res = f_lseek(&file, rb_log.fpointer);
+
+    if(res == FR_OK)
+    {
 		//write data to the file
+
+        rb_log.num_entries++;
 		
-		rbDataCount++;
-		
-		ff_fclose(rbSourceFile);
+        rb_log.fpointer = file.fptr;
+		f_close(&file);
 	}
 }
 
-void writeGPS(char *fileName)
+void log_gnss()
 {
-	//go to gps directory 
-	ff_chdir("data/gps");
-	
-	gpsSoruceFile = ff_fopen(fileName, "a");
-	
-	if(gpsSourceFile != NULL)
-	{
-		gnss_t *gpsObj; 
-		
+
+    FRESULT res;
+
+    if(gnss_log.num_entries > maxFileNameLength){
+        log_create_new(&gnss_log);
+    }
+
+    FIL file;
+    UINT bw;
+//    taskENTER_CRITICAL();
+    res = f_open(&file, gnss_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+    res = f_lseek(&file, gnss_log.fpointer);
+
+    if(res == FR_OK)
+    {
 		//write gps time
-		gnss_time_t *time;
-		if(gnss_get_time(gpsObj,time))
+		gnss_time_t time;
+		if(gnss_get_time(&GNSS,&time))
 		{
-			char *hStr;
-			char *mStr;
-			ltoa(hStr,time->hour);
-			ltoa(mStr,time->min);
+			char hStr[20];
+			char mStr[20];
+			ltoa(time.hour,hStr);
+			ltoa(time.min,mStr);
 			//writes hours:minutes
 			int length = strlen(hStr);
-			ff_fwrite(hStr,1,length,gpsSoruceFile);
-			ff_fwrite(":",1,1,gpsSoruceFile);
+			f_write(&file,hStr,length,&bw);
+			f_write(&file,":",1,&bw);
 			length = strlen(mStr);
-			ff_fwrite(mStr,1,length,gpsSourceFile);
+			f_write(&file,mStr,length,&bw);
 		}
 		else
 		{
-			ff_fwrite("???",1,3,gpsSourceFile);
+			f_write(&file,"???",3,&bw);
 		}
-		ff_fwrite(",",1,1,gpsSourceFile);
+		f_write(&file,",",1,&bw);
 		
 		//write gps location 
-		gnss_coordinate_pair_t *location; 
-		if(gnss_get_location(gpsObj,location))
+		gnss_coordinate_pair_t location;
+		if(gnss_get_location(&GNSS,&location))
 		{
 			//int32_t gnss_coord_to_decSec(gnss_coordinate_t *coordinate);
 			int32_t latitude;
 			int32_t longitude;
-			latitude = gnss_coord_to_decSec(location->latitude);
-			longitude = gnss_coord_to_decSec(location->longitude);
+			latitude = gnss_coord_to_decSec(&location.latitude);
+			longitude = gnss_coord_to_decSec(&location.longitude);
 			
-			char *lat
-			char *lon
-			ltoa(lat,latitude);
-			ltoa(lon,longitude);
+			char lat[10];
+			char lon[10];
+			ltoa(latitude,lat);
+			ltoa(longitude,lon);
 			int length = strlen(lat);
-			ff_fwrite(lat,1,length,gpsSoruceFile);
-			ff_fwrite(",",1,1,gpsSourceFile);
+			f_write(&file,lat,length,&bw);
+			f_write(&file,",",1,&bw);
 			length = strlen(lon);
-			ff_fwrite(lon,1,length,gpsSourceFile);
+			f_write(&file,lon,length,&bw);
 		}
 		else
 		{
-			ff_fwrite("???",1,3,gpsSourceFile);
+            f_write(&file,"???",3,&bw);
 		}
-		ff_fwrite(",",1,1,gpsSourceFile);
+        f_write(&file,",",1,&bw);
 		
 		//write gps altitude
-		int32_t *altitude;
-		if(gnss_get_altitude(gnss_obj,altitude))
+		int32_t altitude;
+		if(gnss_get_altitude(&GNSS,&altitude))
 		{
-			char *aStr;
-			ltoa(aStr,altitude);
+			char aStr[20];
+			ltoa(altitude,aStr);
 			int length = strlen(aStr);
-			ff_fwrite(aStr,1,length,gpsSourceFile);
+			f_write(&file,aStr,length,&bw);
 		}
 		else
 		{
-			ff_fwrite("???",1,3,gpsSourceFile);
+            f_write(&file,"???",3,&bw);
 		}
-		ff_fwrite(",",1,1,gpsSourceFile);
+        f_write(&file,"\n",1,&bw);
 		
+        gnss_log.num_entries++;
 		
-		gpsDataCount++;
-		
-		ff_fclose(gpsSoruceFile);
+        gnss_log.fpointer = file.fptr;
+		f_close(&file);
+//		taskEXIT_CRITICAL();
 	}
 }
 
-void writeSensor(char *fileName)
+void log_sens()
 {
-	//go to sensor directory 
-	ff_chdir("data/sensor");
-	
-	sensorSourceFile = ff_fopen(fileName, "a");
-	
-	if(sensorSourceFile != NULL)
+
+    FRESULT res;
+
+    if(sens_log.num_entries > maxFileNameLength){
+        log_create_new(&sens_log);
+    }
+
+    FIL file;
+    UINT bw;
+//    taskENTER_CRITICAL();
+    res = f_open(&file, sens_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+    res = f_lseek(&file, sens_log.fpointer);
+
+	if(res == FR_OK)
 	{
 		//write pressure data
-		int32_t *pressure; 
-		if(getPressure(pressure))
+		int32_t pressure;
+		if(sens_get_pres(&pressure))
 		{
-			char *pStr;
-			ltoa(pStr,pressure);
+			char pStr[20];
+			ltoa(pressure,pStr);
 			int length = strlen(pStr);
-			ff_fwrite(pStr,1,length,sensorSourceFile);
+			f_write(&file,pStr,length,&bw);
 		}
 		else
 		{
-			ff_fwrite("???",1,3,sensorSourceFile);
+			f_write(&file,"???",3,&bw);
 		}
-		ff_fwrite(",",1,1,sensorSourceFile);
+		f_write(&file,",",1,&bw);
 		
 		//write pressure temperature data
-		int32_t *temp; 
-		if(getPTemp(temp))
+		int32_t temp;
+		if(sens_get_ptemp(&temp))
 		{
-			char *tStr;
-			ltoa(tStr,temp);
+			char tStr[20];
+			ltoa(temp,tStr);
 			int length = strlen(tStr);
-			ff_fwrite(tStr,1,length,sensorSourceFile);
+			f_write(&file,tStr,length,&bw);
 		}
 		else
 		{
-			ff_fwrite("???",1,3,sensorSourceFile);
+            f_write(&file,"???",3,&bw);
 		}
-		ff_fwrite(",",1,1,sensorSourceFile);
+        f_write(&file,",",1,&bw);
 		
 		//write humidity data
-		int32_t *humidity; 
-		if(getHumidity(humidity))
+		int32_t humidity;
+		if(sens_get_humid(&humidity))
 		{
-			char *hStr;
-			ltoa(hStr,humidity);
+			char hStr[20];
+			ltoa(humidity,hStr);
 			int length = strlen(hStr);
-			ff_fwrite(hStr,1,length,sensorSourceFile);
+			f_write(&file,hStr,length,&bw);
 		}
 		else
 		{
-			ff_fwrite("???",1,3,sensorSourceFile);
+            f_write(&file,"???",3,&bw);
 		}
-		ff_fwrite(",",1,1,sensorSourceFile);
+        f_write(&file,",",1,&bw);
 		
 		//write humidity temperature data
-		int32_t *temp2; 
-		if(getHTemp(temp2))
+		int32_t temp2;
+		if(sens_get_htemp(&temp2))
 		{
-			char *t2Str;
-			ltoa(t2Str,temp2);
+			char t2Str[20];
+			ltoa(temp2,t2Str);
 			int length = strlen(t2Str);
-			ff_fwrite(t2Str,1,length,sensorSourceFile);
+			f_write(&file,t2Str,length,&bw);
 		}
 		else
 		{
-			ff_fwrite("???",1,3,sensorSourceFile);
+            f_write(&file,"???",3,&bw);
 		}
-		ff_fwrite(",",1,1,sensorSourceFile);
+        f_write(&file,"\n",1,&bw);
 
-		sensorDataCount++;
+		sens_log.num_entries++;
 		
-		ff_fclose(sensorSourceFile);
+        sens_log.fpointer = file.fptr;
+		f_close(&file);
+//		taskEXIT_CRITICAL();
 	}
 }
 
-void writeAPRS(char *fileName)
+void log_aprs()
 {
-	//go to aprs directory 
-	ff_chdir("data/aprs");
-	
-	aprsSourceFile = ff_fopen(fileName, "a");
-	
-	if(aprsSourceFile != NULL)
-	{
+
+    FRESULT res;
+
+    if(aprs_log.num_entries > maxFileNameLength){
+        log_create_new(&aprs_log);
+    }
+
+    FIL file;
+    UINT bw;
+//    taskENTER_CRITICAL();
+    res = f_open(&file, aprs_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+    res = f_lseek(&file, aprs_log.fpointer);
+    if(res == FR_OK)
+    {
 		//write data to file, probably when last transmitted 
+
+        aprs_log.num_entries++;
 		
-		aprsDataCount++
-		
-		ff_fclose(aprsSourceFile);
+        aprs_log.fpointer = file.fptr;
+		f_close(&file);
+//		taskEXIT_CRITICAL();
 	}
 }
 
-void writeToFiles()
+void log_convert_file_name(char *fileName)
 {
-	/*need to add functionality to check if files should be written to
-	  these may need to be in separate functions */
-	if(rbDataCount > maxData)
-	{
-		char tempFile = rbFileName;
-		convertFileName(tempFile,rbFileName);
-	}
-	writeRB(rbFileName);
-	
-	if(gpsDataCount > maxData)
-	{
-		char tempFile = gpsFileName;
-		convertFileName(tempFile,gpsFileName);
-	}
-	writeGPS(gpsFileName);
-	
-	if(sensorDataCount > maxData)
-	{
-		char tempFile = sensorFileName;
-		convertFileName(tempFile,sensorFileName);
-	}
-	writeSensor(sensorFileName);
-	
-	if(aprsDataCount > maxData)
-	{
-		char tempFile = aprsFileName;
-		convertFileName(tempFile,aprsFileName);
-	}
-	writeAPRS(aprsFileName);
+    char* end = fileName;
+    while(*end != '.'){
+        end++;
+    }
+    end--;
+
+    while(*end == '9'){
+        *end = '0';
+        end--;
+    }
+    *end += 1;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void log_create_new(log_t *log_obj)
+{
+    taskENTER_CRITICAL();
+    log_obj->fpointer = 0;
+    while(f_stat(log_obj->current_log, NULL) == FR_OK){
+        log_convert_file_name(log_obj->current_log);
+    }
+    log_obj->num_entries = 0;
+    taskEXIT_CRITICAL();
+}

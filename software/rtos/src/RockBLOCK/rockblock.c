@@ -3,6 +3,11 @@
 
 #include "rockblock.h"
 
+extern gnss_t GNSS;
+extern sensor_data_t sensor_data;
+
+ROCKBLOCK_t rb = {.is_valid = false}; // global rockblock object for the task.
+
 // formats the command for the message sent to the RockBLOCK.
 static void rb_format_command(ROCKBLOCK_t *rb, rb_message_t cmd, volatile uint8_t *numReturns) {
 
@@ -39,7 +44,7 @@ static void rb_format_command(ROCKBLOCK_t *rb, rb_message_t cmd, volatile uint8_
         case SBDRT: // download ASCII message
             *(rb->tx.cur_ptr++) = 'R';
             *(rb->tx.cur_ptr++) = 'T';
-            *numReturns = 5;
+            *numReturns = 4;
         break;
         default:
             *numReturns = 0;
@@ -61,12 +66,17 @@ static void rb_clear_buffers(ROCKBLOCK_t *rb) {
     rb->rx.cur_ptr = rb->rx.buff;
     rb->rx.last_ptr = rb->rx.buff;
     rb->tx.tx_ptr = rb->tx.buff;
-    rb->rx.rx_ptr = rb->rx.buff;
 }
 
-static void rb_wait_for_messages(ROCKBLOCK_t *rb) {
-    xSemaphoreTake(rb->tx.txSemaphore, portMAX_DELAY);
-    xSemaphoreTake(rb->rx.rxSemaphore, portMAX_DELAY);
+static bool rb_wait_for_messages(ROCKBLOCK_t *rb) {
+
+    if(xSemaphoreTake(rb->tx.txSemaphore, 20000 / portTICK_RATE_MS) == pdFALSE)
+        return false;
+
+    if(xSemaphoreTake(rb->rx.rxSemaphore, 20000 / portTICK_RATE_MS) == pdFALSE)
+        return false;
+
+    return true;
 }
 
 static void put_int32_array(int32_t toInsert, uint8_t *msg, uint16_t *cur_idx, bool success) {
@@ -78,9 +88,11 @@ static void put_int32_array(int32_t toInsert, uint8_t *msg, uint16_t *cur_idx, b
         memcpy(msg + *cur_idx, str, lenStr);
         *cur_idx += lenStr;
     } else {
-        msg[*(cur_idx)++] = '?';
+        msg[*cur_idx] = '?';
+        *cur_idx = *cur_idx + 1;
     }
-    msg[(*cur_idx)++] = ',';
+    msg[*cur_idx] = ',';
+    *cur_idx = *cur_idx + 1;
 }
 
 
@@ -108,10 +120,18 @@ void task_rockblock(void) {
 
     rb_init(&rb);
 
+    // wait for all sensors to initialize.
+    while(!sensor_data.humid_init);
+    while(!sensor_data.pres_init);
+    while(!GNSS.is_valid);
+
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xTaskFrequency);
+        GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN4);
+
 
         i = 0;
+
         success[i++] = sens_get_pres(&pressure);
         success[i++] = sens_get_humid(&humidity);
         success[i++] = sens_get_htemp(&hTemp);
@@ -131,29 +151,33 @@ void task_rockblock(void) {
 
         while(!msgSent && numRetries < RB_MAX_TX_RETRIES) {
             numRetries++;
-            vTaskDelayUntil(&xLastWakeTime, xRetryFrequency);
+            vTaskDelay(xRetryFrequency);
             rb_start_session(&rb, &msgSent, &msgReceived, &msgsQueued);
         }
 
         numRetries = 0;
 
         if(msgReceived == 1) { // we received a message
-            rb_retrieve_message(&rb);
-            rb_process_message(&rb.rx);
+            if(rb_retrieve_message(&rb))
+                rb_process_message(&rb.rx);
 
             while(msgsQueued > 0 && numRetries < RB_MAX_RX_RETRIES ) { // other messages to download
                 rb_start_session(&rb, &msgSent, &msgReceived, &msgsQueued);
                 if(msgReceived == 1) {
                     numRetries = 0;
-                    rb_retrieve_message(&rb);
-                    // TODO: process message
+                    if(rb_retrieve_message(&rb))
+                        rb_process_message(&rb.rx);
+
                 } else {
                     numRetries++;
-                    vTaskDelayUntil(&xLastWakeTime, xRetryFrequency);
+                    vTaskDelay(xRetryFrequency);
                 }
             }
         }
+        GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
+        xLastWakeTime = xTaskGetTickCount();
     }
+
 }
 
 void rb_init(ROCKBLOCK_t *rb) {
@@ -161,11 +185,9 @@ void rb_init(ROCKBLOCK_t *rb) {
     // initialize buffers with appropriate start values and end values.
     rb->rx.cur_ptr = rb->rx.buff;
     rb->rx.last_ptr = rb->rx.buff;
-    rb->rx.end_ptr = rb->rx.buff + RB_RX_SIZE - 1;
 
     rb->tx.cur_ptr = rb->tx.buff;
     rb->tx.last_ptr = rb->tx.buff;
-    rb->tx.end_ptr = rb->tx.buff + RB_TX_SIZE - 1;
 
     rb->rx.rxSemaphore = xSemaphoreCreateCounting(1, 0);
     rb->tx.txSemaphore = xSemaphoreCreateCounting(1, 0);
@@ -191,13 +213,14 @@ void rb_init(ROCKBLOCK_t *rb) {
 
     // ring, network-available, and sleep pin initialization
     P8DIR &= ~(BIT0 | BIT1); // set ring and network-available pins to inputs. ON OUR MSP430
+    P8DIR |= BIT5;
     // P8DIR &= ~(BIT0 | BIT2); // OLIMEX ring, netav pins
 
     P7DIR |= BIT3; // set sleep to an output.
 
     rb_set_awake(true); // TODO: might want to not just always be on, so add the ability to sleep...
     //rb_set_awake(false);
-
+    rb->is_valid = true;
 }
 
 
@@ -227,25 +250,23 @@ void rb_rx_callback(void *param, uint8_t datum) {
     ROCKBLOCK_t *rb = (ROCKBLOCK_t *) param;
 
     if(rb->rx.finished == false) {
-        *(rb->rx.rx_ptr) = datum; // take the data, we assume we have room here.
+        *(rb->rx.cur_ptr) = datum; // take the data, we assume we have room here.
 
-        if(datum == (uint8_t) '\r') { // all message responses end with '\r', but there might be multiple '\r' per message.
+        if( (datum == (uint8_t) '\r') || (datum == (uint8_t) ')')) { // all message responses end with '\r', but there might be multiple '\r' per message.
             numReturns++;
 
             if(numReturns == rb->rx.numReturns) {
                 numReturns = 0;
                 rb->rx.finished = true;
-                rb->rx.last_ptr = rb->rx.rx_ptr;
+                rb->rx.last_ptr = rb->rx.cur_ptr;
                 xSemaphoreGiveFromISR(rb->rx.rxSemaphore, NULL);
             }
         }
 
-        rb->rx.rx_ptr++; // increment the index.
+//        if(datum == (uint8_t) ')' || datum == (uint8_t) '(')
+//            numReturns = 200;
 
-        if(rb->rx.rx_ptr >= rb->rx.end_ptr) { // we are full! Message must be complete.
-            //TODO: Handle this case in a reasonable way.
-        }
-
+        rb->rx.cur_ptr++; // increment the index.
     }
 }
 
@@ -256,7 +277,6 @@ bool rb_tx_callback(void *param, uint8_t *txAddress) {
 
     if(rb->tx.tx_ptr == rb->tx.last_ptr) { // sent last byte.
         xSemaphoreGiveFromISR(rb->tx.txSemaphore, NULL);
-        rb->rx.finished = false;
         return false;
     }
 
@@ -280,9 +300,9 @@ void rb_send_message(ROCKBLOCK_t *rb, uint8_t *msg, uint16_t len, bool *msgSent,
     *(rb->tx.cur_ptr++) = '\r'; // end message with carriage return.
 
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
+    rb->rx.finished = false;
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
     rb_wait_for_messages(rb);
-
     rb_start_session(rb, msgSent, msgReceived, msgsQueued);
 
     // process response to see if message succeeded.
@@ -295,9 +315,15 @@ void rb_start_session(ROCKBLOCK_t *rb, bool *msgSent, int8_t *msgReceived, int8_
     rb_clear_buffers(rb);
     rb_format_command(rb, SBDIX, &(rb->rx.numReturns));
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1;
-
+    rb->rx.finished = false;
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
-    rb_wait_for_messages(rb);
+
+    if(rb_wait_for_messages(rb) == false) {
+        *msgSent = false;
+        *msgReceived = 0;
+        *msgsQueued = 0;
+        return;
+    }
 
     totalLen = rb->rx.last_ptr - rb->rx.buff + 1;
 
@@ -393,14 +419,15 @@ uint8_t rb_check_mailbox(ROCKBLOCK_t *rb, int8_t *msgsQueued) {
     return msgReceived;
 }
 
-void rb_retrieve_message(ROCKBLOCK_t *rb) {
+bool rb_retrieve_message(ROCKBLOCK_t *rb) {
 
     rb_clear_buffers(rb);
     rb_format_command(rb, SBDRT, &(rb->rx.numReturns));
+    rb->rx.finished = false;
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
 
     uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
-    rb_wait_for_messages(rb);
+    return rb_wait_for_messages(rb);
 
 }
 
@@ -413,11 +440,12 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
 
     size_t lenstr = strlen("ATACS,");
     memcpy(msg, "ATACS,", lenstr); // header len = 6
+    cur_idx += lenstr;
 
     put_int32_array(pressure, msg, &cur_idx, success[0]);
     put_int32_array(humidity, msg, &cur_idx, success[1]);
-    put_int32_array(pTemp, msg, &cur_idx, success[2]);
-    put_int32_array(hTemp, msg, &cur_idx, success[3]);
+    put_int32_array(hTemp, msg, &cur_idx, success[2]);
+    put_int32_array(pTemp, msg, &cur_idx, success[3]);
     put_int32_array(altitude, msg, &cur_idx, success[4]);
 
     if(success[5]) { // time
@@ -470,6 +498,23 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
         }
     }
 
+    char msg[] = "FTUPLZ";
+    bool cut = true;
+    for(i = 0; i < strlen("FTUPLZ"); i++) {
+        if(msg[i] != rx->buff[cur_idx++]) {
+            cut = false;
+            break;
+        }
+    }
+
+    if(cut) {
+        rb_cut_ftu(true);
+        vTaskDelay(10000 / portTICK_RATE_MS);
+        rb_cut_ftu(false);
+    }
+
+    return cut;
+
     if(rx->buff[cur_idx++] != RB_SOF)
         return false;
 
@@ -480,6 +525,9 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
 
     switch(rx->buff[cur_idx]) {
     case CUT_FTU_NOW:
+        rb_cut_ftu(true);
+        vTaskDelay(2000 / portTICK_RATE_MS);
+        rb_cut_ftu(false);
         break;
     case GET_TELEM:
         break;
@@ -493,4 +541,11 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
         break;
     }
     return false;
+}
+
+void rb_cut_ftu(bool cut) {
+    if(cut)
+        P8OUT |= BIT5;
+    else
+        P8OUT &= ~BIT5;
 }

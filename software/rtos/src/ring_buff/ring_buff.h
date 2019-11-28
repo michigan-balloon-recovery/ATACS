@@ -106,6 +106,8 @@ uint16_t ring_buff_read_finish_packet(ring_buff_t *buff);
  */
 void ring_buff_read_clear_packet(ring_buff_t *buff);
 
+void ring_buff_clear_buff(ring_buff_t *buff);
+
 #ifdef __cplusplus
 }
 #endif

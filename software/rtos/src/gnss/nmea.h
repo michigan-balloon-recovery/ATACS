@@ -12,7 +12,7 @@ extern "C" {
 #include "gnss.h"
 
 #define TALKER(x,y)             ((x << 8) | y)
-#define SENTENCE(x,y,z)         ((x << 16) | (y << 8) | z)
+#define SENTENCE(x,y,z)         (( (uint32_t)x << 16 ) | ( (uint32_t)y << 8 ) | (uint32_t)z )
 
 // ----- Talker IDs ----- //
 #define TALKER_UBX              TALKER('P','U')
@@ -44,10 +44,12 @@ extern "C" {
 #define SENTENCE_UBX            SENTENCE('B','X',',')
 
 // ----- NMEA Faults ----- //
+#define NO_FAULT                0
 #define UNKNOWN_TALKER          -1
 #define UNKNOWN_SENTENCE        -2
 #define UNKNOWN_PROPRIETARY     -3
 #define PAYLOAD_OVERFLOW        -4
+#define EMPTY_BUFFER            -5
 
 /*!
  * \brief UART RX callback function
@@ -113,19 +115,19 @@ int8_t gnss_nmea_decode_PUBX();
 bool gnss_nmea_decode_field(uint8_t *payload, uint8_t **field, bool (*format_data)(uint8_t*, uint8_t*, void*), void *data);
 
 // ----- field formatting decoders ----- //
-bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, gnss_coordinate_t *data);
+bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, void *data);
 
-bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, gnss_coordinate_t *data);
+bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, void *data);
 
-bool gnss_nmea_field_direction(uint8_t *start, uint8_t *end, gnss_coordinate_t *data);
+bool gnss_nmea_field_direction(uint8_t *start, uint8_t *end, void *data);
 
-bool gnss_nmea_field_time(uint8_t *start, uint8_t *end, gnss_time_t *data);
+bool gnss_nmea_field_time(uint8_t *start, uint8_t *end, void *data);
 
-bool gnss_nmea_field_char(uint8_t *start, uint8_t *end, char *output);
+bool gnss_nmea_field_char(uint8_t *start, uint8_t *end, void *data);
 
-bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, int32_t *output);
+bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, void *data);
 
-bool gnss_nmea_field_int8(uint8_t *start, uint8_t *end, uint8_t *output);
+bool gnss_nmea_field_int8(uint8_t *start, uint8_t *end, void *data);
 
 
 #ifdef __cplusplus

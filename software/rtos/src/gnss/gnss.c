@@ -2,6 +2,8 @@
 
 extern UARTConfig * prtInfList[5];
 
+gnss_t GNSS = {.is_valid = false, .last_fix = 0};
+
 // ----- public API ----- //
 
 void task_gnss(void) {
@@ -9,7 +11,9 @@ void task_gnss(void) {
 
     while (1) {
         xSemaphoreTake(GNSS.uart_semaphore, portMAX_DELAY);
+//        GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN4);
         gnss_nmea_decode(&GNSS);
+//        GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
     }
 }
 
@@ -22,7 +26,7 @@ void gnss_init(gnss_t *gnss_obj) {
     ring_buff_init(&gnss_obj->gnss_tx_buff, gnss_obj->gnss_tx_mem, GNSS_TX_BUFF_SIZE);
 
     // initialize semaphores
-    gnss_obj->uart_semaphore = xSemaphoreCreateBinary();
+    gnss_obj->uart_semaphore = xSemaphoreCreateCounting(255,0);
     gnss_obj->data_mutex = xSemaphoreCreateMutex();
 
     // initialize UART
@@ -41,6 +45,7 @@ void gnss_init(gnss_t *gnss_obj) {
     initUSCIUart(&a0_cnf, &gnss_obj->gnss_tx_buff, &gnss_obj->gnss_rx_buff);
 
     initUartRxCallback(&USCI_A0_cnf, &gnss_nmea_rx_callback, gnss_obj);
+    gnss_obj->is_valid = true;
 }
 
 bool gnss_get_time(gnss_t *gnss_obj, gnss_time_t *time) {

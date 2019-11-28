@@ -1,35 +1,40 @@
+#include "ff.h"
+#include <stdlib.h>
+#include "sensors.h"
+#include "gnss.h"
+#include "rockblock.h"
+#include <string.h>
 #include <stdint.h>
-#include "ff_headers.h"
+#include "ff.h"
+#include <stdlib.h>
+#include "sensors.h"
+#include "gnss.h"
+#include "rockblock.h"
+#include <string.h>
 
 //max data points per file
-#define maxData 1000
+#define maxData 5
+#define maxFileNameLength 30
 
-//variables to keep track of how much data has been written to the files
-uint32_t rbDataCount = 0;
-uint32_t gpsDataCount = 0;
-uint32_t sensorDataCount = 0;
-uint32_t aprsDataCount = 0;
+typedef struct {
+    uint16_t num_entries;
+    char current_log [maxFileNameLength];
+    FSIZE_t fpointer;
+} log_t;
 
-//file name for data
-char rbFileName [11] = "000000.txt";
-char gpsFileName [11] = "000000.txt";
-char sensorFileName [11] = "000000.txt";
-char aprsFileName [11] = "000000.txt"; 
+log_t rb_log;
+log_t gnss_log;
+log_t aprs_log;
+log_t sens_log;
 
+void task_log();
 
+void log_init();
 
-void init();
+void log_rb();
 
-void getLastFileName(char *directory, char *fileName);
+void log_gnss();
 
-void writeRB(char *fileName);
+void log_sens();
 
-void writeGPS(char *fileName);
-
-void writeSensor(char *fileName);
-
-void writeAPRS(char *fileName);
-
-void writeToFiles();
-
-void convertFileName(char *fileNameBefore, char *fileNameAfter);
+void log_aprs();

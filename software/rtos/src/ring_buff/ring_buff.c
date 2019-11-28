@@ -50,6 +50,13 @@ bool ring_buff_read(ring_buff_t *buff, uint8_t *datum) {
     return true;
 }
 
+void ring_buff_clear_buff(ring_buff_t *buff) {
+    buff->read_ptr_byte = buff->start;
+    buff->read_ptr_packet = buff->start;
+    buff->write_ptr_byte = buff->start;
+    buff->write_ptr_packet = buff->start;
+}
+
 uint16_t ring_buff_read_finish_packet(ring_buff_t *buff) {
     uint16_t packet_size;
 

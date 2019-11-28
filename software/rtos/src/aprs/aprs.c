@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+extern gnss_t GNSS;
+
 void configDRA818V(const char* freq_str);
 
 /*
