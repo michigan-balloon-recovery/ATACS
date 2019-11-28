@@ -80,10 +80,10 @@ void log_init()
     sens_log.num_entries = maxFileNameLength + 1;
 	aprs_log.num_entries = maxFileNameLength + 1;
 
-	strcpy(rb_log.current_log, "rb/000000.txt");
-    strcpy(gnss_log.current_log, "gnss/000000.txt");
-    strcpy(sens_log.current_log, "sens/000000.txt");
-    strcpy(aprs_log.current_log, "aprs/000000.txt");
+	strcpy(rb_log.current_log, "rb/000000.csv");
+    strcpy(gnss_log.current_log, "gnss/000000.csv");
+    strcpy(sens_log.current_log, "sens/000000.csv");
+    strcpy(aprs_log.current_log, "aprs/000000.csv");
 }
 
 void log_rb()
@@ -92,7 +92,7 @@ void log_rb()
 	//open file for writing. If exist append data else create file
     FRESULT res;
 
-    if(rb_log.num_entries > maxFileNameLength){
+    if(rb_log.num_entries > maxData){
         log_create_new(&rb_log);
     }
 
@@ -117,7 +117,7 @@ void log_gnss()
 
     FRESULT res;
 
-    if(gnss_log.num_entries > maxFileNameLength){
+    if(gnss_log.num_entries > maxData){
         log_create_new(&gnss_log);
     }
 
@@ -204,7 +204,7 @@ void log_sens()
 
     FRESULT res;
 
-    if(sens_log.num_entries > maxFileNameLength){
+    if(sens_log.num_entries > maxData){
         log_create_new(&sens_log);
     }
 
@@ -289,7 +289,7 @@ void log_aprs()
 
     FRESULT res;
 
-    if(aprs_log.num_entries > maxFileNameLength){
+    if(aprs_log.num_entries > maxData){
         log_create_new(&aprs_log);
     }
 
