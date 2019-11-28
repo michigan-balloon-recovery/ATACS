@@ -34,6 +34,8 @@
 #include "ff.h"		/* Obtains integer types for FatFs */
 #include "diskio.h"	/* Common include file for FatFs and disk I/O layer */
 
+#include <stdint.h>
+
 
 /*-------------------------------------------------------------------------*/
 /* Platform dependent macros and functions needed to be modified           */
@@ -123,12 +125,16 @@ int wait_ready (void)	/* 1:OK, 0:Timeout */
 {
 	BYTE d;
 	UINT tmr;
+	uint32_t i;
 
 
 	for (tmr = 5000; tmr; tmr--) {	/* Wait for ready in timeout of 500ms */
 		rcvr_mmc(&d, 1);
 		if (d == 0xFF) break;
-		__delay_cycles(100 * CLK_kHz);
+//		__delay_cycles(100 * CLK_kHz);
+//		for(i=0;i<100*CLK_kHz;i++);
+		__delay_cycles(1600);
+//		vTaskDelay(1);
 	}
 
 	return tmr ? 1 : 0;
@@ -182,12 +188,16 @@ int rcvr_datablock (	/* 1:OK, 0:Failed */
 {
 	BYTE d[2];
 	UINT tmr;
+	uint32_t i;
 
 
 	for (tmr = 1000; tmr; tmr--) {	/* Wait for data packet in timeout of 100ms */
 		rcvr_mmc(d, 1);
 		if (d[0] != 0xFF) break;
-		__delay_cycles(100 * CLK_kHz);
+//		__delay_cycles(100 * CLK_kHz);
+//		vTaskDelay(1);
+//        for(i=0;i<100*CLK_kHz;i++);
+		__delay_cycles(1600);
 	}
 	if (d[0] != 0xFE) return 0;		/* If not valid data token, return with error */
 
@@ -311,16 +321,23 @@ DSTATUS disk_initialize (
 	BYTE n, ty, cmd, buf[4];
 	UINT tmr;
 	DSTATUS s;
+	uint32_t i;
 
 
 	if (drv) return RES_NOTRDY;
 
-	__delay_cycles(10000 * CLK_kHz);
+//	__delay_cycles(10000 * CLK_kHz);
+	vTaskDelay(10);
+//    for(i=0;i<10000*CLK_kHz;i++);
 	MMC_PxOUT |= MMC_SIMO + MMC_UCLK;
 	MMC_PxDIR |= MMC_SIMO + MMC_UCLK;
 	MMC_CS_PxOUT |= MMC_CS;
 	MMC_CS_PxDIR |= MMC_CS;
 	halSPISetup();
+
+#if SPI_SER_INTF != SER_INTF_BITBANG
+  MMC_PxSEL |= MMC_SIMO + MMC_SOMI + MMC_UCLK;
+#endif
 
 
 	for (n = 10; n; n--) rcvr_mmc(buf, 1);	/* Apply 80 dummy clocks and the card gets ready to receive command */
@@ -332,7 +349,10 @@ DSTATUS disk_initialize (
 			if (buf[2] == 0x01 && buf[3] == 0xAA) {		/* The card can work at vdd range of 2.7-3.6V */
 				for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state (ACMD41 with HCS bit) */
 					if (send_cmd(ACMD41, 1UL << 30) == 0) break;
-					__delay_cycles(1000 * CLK_kHz);
+//					__delay_cycles(1000 * CLK_kHz);
+//					vTaskDelay(1);
+					__delay_cycles(16000);
+//			        for(i=0;i<16000;i++);
 
 				}
 				if (tmr && send_cmd(CMD58, 0) == 0) {	/* Check CCS bit in the OCR */
@@ -348,7 +368,10 @@ DSTATUS disk_initialize (
 			}
 			for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state */
 				if (send_cmd(cmd, 0) == 0) break;
-				__delay_cycles(1000 * CLK_kHz);
+//				__delay_cycles(1000 * CLK_kHz);
+//				vTaskDelay(1);
+//		        for(i=0;i<1000*CLK_kHz;i++);
+				__delay_cycles(16000);
 			}
 			if (!tmr || send_cmd(CMD16, 512) != 0)	/* Set R/W block length to 512 */
 				ty = 0;
