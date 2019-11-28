@@ -194,6 +194,11 @@ int initUartPort(UARTConfig * prtInf)
 			prtSelReg = (unsigned char *)&P9SEL;
 			break;
 #endif
+#ifdef __MSP430_HAS_PORT10_R__
+        case 10:
+            prtSelReg = (unsigned char *)&P10SEL;
+            break;
+#endif
 		default:
 			prtSelReg = NULL;
 			break;
@@ -224,7 +229,7 @@ int initUartPort(UARTConfig * prtInf)
  * \return Success or errors as defined by UART_ERR_CODES
  *
  */
-#if defined(__MSP430_HAS_USCI__) || defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__)
+#if defined(__MSP430_HAS_USCI__) || defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__) || defined(__MSP430_HAS_USCI_A3__)
 int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs)
 {
 	initUartPort(prtInf);
@@ -285,7 +290,19 @@ int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs)
 			confRegs->IFG_REG = (unsigned char *)&UCA2IFG;
 			break;
 #endif
-
+#if (defined(__MSP430_HAS_USCI_A3__)) && (!defined(__MSP430_HAS_USCI__))
+        case USCI_A3:
+            confRegs->CTL0_REG = (unsigned char *)&UCA3CTL0;
+            confRegs->CTL1_REG = (unsigned char *)&UCA3CTL1;
+            confRegs->MCTL_REG = (unsigned char *)&UCA3MCTL;
+            confRegs->BR0_REG  = (unsigned char *)&UCA3BR0;
+            confRegs->BR1_REG  = (unsigned char *)&UCA3BR1;
+            confRegs->IE_REG  = (unsigned char *)&UCA3IE;
+            confRegs->RX_BUF = (unsigned char *)&UCA3RXBUF;
+            confRegs->TX_BUF = (unsigned char *)&UCA3TXBUF;
+            confRegs->IFG_REG = (unsigned char *)&UCA3IFG;
+            break;
+#endif
 
 	}
 
@@ -539,8 +556,8 @@ int uartSendDataBlocking(UARTConfig * prtInf,unsigned char * buf, int len)
 	int i = 0;
 	for(i = 0; i < len; i++)
 	{
-#if (defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__)) && (!defined(__MSP430_HAS_USCI__))
-		if(prtInf->moduleName == USCI_A0|| prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2)
+#if (defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__)) || defined(__MSP430_HAS_USCI_A3__) && (!defined(__MSP430_HAS_USCI__))
+		if(prtInf->moduleName == USCI_A0|| prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2 || prtInf->moduleName == USCI_A3)
 		{
 
 			while(!( *prtInf->usciRegs->IFG_REG & UCTXIFG));
@@ -630,7 +647,7 @@ int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len)
 
 #if (defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__)) && (!defined(__MSP430_HAS_USCI__))
 
-	if(prtInf->moduleName == USCI_A0 || prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2)
+	if(prtInf->moduleName == USCI_A0 || prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2 || prtInf->moduleName == USCI_A3)
 	{
 		// Enable TX IE
 		*prtInf->usciRegs->IFG_REG &= ~UCTXIFG;
@@ -672,7 +689,7 @@ int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len)
 void enableUartRx(UARTConfig * prtInf)
 {
 #if (defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__)) && (!defined(__MSP430_HAS_USCI__))
-	if(prtInf->moduleName == USCI_A0|| prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2)
+	if(prtInf->moduleName == USCI_A0|| prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2 || prtInf->moduleName == USCI_A3)
 	{
 		// Enable RX IE
 		*prtInf->usciRegs->IFG_REG &= ~UCRXIFG;
