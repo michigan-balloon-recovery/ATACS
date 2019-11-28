@@ -2,6 +2,7 @@
 #define APRS_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "gnss.h"
 
 #define APRS_PERIOD_MS 60000
@@ -13,7 +14,8 @@ void task_aprs();
 
 void aprs_setup(const uint16_t pd_port,  const uint8_t pd_pin,
                 const uint16_t ptt_port, const uint8_t ptt_pin,
-                const uint16_t tx_port,  const uint8_t tx_pin);
+                const uint16_t tx_port,  const uint8_t tx_pin,
+                const bool ptt_active_high);
 
 void aprs_beacon(gnss_time_t* time, gnss_coordinate_pair_t* loc, int32_t* alt);
 

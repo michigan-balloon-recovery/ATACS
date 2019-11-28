@@ -27,10 +27,9 @@ void main( void ) {
     prvSetupHardware();
 
     /* Create Tasks */
-
-//    xTaskCreate((TaskFunction_t) task_led_breathe,      "LED heartbeat",    128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_led_breathe,    "LED heartbeat",    128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_gnss,           "gnss",             128, NULL, 1, NULL);
-    xTaskCreate((TaskFunction_t) task_aprs,           "aprs",             128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_aprs,           "aprs",             512, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_pressure,       "pressure",         128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_humidity,       "humidity",         128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_rockblock,      "RockBLOCK",        512, NULL, 1, NULL);
@@ -38,7 +37,6 @@ void main( void ) {
 
 
     /* Start the scheduler. */
-
     __bis_SR_register(GIE); // Global interrupt enable
     vTaskStartScheduler();
 
