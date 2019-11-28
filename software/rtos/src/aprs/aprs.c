@@ -44,10 +44,11 @@ void task_aprs() {
         gnss_coordinate_pair_t loc = {0};
         loc.latitude.dir = 'N';
         loc.longitude.dir = 'E';
-        int32_t alt = 0;
-//        while(!gnss_get_time(&GNSS, &time));
-//        while(!gnss_get_location(&GNSS, &loc));
-//        while(!gnss_get_altitude(&GNSS, &alt));
+        int32_t alt = -1;
+
+        gnss_get_time(&GNSS, &time);
+        gnss_get_location(&GNSS, &loc);
+        gnss_get_altitude(&GNSS, &alt);
 
         // Disable scheduler so that transmission is not interrupted by FreeRTOS ticks
         vTaskSuspendAll();
@@ -113,7 +114,7 @@ void aprs_beacon(gnss_time_t* time, gnss_coordinate_pair_t* loc, int32_t* alt){
 
     // Altitude
     ax25_send_string("/A=");
-    snprintf(temp_str, 7, "%06ld", *alt);
+    snprintf(temp_str, 7, "%6ld", *alt);
     ax25_send_string(temp_str);
 
     // Comment
