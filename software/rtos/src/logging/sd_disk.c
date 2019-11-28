@@ -34,6 +34,8 @@
 #include "ff.h"		/* Obtains integer types for FatFs */
 #include "diskio.h"	/* Common include file for FatFs and disk I/O layer */
 
+#include <stdint.h>
+
 
 /*-------------------------------------------------------------------------*/
 /* Platform dependent macros and functions needed to be modified           */
@@ -44,7 +46,7 @@
 #define	CS_H()		CS_HIGH()		/* Set MMC CS "high" */
 #define CS_L()		CS_LOW()		/* Set MMC CS "low" */
 
-#define CLK_kHz		16000
+#define CLK_MHz		16
 
 /*--------------------------------------------------------------------------
 
@@ -128,7 +130,7 @@ int wait_ready (void)	/* 1:OK, 0:Timeout */
 	for (tmr = 5000; tmr; tmr--) {	/* Wait for ready in timeout of 500ms */
 		rcvr_mmc(&d, 1);
 		if (d == 0xFF) break;
-		__delay_cycles(100 * CLK_kHz);
+		__delay_cycles(100 * CLK_MHz);
 	}
 
 	return tmr ? 1 : 0;
@@ -183,11 +185,10 @@ int rcvr_datablock (	/* 1:OK, 0:Failed */
 	BYTE d[2];
 	UINT tmr;
 
-
 	for (tmr = 1000; tmr; tmr--) {	/* Wait for data packet in timeout of 100ms */
 		rcvr_mmc(d, 1);
 		if (d[0] != 0xFF) break;
-		__delay_cycles(100 * CLK_kHz);
+		__delay_cycles(100 * CLK_MHz);
 	}
 	if (d[0] != 0xFE) return 0;		/* If not valid data token, return with error */
 
@@ -268,7 +269,7 @@ BYTE send_cmd (		/* Returns command response (bit7==1:Send failed)*/
 
 	/* Receive command response */
 	if (cmd == CMD12) rcvr_mmc(&d, 1);	/* Skip a stuff byte when stop reading */
-	n = 10;								/* Wait for a valid response in timeout of 10 attempts */
+	n = 100;								/* Wait for a valid response in timeout of 10 attempts */
 	do
 		rcvr_mmc(&d, 1);
 	while ((d & 0x80) && --n);
@@ -315,24 +316,28 @@ DSTATUS disk_initialize (
 
 	if (drv) return RES_NOTRDY;
 
-	__delay_cycles(10000 * CLK_kHz);
 	MMC_PxOUT |= MMC_SIMO + MMC_UCLK;
 	MMC_PxDIR |= MMC_SIMO + MMC_UCLK;
 	MMC_CS_PxOUT |= MMC_CS;
 	MMC_CS_PxDIR |= MMC_CS;
 	halSPISetup();
 
+#if SPI_SER_INTF != SER_INTF_BITBANG
+  MMC_PxSEL |= MMC_SIMO + MMC_SOMI + MMC_UCLK;
+#endif
+
 
 	for (n = 10; n; n--) rcvr_mmc(buf, 1);	/* Apply 80 dummy clocks and the card gets ready to receive command */
 
 	ty = 0;
-	if (send_cmd(CMD0, 0) == 1) {			/* Enter Idle state */
+	n = 0;
+	while ( (send_cmd(CMD0, 0) != 1) && (n < 10)) {			/* Enter Idle state */
 		if (send_cmd(CMD8, 0x1AA) == 1) {	/* SDv2? */
 			rcvr_mmc(buf, 4);							/* Get trailing return value of R7 resp */
 			if (buf[2] == 0x01 && buf[3] == 0xAA) {		/* The card can work at vdd range of 2.7-3.6V */
 				for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state (ACMD41 with HCS bit) */
 					if (send_cmd(ACMD41, 1UL << 30) == 0) break;
-					__delay_cycles(1000 * CLK_kHz);
+					__delay_cycles(1000 * CLK_MHz);
 
 				}
 				if (tmr && send_cmd(CMD58, 0) == 0) {	/* Check CCS bit in the OCR */
@@ -348,11 +353,12 @@ DSTATUS disk_initialize (
 			}
 			for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state */
 				if (send_cmd(cmd, 0) == 0) break;
-				__delay_cycles(1000 * CLK_kHz);
+				__delay_cycles(1000 * CLK_MHz);
 			}
 			if (!tmr || send_cmd(CMD16, 512) != 0)	/* Set R/W block length to 512 */
 				ty = 0;
 		}
+		n--;
 	}
 	CardType = ty;
 	s = ty ? 0 : STA_NOINIT;

@@ -30,7 +30,7 @@
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.MSP430F5438.ccxml.TI MSP430 USB1_0/MSP430" value="rtos"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.MSP430F5438A.ccxml.TI MSP430 USB1/MSP430" value="rtos"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_TARGET_CONFIG" value="${target_config_active_default:rtos}"/>
-<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430F5438.ccxml.TI MSP430 USB1/MSP430" value="D:/git\ATACS\software\rtos\Debug_Large_Data_Model\RTOSDemo.out"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430F5438.ccxml.TI MSP430 USB1/MSP430" value="/media/data/git/ATACS/software/rtos/Debug_Large_Data_Model/RTOSDemo.out"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430F5438.ccxml.TI MSP430 USB1_0/MSP430" value="D:/git\ATACS\software\rtos\Debug_Large_Data_Model\RTOSDemo.out"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430F5438A.ccxml.TI MSP430 USB1/MSP430" value="D:/git\ATACS\software\rtos\Debug_Large_Data_Model\RTOSDemo.out"/>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
