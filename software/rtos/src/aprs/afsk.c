@@ -117,7 +117,7 @@ void afsk_transmit(){
     } else {
         GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
     }
-    __delay_cycles(configCPU_CLOCK_HZ / 100);
+    __delay_cycles(configCPU_CLOCK_HZ / 50); // 20ms
 
     // Reset metadata
     afsk_state.tx_idx             = 0;
@@ -133,7 +133,7 @@ void afsk_transmit(){
     while(afsk_state.tx_flag);
 
     // Return to RX mode
-    __delay_cycles(configCPU_CLOCK_HZ / 100);
+    __delay_cycles(configCPU_CLOCK_HZ / 100); // 20ms
     if (afsk_state.ptt_active_high) {
         GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
     } else {
