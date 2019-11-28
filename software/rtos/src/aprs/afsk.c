@@ -49,6 +49,7 @@ const uint8_t AFSK_SINE_TABLE[AFSK_TABLE_SIZE_100/100] = {
 typedef struct {
     uint16_t ptt_port;
     uint8_t  ptt_pin;
+    bool     ptt_active_high;
 
     uint16_t sine_idx_100;
     uint16_t stride_100;
@@ -74,13 +75,18 @@ void afsk_timer_stop();
  * Exported Functions Definitions
  */
 void afsk_setup(const uint16_t ptt_port, const uint8_t ptt_pin,
-                const uint16_t tx_port,  const uint8_t tx_pin){
+                const uint16_t tx_port,  const uint8_t tx_pin,
+                const bool ptt_active_high){
     // Setup radio GPIO
-    afsk_state.ptt_port = ptt_port;
-    afsk_state.ptt_pin = ptt_pin;
+    afsk_state.ptt_port         = ptt_port;
+    afsk_state.ptt_pin          = ptt_pin;
+    afsk_state.ptt_active_high  = ptt_active_high;
     GPIO_setAsOutputPin(ptt_port, ptt_pin);
-    GPIO_setOutputHighOnPin(ptt_port, ptt_pin); // Low->TX High->RX
-
+    if(ptt_active_high){
+        GPIO_setOutputLowOnPin(ptt_port, ptt_pin);
+    } else {
+        GPIO_setOutputHighOnPin(ptt_port, ptt_pin);
+    }
     GPIO_setAsPeripheralModuleFunctionOutputPin(tx_port, tx_pin);
 
     // Setup timer ISR
@@ -105,8 +111,13 @@ void afsk_transmit(){
     if (afsk_state.packet_buf == 0 || afsk_state.packet_len == 0)
         return;
 
-    // Put radio in TX mode (active low)
-    GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    // Put radio in TX mode
+    if (afsk_state.ptt_active_high) {
+        GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    } else {
+        GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    }
+    __delay_cycles(configCPU_CLOCK_HZ / 50); // 20ms
 
     // Reset metadata
     afsk_state.tx_idx             = 0;
@@ -122,7 +133,12 @@ void afsk_transmit(){
     while(afsk_state.tx_flag);
 
     // Return to RX mode
-    GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    __delay_cycles(configCPU_CLOCK_HZ / 100); // 20ms
+    if (afsk_state.ptt_active_high) {
+        GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    } else {
+        GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    }
 }
 
 /*

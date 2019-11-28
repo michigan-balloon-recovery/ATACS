@@ -2,7 +2,7 @@
 
 extern UARTConfig * prtInfList[5];
 
-gnss_t GNSS = {.is_valid = false, .last_fix = 0};
+gnss_t GNSS = {.is_valid = false, .last_fix = 0, .data_mutex = 0};
 
 // ----- public API ----- //
 
@@ -50,12 +50,11 @@ void gnss_init(gnss_t *gnss_obj) {
 
 bool gnss_get_time(gnss_t *gnss_obj, gnss_time_t *time) {
     bool data_valid = false;
-    if(xSemaphoreTake(gnss_obj->data_mutex, 100) == pdFALSE) {
+    if(gnss_obj->data_mutex == 0 || xSemaphoreTake(gnss_obj->data_mutex, 100) == pdFALSE) {
         return false;
     }
     // check if the previous fix is valid
     if(gnss_obj->last_fix.quality == no_fix) {
-
         data_valid = false;
     }
     else {
@@ -69,12 +68,11 @@ bool gnss_get_time(gnss_t *gnss_obj, gnss_time_t *time) {
 
 bool gnss_get_location(gnss_t *gnss_obj, gnss_coordinate_pair_t *location) {
     bool data_valid = false;
-    if(xSemaphoreTake(gnss_obj->data_mutex, 100) == pdFALSE) {
+    if(gnss_obj->data_mutex == 0 || xSemaphoreTake(gnss_obj->data_mutex, 100) == pdFALSE) {
         return false;
     }
     // check if the previous fix is valid
     if(gnss_obj->last_fix.quality == no_fix) {
-
         data_valid = false;
     }
     else {
@@ -88,12 +86,11 @@ bool gnss_get_location(gnss_t *gnss_obj, gnss_coordinate_pair_t *location) {
 
 bool gnss_get_altitude(gnss_t *gnss_obj, int32_t *altitude) {
     bool data_valid = false;
-    if(xSemaphoreTake(gnss_obj->data_mutex, 100) == pdFALSE) {
+    if(gnss_obj->data_mutex == 0 || xSemaphoreTake(gnss_obj->data_mutex, 100) == pdFALSE) {
         return false;
     }
     // check if the previous fix is valid
     if(gnss_obj->last_fix.quality == no_fix) {
-
         data_valid = false;
     }
     else {
