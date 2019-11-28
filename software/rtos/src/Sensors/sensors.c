@@ -5,7 +5,7 @@
  * sensors.c
  */
 
-sensor_data_t sensor_data = {.humid_init = false, .pres_init = false, .pressureSemaphore = 0, .humiditySemaphore = 0};
+sensor_data_t sensor_data = {.humid_init = false, .pres_init = false};
 
 void task_pressure(void) {
 //    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
@@ -181,7 +181,7 @@ void sens_calc_humid(int32_t *return_data) {
 }
 
 bool sens_get_pres(int32_t* pressure) {
-	if(sensor_data.pressureSemaphore == 0 || xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdFALSE)
+	if(!sensor_data.pres_init || xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdFALSE)
 		return false;
 
 	*pressure = sensor_data.pressure;
@@ -190,7 +190,7 @@ bool sens_get_pres(int32_t* pressure) {
 }
 
 bool sens_get_ptemp(int32_t* temp) {
-	if(sensor_data.pressureSemaphore == 0 || xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdFALSE)
+	if(!sensor_data.pres_init || xSemaphoreTake(sensor_data.pressureSemaphore,100) == pdFALSE)
 	    return false;
 
 	*temp = sensor_data.pTemp;
@@ -199,7 +199,7 @@ bool sens_get_ptemp(int32_t* temp) {
 }
 
 bool sens_get_humid(int32_t* humidity) {
-	if(sensor_data.humiditySemaphore == 0 || xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdFALSE)
+	if(!sensor_data.humid_init || xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdFALSE)
 	    return false;
 
     *humidity = sensor_data.humidity;
@@ -209,7 +209,7 @@ bool sens_get_humid(int32_t* humidity) {
 
 
 bool sens_get_htemp(int32_t* temp) {
-    if(sensor_data.humiditySemaphore == 0 || xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdFALSE)
+    if(!sensor_data.humid_init || xSemaphoreTake(sensor_data.humiditySemaphore, 100) == pdFALSE)
         return false;
 
     *temp = sensor_data.hTemp;
