@@ -11,6 +11,7 @@ void log_create_new(log_t *log_obj);
 void log_convert_file_name(char *fileName);
 
 void task_log() {
+    vTaskDelay(10);
     log_init();
     vTaskDelay(10);
     while(1){
@@ -45,10 +46,10 @@ void task_log() {
 
 void log_init()
 {
-    FRESULT res;
+    FRESULT res[5];
     // mount drive
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
-    res = f_mount(&file_sys, "", 1);
+    res[0] = f_mount(&file_sys, "", 1);
 //    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
 	//initialize all directories
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
@@ -58,20 +59,28 @@ void log_init()
 
 	//create folders for each data source
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
-	res = f_mkdir("rb");
+	res[1] = f_mkdir("rb");
 //	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
 
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
-	res = f_mkdir("gnss");
+	res[2] = f_mkdir("gnss");
+
 //	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
 
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
-	res = f_mkdir("sens");
+	res[3] = f_mkdir("sens");
+
 //	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
 
 //    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
-	res = f_mkdir("aprs");
+	res[4] = f_mkdir("aprs");
+
 //	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+
+	// reset processor if files were created
+	if( (res[1] != FR_EXIST) || (res[2] != FR_EXIST) || (res[3] != FR_EXIST) || (res[4] != FR_EXIST) ) {
+	    PMMCTL0 = (PMMCTL0 & (PMMCOREV0 | PMMCOREV1)) | PMMSWPOR | (PMMCTL0 & PMMREGOFF) | PMMPW;
+	}
 
 
 

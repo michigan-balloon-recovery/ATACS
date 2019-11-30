@@ -331,34 +331,37 @@ DSTATUS disk_initialize (
 
 	ty = 0;
 	n = 0;
-	while ( (send_cmd(CMD0, 0) != 1) && (n < 10)) {			/* Enter Idle state */
-		if (send_cmd(CMD8, 0x1AA) == 1) {	/* SDv2? */
-			rcvr_mmc(buf, 4);							/* Get trailing return value of R7 resp */
-			if (buf[2] == 0x01 && buf[3] == 0xAA) {		/* The card can work at vdd range of 2.7-3.6V */
-				for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state (ACMD41 with HCS bit) */
-					if (send_cmd(ACMD41, 1UL << 30) == 0) break;
-					__delay_cycles(1000 * CLK_MHz);
+	while(n < 10) {
+	    if (send_cmd(CMD0, 0) == 1) {			/* Enter Idle state */
+	        if (send_cmd(CMD8, 0x1AA) == 1) {	/* SDv2? */
+	            rcvr_mmc(buf, 4);							/* Get trailing return value of R7 resp */
+	            if (buf[2] == 0x01 && buf[3] == 0xAA) {		/* The card can work at vdd range of 2.7-3.6V */
+	                for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state (ACMD41 with HCS bit) */
+	                    if (send_cmd(ACMD41, 1UL << 30) == 0) break;
+	                    __delay_cycles(1000 * CLK_MHz);
 
-				}
-				if (tmr && send_cmd(CMD58, 0) == 0) {	/* Check CCS bit in the OCR */
-					rcvr_mmc(buf, 4);
-					ty = (buf[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2;	/* SDv2 */
-				}
-			}
-		} else {							/* SDv1 or MMCv3 */
-			if (send_cmd(ACMD41, 0) <= 1) 	{
-				ty = CT_SD1; cmd = ACMD41;	/* SDv1 */
-			} else {
-				ty = CT_MMC; cmd = CMD1;	/* MMCv3 */
-			}
-			for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state */
-				if (send_cmd(cmd, 0) == 0) break;
-				__delay_cycles(1000 * CLK_MHz);
-			}
-			if (!tmr || send_cmd(CMD16, 512) != 0)	/* Set R/W block length to 512 */
-				ty = 0;
-		}
-		n--;
+	                }
+	                if (tmr && send_cmd(CMD58, 0) == 0) {	/* Check CCS bit in the OCR */
+	                    rcvr_mmc(buf, 4);
+	                    ty = (buf[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2;	/* SDv2 */
+	                }
+	            }
+	        } else {							/* SDv1 or MMCv3 */
+	            if (send_cmd(ACMD41, 0) <= 1) 	{
+	                ty = CT_SD1; cmd = ACMD41;	/* SDv1 */
+	            } else {
+	                ty = CT_MMC; cmd = CMD1;	/* MMCv3 */
+	            }
+	            for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state */
+	                if (send_cmd(cmd, 0) == 0) break;
+	                __delay_cycles(1000 * CLK_MHz);
+	            }
+	            if (!tmr || send_cmd(CMD16, 512) != 0)	/* Set R/W block length to 512 */
+	                ty = 0;
+	        }
+	        break;
+	    }
+	    n++;
 	}
 	CardType = ty;
 	s = ty ? 0 : STA_NOINIT;
