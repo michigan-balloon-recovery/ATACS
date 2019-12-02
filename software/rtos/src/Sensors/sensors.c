@@ -14,7 +14,7 @@ void task_pressure(void) {
     sens_init_pres();
 
     while(1) {
-        int32_t data[1];
+        int32_t data[2];
         sens_calc_pres(data);
 
         if(xSemaphoreTake(sensor_data.pressureSemaphore,100/portTICK_RATE_MS) == pdTRUE) {
@@ -34,7 +34,7 @@ void task_humidity(void) {
 
     while(1) {
         GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN3);
-        int32_t data[1];
+        int32_t data[2];
         sens_calc_humid(data);
 
         if(xSemaphoreTake(sensor_data.humiditySemaphore, 100/portTICK_RATE_MS) == pdTRUE) {
