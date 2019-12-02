@@ -68,14 +68,27 @@ static void rb_clear_buffers(ROCKBLOCK_t *rb) {
     rb->tx.tx_ptr = rb->tx.buff;
 }
 
-static bool rb_wait_for_messages(ROCKBLOCK_t *rb) {
+static bool rb_use_uart(ROCKBLOCK_t *rb) {
 
-    if(xSemaphoreTake(rb->tx.txSemaphore, 20000 / portTICK_RATE_MS) == pdFALSE)
+    if(xSemaphoreTake(rb->busy_semaphore, 2000 / portTICK_RATE_MS) == pdFALSE)
         return false;
 
-    if(xSemaphoreTake(rb->rx.rxSemaphore, 20000 / portTICK_RATE_MS) == pdFALSE)
-        return false;
+    uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
+    rb->rx.finished = false;
 
+    uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
+
+    if(xSemaphoreTake(rb->tx.txSemaphore, 20000 / portTICK_RATE_MS) == pdFALSE) {
+        xSemaphoreGive(rb->busy_semaphore);
+        return false;
+    }
+
+    if(xSemaphoreTake(rb->rx.rxSemaphore, 20000 / portTICK_RATE_MS) == pdFALSE) {
+        xSemaphoreGive(rb->busy_semaphore);
+        return false;
+    }
+
+    xSemaphoreGive(rb->busy_semaphore);
     return true;
 }
 
@@ -191,6 +204,7 @@ void rb_init(ROCKBLOCK_t *rb) {
 
     rb->rx.rxSemaphore = xSemaphoreCreateCounting(1, 0);
     rb->tx.txSemaphore = xSemaphoreCreateCounting(1, 0);
+    rb->busy_semaphore = xSemaphoreCreateMutex();
 
     // UART initialization
     UARTConfig a1_cnf = {
@@ -299,10 +313,13 @@ void rb_send_message(ROCKBLOCK_t *rb, uint8_t *msg, uint16_t len, bool *msgSent,
     rb->tx.last_ptr = rb->tx.cur_ptr;
     *(rb->tx.cur_ptr++) = '\r'; // end message with carriage return.
 
-    uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
-    rb->rx.finished = false;
-    uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
-    rb_wait_for_messages(rb);
+    if(rb_use_uart(rb) == false) {
+        *msgSent = false;
+        *msgReceived = 0;
+        *msgsQueued = 0;
+        return;
+    }
+
     rb_start_session(rb, msgSent, msgReceived, msgsQueued);
 
     // process response to see if message succeeded.
@@ -314,11 +331,9 @@ void rb_start_session(ROCKBLOCK_t *rb, bool *msgSent, int8_t *msgReceived, int8_
 
     rb_clear_buffers(rb);
     rb_format_command(rb, SBDIX, &(rb->rx.numReturns));
-    uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1;
-    rb->rx.finished = false;
-    uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
+    uint16_t totalLen;
 
-    if(rb_wait_for_messages(rb) == false) {
+    if(rb_use_uart(rb) == false) {
         *msgSent = false;
         *msgReceived = 0;
         *msgsQueued = 0;
@@ -423,11 +438,7 @@ bool rb_retrieve_message(ROCKBLOCK_t *rb) {
 
     rb_clear_buffers(rb);
     rb_format_command(rb, SBDRT, &(rb->rx.numReturns));
-    rb->rx.finished = false;
-    uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
-
-    uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
-    return rb_wait_for_messages(rb);
+    return rb_use_uart(rb);
 
 }
 
@@ -548,4 +559,12 @@ void rb_cut_ftu(bool cut) {
         P8OUT |= BIT5;
     else
         P8OUT &= ~BIT5;
+}
+
+bool rb_set_enabled(ROCKBLOCK_t *rb, bool enable) {
+    if(xSemaphoreTake(rb->busy_semaphore, 20000 / portTICK_RATE_MS) == pdFALSE)
+        return false;
+
+    //TODO: disable UART somehow
+
 }

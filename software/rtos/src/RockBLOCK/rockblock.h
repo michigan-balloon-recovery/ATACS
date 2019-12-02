@@ -73,6 +73,7 @@ typedef struct {
     rb_tx_buffer_t tx; // all tx info is stored here
     rb_rx_buffer_t rx; // all rx info is stored here
     bool is_valid;
+    SemaphoreHandle_t busy_semaphore;
 } ROCKBLOCK_t;
 
 
@@ -155,6 +156,16 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
 // returns true if the message is a valid command, false if it is not a valid command.
 bool rb_process_message(rb_rx_buffer_t *rx);
 
+// controls the FTU
+// if true, starts FTU.
+// if false, turns off FTU
 void rb_cut_ftu(bool cut);
+
+// enables or disables the task and all its interrupts based on the bool input
+// use if you have critical section elsewhere.
+// should avoid having to call this. But it is safe. Communications will not break.
+// returns true if interrupts were actually disabled.
+// DO NOT ENABLE UNLESS YOU PREVIOUSLY SET IT TO FALSE.
+bool rb_set_enabled(ROCKBLOCK_t *rb, bool enable);
 
 #endif /* SRC_ROCKBLOCK_ROCKBLOCK_H_ */
