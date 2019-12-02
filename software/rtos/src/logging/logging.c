@@ -14,6 +14,11 @@ void task_log() {
     vTaskDelay(10);
     log_init();
     vTaskDelay(10);
+    UCB0CTL1 |= UCSWRST;
+    UCB0BR0 |= 0;
+    UCB0BR1 = 0;
+    UCB0CTL1 &= ~UCSWRST;
+    vTaskDelay(10);
     while(1){
         GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
         if(rb.is_valid) {
@@ -47,52 +52,33 @@ void task_log() {
 void log_init()
 {
     FRESULT res[5];
-    // mount drive
-//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
-    res[0] = f_mount(&file_sys, "", 1);
-//    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-	//initialize all directories
-//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
-//	res = f_mkdir("data");
-//	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
 
+    // mount drive
+    res[0] = f_mount(&file_sys, "", 1);
 
 	//create folders for each data source
-//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
 	res[1] = f_mkdir("rb");
-//	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-
-//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
 	res[2] = f_mkdir("gnss");
-
-//	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-
-//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
 	res[3] = f_mkdir("sens");
-
-//	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-
-//    GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
 	res[4] = f_mkdir("aprs");
 
-//	GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
+	// initialize entry count to max (forces a search for lowest log #)
+	rb_log.num_entries = maxData + 1;
+	gnss_log.num_entries = maxData + 1;
+    sens_log.num_entries = maxData + 1;
+	aprs_log.num_entries = maxData + 1;
 
-	// reset processor if files were created
-	if( (res[1] != FR_EXIST) || (res[2] != FR_EXIST) || (res[3] != FR_EXIST) || (res[4] != FR_EXIST) ) {
-	    PMMCTL0 = (PMMCTL0 & (PMMCOREV0 | PMMCOREV1)) | PMMSWPOR | (PMMCTL0 & PMMREGOFF) | PMMPW;
-	}
-
-
-
-	rb_log.num_entries = maxFileNameLength + 1;
-	gnss_log.num_entries = maxFileNameLength + 1;
-    sens_log.num_entries = maxFileNameLength + 1;
-	aprs_log.num_entries = maxFileNameLength + 1;
-
+	// initialize log names
 	strcpy(rb_log.current_log, "rb/000000.csv");
     strcpy(gnss_log.current_log, "gnss/000000.csv");
     strcpy(sens_log.current_log, "sens/000000.csv");
     strcpy(aprs_log.current_log, "aprs/000000.csv");
+
+    // initialize log headers
+    strcpy(rb_log.log_header, "rockBLOCK log file\n");
+    strcpy(gnss_log.log_header, "GNSS log file\nhr:min,latitude(dSec),longitude(dSec),altitude(m)\n");
+    strcpy(sens_log.log_header, "sensor log file\npressure,temperature(degF),humidity(%),temperature(degC)\n");
+    strcpy(aprs_log.log_header, "APRS log file\n");
 }
 
 void log_rb()
@@ -132,7 +118,6 @@ void log_gnss()
 
     FIL file;
     UINT bw;
-//    taskENTER_CRITICAL();
     res = f_open(&file, gnss_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
     res = f_lseek(&file, gnss_log.fpointer);
 
@@ -155,7 +140,7 @@ void log_gnss()
 		}
 		else
 		{
-			f_write(&file,"???",3,&bw);
+			f_write(&file,"??:??",5,&bw);
 		}
 		f_write(&file,",",1,&bw);
 		
@@ -181,7 +166,7 @@ void log_gnss()
 		}
 		else
 		{
-            f_write(&file,"???",3,&bw);
+            f_write(&file,"??,??",5,&bw);
 		}
         f_write(&file,",",1,&bw);
 		
@@ -204,7 +189,6 @@ void log_gnss()
 		
         gnss_log.fpointer = file.fptr;
 		f_close(&file);
-//		taskEXIT_CRITICAL();
 	}
 }
 
@@ -219,7 +203,6 @@ void log_sens()
 
     FIL file;
     UINT bw;
-//    taskENTER_CRITICAL();
     res = f_open(&file, sens_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
     res = f_lseek(&file, sens_log.fpointer);
 
@@ -289,7 +272,6 @@ void log_sens()
 		
         sens_log.fpointer = file.fptr;
 		f_close(&file);
-//		taskEXIT_CRITICAL();
 	}
 }
 
@@ -304,7 +286,6 @@ void log_aprs()
 
     FIL file;
     UINT bw;
-//    taskENTER_CRITICAL();
     res = f_open(&file, aprs_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
     res = f_lseek(&file, aprs_log.fpointer);
     if(res == FR_OK)
@@ -315,7 +296,6 @@ void log_aprs()
 		
         aprs_log.fpointer = file.fptr;
 		f_close(&file);
-//		taskEXIT_CRITICAL();
 	}
 }
 
@@ -336,11 +316,18 @@ void log_convert_file_name(char *fileName)
 
 void log_create_new(log_t *log_obj)
 {
-    taskENTER_CRITICAL();
+    FIL file;
+    UINT bw;
+    FRESULT res;
     log_obj->fpointer = 0;
     while(f_stat(log_obj->current_log, NULL) == FR_OK){
         log_convert_file_name(log_obj->current_log);
     }
     log_obj->num_entries = 0;
-    taskEXIT_CRITICAL();
+    res = f_open(&file, log_obj->current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+    if(res == FR_OK) {
+        f_write(&file,log_obj->log_header,strlen(log_obj->log_header),&bw);
+        log_obj->fpointer = file.fptr;
+        f_close(&file);
+    }
 }

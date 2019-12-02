@@ -13,12 +13,14 @@
 #include <string.h>
 
 //max data points per file
-#define maxData 5
-#define maxFileNameLength 30
+#define maxData                     5
+#define maxFileNameLength           30
+#define maxHeaderSize               100
 
 typedef struct {
     uint16_t num_entries;
     char current_log [maxFileNameLength];
+    char log_header [maxHeaderSize];
     FSIZE_t fpointer;
 } log_t;
 

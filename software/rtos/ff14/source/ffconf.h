@@ -2,6 +2,9 @@
 /  FatFs Functional Configurations
 /---------------------------------------------------------------------------*/
 
+#include "FreeRTOS.h"
+#include "semphr.h"
+
 #define FFCONF_DEF	86606	/* Revision ID */
 
 /*---------------------------------------------------------------------------/
@@ -68,7 +71,7 @@
 / Locale and Namespace Configurations
 /---------------------------------------------------------------------------*/
 
-#define FF_CODE_PAGE	437
+#define FF_CODE_PAGE	0
 /* This option specifies the OEM code page to be used on the target system.
 /  Incorrect code page setting can cause a file open failure.
 /
@@ -234,8 +237,8 @@
 /  Note that enabling exFAT discards ANSI C (C89) compatibility. */
 
 
-#define FF_FS_NORTC		0
-#define FF_NORTC_MON	1
+#define FF_FS_NORTC		1
+#define FF_NORTC_MON	12
 #define FF_NORTC_MDAY	1
 #define FF_NORTC_YEAR	2019
 /* The option FF_FS_NORTC switches timestamp functiton. If the system does not have
@@ -273,7 +276,7 @@
 
 
 /* #include <somertos.h>	// O/S definitions */
-#define FF_FS_REENTRANT	0
+#define FF_FS_REENTRANT	1
 #define FF_FS_TIMEOUT	1000
 #define FF_SYNC_t		SemaphoreHandle_t
 /* The option FF_FS_REENTRANT switches the re-entrancy (thread safe) of the FatFs

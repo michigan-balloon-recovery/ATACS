@@ -1,34 +1,58 @@
+
 #include "nmea.h"
 
-// ----- private function prototypes ----- //
+// ------------------------------------------------------------ //
+// -------------------- private prototypes -------------------- //
+// ------------------------------------------------------------ //
+
+/*!
+ * \brief Decode a standard NMEA sentence
+ *
+ * @param gnss_obj is the GNSS object
+ * @param sentence_id is the identifier code for the sentence type using the SENTENCE() macro
+ * @param payload is a byte array containing the sentence payload
+ * \return NMEA fault code
+ */
+static int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uint8_t *payload);
+
+/*!
+ * \brief Decode a PUBX (Ublox proprietary) NMEA sentence
+ *
+ * currently not implemented
+ *
+ */
+static int8_t gnss_nmea_decode_PUBX();
+
+/*!
+ * \brief Decode a field in a NMEA sentence
+ *
+ * @param payload is a byte array containing the sentence payload
+ * @param field is a pass by reference to the pointer indicating the start of the field
+ * @format_data is a function pointer to the function that decodes the field
+ * @param data is a void pointer to the data passed into the field decoder function
+ * \return true if more fields remain in the sentence
+ */
+static bool gnss_nmea_decode_field(uint8_t *payload, uint8_t **field, bool (*format_data)(uint8_t*, uint8_t*, void*), void *data);
+
+// ----- field formatting decoders ----- //
+static bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, void *data);
+static bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, void *data);
+static bool gnss_nmea_field_direction(uint8_t *start, uint8_t *end, void *data);
+static bool gnss_nmea_field_time(uint8_t *start, uint8_t *end, void *data);
+static bool gnss_nmea_field_char(uint8_t *start, uint8_t *end, void *data);
+static bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, void *data);
+static bool gnss_nmea_field_int8(uint8_t *start, uint8_t *end, void *data);
+
+// ----- utility functions ----- //
 static inline long gnss_nmea_atoi(uint8_t *temp, uint8_t *ascii, uint8_t length);
 
-// ----- public API ----- //
 
-void gnss_nmea_rx_callback(void *param, uint8_t datum) {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    gnss_t *gnss_obj = (gnss_t *)param;
-    ring_buff_t *buff = &gnss_obj->gnss_rx_buff;
 
-    // check if start of a packet
-    if(datum == '$') {
-        gnss_obj->decoding_message = true;
-        ring_buff_write_clear_packet(buff);
-    }
-    // check if end of a packet
-    else if(gnss_obj->decoding_message && (datum == '\n') ) {
-        gnss_obj->decoding_message = false;
-        ring_buff_write_finish_packet(buff);
-    }
-    // contents of message
-    else if(gnss_obj->decoding_message){
-        ring_buff_write(buff, datum);
-    }
 
-    // release NMEA parsing task
-    xSemaphoreGiveFromISR(gnss_obj->uart_semaphore, &xHigherPriorityTaskWoken);
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-}
+
+// ---------------------------------------------------- //
+// -------------------- public API -------------------- //
+// ---------------------------------------------------- //
 
 bool gnss_nmea_queue(gnss_t *gnss_obj, uint8_t datum) {
     ring_buff_t *buff = &gnss_obj->gnss_rx_buff;
@@ -128,6 +152,14 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
     }
 }
 
+
+
+
+
+// ----------------------------------------------------- //
+// -------------------- private API -------------------- //
+// ----------------------------------------------------- //
+
 int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uint8_t *payload) {
     uint8_t *ptr = payload;
     gnss_fix_t current_fix = {.quality = no_fix};
@@ -158,8 +190,6 @@ int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uin
             if( (current_fix.quality != no_fix) && (current_fix.quality != 0xFFFF)) {
                 gnss_obj->last_fix = current_fix;
             }
-//            ring_buff_clear_buff(&gnss_obj->gnss_rx_buff);
-            // gnss_nmea_decode_field(payload, &ptr, NULL, NULL);
             break;
         // lattitude and longitude, with time of position fix and status
         case SENTENCE_GLL:
@@ -252,7 +282,6 @@ bool gnss_nmea_decode_field(uint8_t *payload, uint8_t **field, bool (*format_dat
     return false;
 }
 
-// ----- field formatting decoders ----- //
 bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, void *data) {
     gnss_coordinate_t *coord = (gnss_coordinate_t*)data;
     uint8_t temp[6];
@@ -378,8 +407,6 @@ bool gnss_nmea_field_int8(uint8_t *start, uint8_t *end, void *data) {
     return true;
 }
 
-
-// ----- GNSS NMEA utilities ----- //
 static inline long gnss_nmea_atoi(uint8_t *temp, uint8_t *ascii, uint8_t length) {
     temp[length] = '\0';
     memcpy(temp, ascii, length);

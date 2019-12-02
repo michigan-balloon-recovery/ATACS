@@ -269,7 +269,7 @@ BYTE send_cmd (		/* Returns command response (bit7==1:Send failed)*/
 
 	/* Receive command response */
 	if (cmd == CMD12) rcvr_mmc(&d, 1);	/* Skip a stuff byte when stop reading */
-	n = 100;								/* Wait for a valid response in timeout of 10 attempts */
+	n = 20;								/* Wait for a valid response in timeout of 20 attempts */
 	do
 		rcvr_mmc(&d, 1);
 	while ((d & 0x80) && --n);
@@ -497,8 +497,8 @@ DRESULT disk_ioctl (
 	return res;
 }
 
-DWORD get_fattime() {
-    return 1;
-}
+//DWORD get_fattime() {
+//    return 1;
+//}
 
 

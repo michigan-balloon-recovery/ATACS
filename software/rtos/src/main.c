@@ -18,7 +18,6 @@
 /*-----------------------------------------------------------*/
 
 static void prvSetupHardware(void);
-void task_led_breathe(void);
 
 /*-----------------------------------------------------------*/
 
@@ -27,13 +26,12 @@ void main( void ) {
     prvSetupHardware();
 
     /* Create Tasks */
-//    xTaskCreate((TaskFunction_t) task_led_breathe,    "LED heartbeat",    128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_gnss,           "gnss",             128, NULL, 1, NULL);
-    xTaskCreate((TaskFunction_t) task_aprs,           "aprs",             512, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_gnss,           "gnss",             128, NULL, 1, NULL);
+//    xTaskCreate((TaskFunction_t) task_aprs,           "aprs",             512, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_pressure,       "pressure",         128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_humidity,       "humidity",         128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_rockblock,      "RockBLOCK",        512, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_log,            "Logging",          512, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_log,            "Logging",          512, NULL, 1, NULL);
 
 
     /* Start the scheduler. */
@@ -45,32 +43,6 @@ void main( void ) {
     to create the idle task.  This may have been trapped by the malloc() failed
     hook function, if one is configured. */
     for( ;; );
-}
-
-/*-----------------------------------------------------------*/
-
-void task_led_breathe() {
-    const portTickType xFrequency = 1000 / portTICK_RATE_MS;
-    portTickType xLastWakeTime = xTaskGetTickCount();
-
-    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN2);
-    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN3);
-    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN4);
-
-    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN2);
-    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
-    GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
-
-    while (1) {
-        GPIO_toggleOutputOnPin(GPIO_PORT_P8, GPIO_PIN2);
-        vTaskDelay(100 / portTICK_RATE_MS);
-        GPIO_toggleOutputOnPin(GPIO_PORT_P8, GPIO_PIN3);
-        vTaskDelay(100 / portTICK_RATE_MS);
-        GPIO_toggleOutputOnPin(GPIO_PORT_P8, GPIO_PIN4);
-        vTaskDelay(100 / portTICK_RATE_MS);
-
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-    }
 }
 
 /*-----------------------------------------------------------*/
