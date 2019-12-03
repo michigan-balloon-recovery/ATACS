@@ -15,6 +15,8 @@ typedef struct{
 	SemaphoreHandle_t humiditySemaphore;
 	bool humid_init;
 	bool pres_init;
+	bool pres_valid;
+	bool humid_valid;
 } sensor_data_t;
 
 uint16_t c[8];
@@ -25,9 +27,9 @@ void task_humidity(void);
 
 void sens_init_pres(void);
 
-void sens_calc_pres(int32_t* return_data);
+bool sens_calc_pres(int32_t* return_data);
 
-void sens_calc_humid(int32_t* return_data);
+bool sens_calc_humid(int32_t* return_data);
 
 bool sens_get_pres(int32_t* pressure);
 
@@ -37,7 +39,14 @@ bool sens_get_humid(int32_t* humidity);
 
 bool sens_get_htemp(int32_t* temp);
 
+// disables interrupts for the sensors (basically just i2c)
+// this function returns true if you were able to disable interrupts.
+bool sens_disable_interrupts(void);
 
+// enables interrupts associated with the sensors (i2c)
+// you can always assume you succeeded enabling.
+// do not call unless you successfully disabled interrupts previously.
+void sens_enable_interrupts(void);
 
 #endif
 

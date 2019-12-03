@@ -13,13 +13,20 @@ void task_pressure(void) {
     sensor_data.pressureSemaphore = xSemaphoreCreateMutex();
     sens_init_pres();
 
+    int32_t data[2] = {0, 0};
+    bool pres_valid = false;
+
     while(1) {
-        int32_t data[2];
-        sens_calc_pres(data);
+
+        if(sens_calc_pres(data))
+            pres_valid = true;
+        else
+            pres_valid = false;
 
         if(xSemaphoreTake(sensor_data.pressureSemaphore,100/portTICK_RATE_MS) == pdTRUE) {
             sensor_data.pressure = data[0];
             sensor_data.pTemp = data[1];
+            sensor_data.pres_valid = pres_valid;
             xSemaphoreGive(sensor_data.pressureSemaphore);
         }
         vTaskDelay(1000 / portTICK_RATE_MS);
@@ -31,17 +38,24 @@ void task_humidity(void) {
 
     sensor_data.humiditySemaphore = xSemaphoreCreateMutex();
     sensor_data.humid_init = true;
+    int32_t data[2] = {0, 0};
+    bool humid_valid = false;
 
     while(1) {
         GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN3);
-        int32_t data[2];
-        sens_calc_humid(data);
+
+        if(sens_calc_humid(data))
+            humid_valid = true;
+        else
+            humid_valid = false;
 
         if(xSemaphoreTake(sensor_data.humiditySemaphore, 100/portTICK_RATE_MS) == pdTRUE) {
             sensor_data.humidity = data[0];
             sensor_data.hTemp = data[1];
+            sensor_data.humid_valid = humid_valid;
             xSemaphoreGive(sensor_data.humiditySemaphore);
         }
+
         GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
         vTaskDelay(xFrequency);
     }
@@ -56,22 +70,35 @@ void sens_init_pres(void) {
         c[i] = 0;
 
 	cmd[0] = 0x1E;
-    i2c_write(0x77, cmd, 1);
+    while(i2c_write(0x77, cmd, 1) == false);
     for(j = 0; j<8; j++) {
         uint8_t data[2];
         vTaskDelay(100/portTICK_PERIOD_MS);
         cmd[0] = 0xA0 + j;
-        i2c_write(0x77, cmd, 1);
+        while(i2c_write(0x77, cmd, 1) == false);
         vTaskDelay(100/portTICK_PERIOD_MS);
-        i2c_read(0x77, data, 2);
+        while(i2c_read(0x77, data, 2) == false);
         c[j] = data[0];
         c[j] = c[j] << 8;
         c[j] += data[1];
     }
     sensor_data.pres_init = true;
 }
+
+void sens_enable_interrupts(void) {
+
+    i2c_enable_interrupts();
+    return;
+
+}
+
+bool sens_disable_interrupts(void) {
+
+    return i2c_disable_interrupts();
+
+}
  
-void sens_calc_pres(int32_t* return_data) {
+bool sens_calc_pres(int32_t* return_data) {
     uint8_t data[4] = {0x0, 0x0, 0x0, 0x0};
     uint8_t cmd[1];
 
@@ -85,12 +112,23 @@ void sens_calc_pres(int32_t* return_data) {
     //retrieves digital pressure value
     vTaskDelay(100/portTICK_PERIOD_MS);
     cmd[0] = 0x48;
-    i2c_write(0x77, cmd, 1);
+
+    if(i2c_write(0x77, cmd, 1) == false)
+        return false;
+
     vTaskDelay(100/portTICK_PERIOD_MS);
     cmd[0] = 0x00;
-    i2c_write(0x77, cmd, 1);
+
+    if(i2c_write(0x77, cmd, 1) == false)
+        return false;
+
+
     vTaskDelay(100/portTICK_PERIOD_MS);
-    i2c_read(0x77, data, 3);
+
+    if(i2c_read(0x77, data, 3) == false)
+        return false;
+
+
     d1 = data[0];
     d1 = d1 << 8;
     d1 += data[1];
@@ -99,12 +137,20 @@ void sens_calc_pres(int32_t* return_data) {
 
     //retrieves digital temperature value
     cmd[0] = 0x58;
-    i2c_write(0x77, cmd, 1);
+
+    if(i2c_write(0x77, cmd, 1) == false)
+        return false;
+
     vTaskDelay(100/portTICK_PERIOD_MS);
     cmd[0] = 0x00;
-    i2c_write(0x77, cmd, 1);
+    if(i2c_write(0x77, cmd, 1) == false)
+        return false;
+
     vTaskDelay(100/portTICK_PERIOD_MS);
-    i2c_read(0x77, data, 3);
+
+    if(i2c_read(0x77, data, 3) == false)
+        return false;
+
     d2 = data[0];
     d2 = d2 << 8;
     d2 += data[1];
@@ -151,16 +197,21 @@ void sens_calc_pres(int32_t* return_data) {
 
     return_data[0] = pressure;
     return_data[1] = pTemp;
+    return true;
 }
 
-void sens_calc_humid(int32_t *return_data) {
+bool sens_calc_humid(int32_t *return_data) {
     uint32_t hum = 0;
     uint8_t data[4] = {0x0, 0x0, 0x0, 0x0};
     int32_t temp = 0;
 
-    i2c_write(0x27, 0, 0);
+    if(i2c_write(0x27, 0, 0) == false)
+        return false;
+
     vTaskDelay(50/portTICK_PERIOD_MS);
-    i2c_read(0x27, data, 4);
+
+    if(i2c_read(0x27, data, 4) == false)
+        return false;
 
     hum = data[0] & 0x3F;
     hum = hum << 8;
@@ -178,6 +229,7 @@ void sens_calc_humid(int32_t *return_data) {
 
     return_data[0] = hum;
     return_data[1] = temp;
+    return true;
 }
 
 bool sens_get_pres(int32_t* pressure) {
@@ -185,8 +237,9 @@ bool sens_get_pres(int32_t* pressure) {
 		return false;
 
 	*pressure = sensor_data.pressure;
+	bool toReturn = sensor_data.pres_valid;
     xSemaphoreGive(sensor_data.pressureSemaphore);
-    return true;
+    return toReturn;
 }
 
 bool sens_get_ptemp(int32_t* temp) {
@@ -194,8 +247,9 @@ bool sens_get_ptemp(int32_t* temp) {
 	    return false;
 
 	*temp = sensor_data.pTemp;
+	bool toReturn = sensor_data.pres_valid;
     xSemaphoreGive(sensor_data.pressureSemaphore);
-    return true;
+    return toReturn;
 }
 
 bool sens_get_humid(int32_t* humidity) {
@@ -203,8 +257,9 @@ bool sens_get_humid(int32_t* humidity) {
 	    return false;
 
     *humidity = sensor_data.humidity;
+    bool toReturn = sensor_data.humid_valid;
     xSemaphoreGive(sensor_data.humiditySemaphore);
-    return true;
+    return toReturn;
 }
 
 
@@ -213,6 +268,7 @@ bool sens_get_htemp(int32_t* temp) {
         return false;
 
     *temp = sensor_data.hTemp;
+    bool toReturn = sensor_data.humid_valid;
     xSemaphoreGive(sensor_data.humiditySemaphore);
-    return true;
+    return toReturn;
 }

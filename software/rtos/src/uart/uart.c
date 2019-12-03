@@ -103,6 +103,22 @@ int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf){
 	return UART_SUCCESS;
 }
 
+/*
+ * Clears RX and TX interrupt flags and enable bits
+ * May corrupt data being sent, ensure transmission is complete before invoking
+ */
+void disableUSCIUartInterrupts(UARTConfig* prtInf){
+    // Clear RX interrupt flag
+    *(prtInf->usciRegs->IFG_REG) &= ~UCRXIFG;
+    // Disable RX interrupt
+    *(prtInf->usciRegs->IE_REG) &= ~UCRXIE;
+
+    // Clear TX interrupt flag
+    *(prtInf->usciRegs->IFG_REG) &= ~UCTXIFG;
+    // Disable TX interrupt
+    *(prtInf->usciRegs->IE_REG) &= ~UCTXIE;
+}
+
 /*!
  * \brief Registers the RX Callback for the UART module
  * 

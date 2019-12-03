@@ -73,6 +73,7 @@ typedef struct {
     rb_tx_buffer_t tx; // all tx info is stored here
     rb_rx_buffer_t rx; // all rx info is stored here
     bool is_valid;
+    SemaphoreHandle_t busy_semaphore;
 } ROCKBLOCK_t;
 
 
@@ -155,6 +156,16 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
 // returns true if the message is a valid command, false if it is not a valid command.
 bool rb_process_message(rb_rx_buffer_t *rx);
 
+// controls the FTU
+// if true, starts FTU.
+// if false, turns off FTU
 void rb_cut_ftu(bool cut);
+
+// enables interrupts for the RockBLOCK. Do not call unless you previously disabled interrupts from rb_set_disabled()
+void rb_enable_interrupts(ROCKBLOCK_t *rb);
+
+// disables interrupts for the RockBLOCK. Returns true if interrupts were successfully disabled.
+// False indicates we were unable to disable interrupts for some reason.
+bool rb_disable_interrupts(ROCKBLOCK_t *rb);
 
 #endif /* SRC_ROCKBLOCK_ROCKBLOCK_H_ */
