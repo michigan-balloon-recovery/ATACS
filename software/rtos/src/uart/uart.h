@@ -163,6 +163,7 @@ USCIUARTRegs USCI_A0_regs, USCI_A1_regs, USCI_A2_regs, USCI_A3_regs;
 
 /* Function Declarations */
 int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf);
+void disableUSCIUartInterrupts(UARTConfig* prtInf);
 void initUartRxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t datum), void *params);
 void initUartTxCallback(UARTConfig * prtInf, bool (*callback) (void *params, uint8_t *txAddress), void *params);
 int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs);
