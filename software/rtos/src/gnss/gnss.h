@@ -18,14 +18,15 @@ extern "C" {
 #include "ring_buff.h"
 #include "uart.h"
 
-// protocol selection:
-//      - GNSS_NMEA for standardized NMEA communications
-//          * Compatible with most GNSS modules
-//          * human readable ASCII encoding
-//      - GNSS_UBX for proprietary UBX communications
-//          * Only compatible with UBLOX modules
-//          * higher performance binary protocol
-//          * not yet implemented TODO: implement UBX
+/* protocol selection:
+ *      - GNSS_NMEA for standardized NMEA communications
+ *          * Compatible with most GNSS modules
+ *          * human readable ASCII encoding
+ *      - GNSS_UBX for proprietary UBX communications
+ *          * Only compatible with UBLOX modules
+ *          * higher performance binary protocol
+ *          * not yet implemented TODO: implement UBX
+ */
 #define GNSS_NMEA
 
 #ifdef GNSS_UBX
