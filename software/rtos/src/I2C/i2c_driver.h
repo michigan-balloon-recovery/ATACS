@@ -12,8 +12,10 @@
 #include "semphr.h"
 #include <stdbool.h>
 
-SemaphoreHandle_t i2c_txrx_semaphore;
+SemaphoreHandle_t i2c_rx_semaphore;
 SemaphoreHandle_t i2c_busy_semaphore;
+SemaphoreHandle_t i2c_tx_semaphore;
+static char status;
 
 // sets up the i2c and all of its configurations. Enables all interrupts
 // must be called before write or read are ever called.
