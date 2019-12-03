@@ -563,12 +563,14 @@ void rb_cut_ftu(bool cut) {
 
 void rb_enable_interrupts(ROCKBLOCK_t *rb) {
 
-    //TODO: enable UART somehow
+    enableUartRx(&USCI_A1_cnf);
     return;
 }
 
 bool rb_disable_interrupts(ROCKBLOCK_t *rb) {
     if(xSemaphoreTake(rb->busy_semaphore, 20000 / portTICK_RATE_MS) == pdFALSE)
         return false;
+    disableUSCIUartInterrupts(&USCI_A1_cnf);
+    return true;
     //TODO: disable UART
 }
