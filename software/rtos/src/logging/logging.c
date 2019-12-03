@@ -19,7 +19,7 @@ void task_log() {
     UCB0BR1 = 0;
     UCB0CTL1 &= ~UCSWRST;
     vTaskDelay(10);
-    while(1){
+    while(1) {
         GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
         if(rb.is_valid) {
             log_rb();
@@ -49,8 +49,7 @@ void task_log() {
     }
 }
 
-void log_init()
-{
+void log_init() {
     FRESULT res[5];
 
     // mount drive
@@ -81,13 +80,12 @@ void log_init()
     strcpy(aprs_log.log_header, "APRS log file\n");
 }
 
-void log_rb()
-{
+void log_rb() {
 	
 	//open file for writing. If exist append data else create file
     FRESULT res;
 
-    if(rb_log.num_entries > maxData){
+    if(rb_log.num_entries > maxData) {
         log_create_new(&rb_log);
     }
 
@@ -96,8 +94,7 @@ void log_rb()
     res = f_open(&file, rb_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
     res = f_lseek(&file, rb_log.fpointer);
 
-    if(res == FR_OK)
-    {
+    if(res == FR_OK) {
 		//write data to the file
 
         rb_log.num_entries++;
@@ -107,12 +104,11 @@ void log_rb()
 	}
 }
 
-void log_gnss()
-{
+void log_gnss() {
 
     FRESULT res;
 
-    if(gnss_log.num_entries > maxData){
+    if(gnss_log.num_entries > maxData) {
         log_create_new(&gnss_log);
     }
 
@@ -121,12 +117,10 @@ void log_gnss()
     res = f_open(&file, gnss_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
     res = f_lseek(&file, gnss_log.fpointer);
 
-    if(res == FR_OK)
-    {
+    if(res == FR_OK) {
 		//write gps time
 		gnss_time_t time;
-		if(gnss_get_time(&GNSS,&time))
-		{
+		if(gnss_get_time(&GNSS,&time)) {
 			char hStr[20];
 			char mStr[20];
 			ltoa(time.hour,hStr);
@@ -138,16 +132,14 @@ void log_gnss()
 			length = strlen(mStr);
 			f_write(&file,mStr,length,&bw);
 		}
-		else
-		{
+		else {
 			f_write(&file,"??:??",5,&bw);
 		}
 		f_write(&file,",",1,&bw);
 		
 		//write gps location 
 		gnss_coordinate_pair_t location;
-		if(gnss_get_location(&GNSS,&location))
-		{
+		if(gnss_get_location(&GNSS,&location)) {
 			//int32_t gnss_coord_to_decSec(gnss_coordinate_t *coordinate);
 			int32_t latitude;
 			int32_t longitude;
@@ -164,23 +156,20 @@ void log_gnss()
 			length = strlen(lon);
 			f_write(&file,lon,length,&bw);
 		}
-		else
-		{
+		else {
             f_write(&file,"??,??",5,&bw);
 		}
         f_write(&file,",",1,&bw);
 		
 		//write gps altitude
 		int32_t altitude;
-		if(gnss_get_altitude(&GNSS,&altitude))
-		{
+		if(gnss_get_altitude(&GNSS,&altitude)) {
 			char aStr[20];
 			ltoa(altitude,aStr);
 			int length = strlen(aStr);
 			f_write(&file,aStr,length,&bw);
 		}
-		else
-		{
+		else {
             f_write(&file,"???",3,&bw);
 		}
         f_write(&file,"\n",1,&bw);
@@ -192,12 +181,11 @@ void log_gnss()
 	}
 }
 
-void log_sens()
-{
+void log_sens() {
 
     FRESULT res;
 
-    if(sens_log.num_entries > maxData){
+    if(sens_log.num_entries > maxData) {
         log_create_new(&sens_log);
     }
 
@@ -206,64 +194,55 @@ void log_sens()
     res = f_open(&file, sens_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
     res = f_lseek(&file, sens_log.fpointer);
 
-	if(res == FR_OK)
-	{
+	if(res == FR_OK) {
 		//write pressure data
 		int32_t pressure;
-		if(sens_get_pres(&pressure))
-		{
+		if(sens_get_pres(&pressure)) {
 			char pStr[20];
 			ltoa(pressure,pStr);
 			int length = strlen(pStr);
 			f_write(&file,pStr,length,&bw);
 		}
-		else
-		{
+		else {
 			f_write(&file,"???",3,&bw);
 		}
 		f_write(&file,",",1,&bw);
 		
 		//write pressure temperature data
 		int32_t temp;
-		if(sens_get_ptemp(&temp))
-		{
+		if(sens_get_ptemp(&temp)) {
 			char tStr[20];
 			ltoa(temp,tStr);
 			int length = strlen(tStr);
 			f_write(&file,tStr,length,&bw);
 		}
-		else
-		{
+		else {
             f_write(&file,"???",3,&bw);
 		}
         f_write(&file,",",1,&bw);
 		
 		//write humidity data
 		int32_t humidity;
-		if(sens_get_humid(&humidity))
-		{
+		if(sens_get_humid(&humidity)) {
 			char hStr[20];
 			ltoa(humidity,hStr);
 			int length = strlen(hStr);
 			f_write(&file,hStr,length,&bw);
 		}
-		else
-		{
+		else {
             f_write(&file,"???",3,&bw);
 		}
         f_write(&file,",",1,&bw);
 		
 		//write humidity temperature data
 		int32_t temp2;
-		if(sens_get_htemp(&temp2))
-		{
+		if(sens_get_htemp(&temp2)) {
 			char t2Str[20];
 			ltoa(temp2,t2Str);
 			int length = strlen(t2Str);
 			f_write(&file,t2Str,length,&bw);
 		}
-		else
-		{
+		else {
             f_write(&file,"???",3,&bw);
 		}
         f_write(&file,"\n",1,&bw);
@@ -275,12 +254,11 @@ void log_sens()
 	}
 }
 
-void log_aprs()
-{
+void log_aprs() {
 
     FRESULT res;
 
-    if(aprs_log.num_entries > maxData){
+    if(aprs_log.num_entries > maxData) {
         log_create_new(&aprs_log);
     }
 
@@ -288,8 +266,7 @@ void log_aprs()
     UINT bw;
     res = f_open(&file, aprs_log.current_log, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
     res = f_lseek(&file, aprs_log.fpointer);
-    if(res == FR_OK)
-    {
+    if(res == FR_OK) {
 		//write data to file, probably when last transmitted 
 
         aprs_log.num_entries++;
@@ -299,28 +276,26 @@ void log_aprs()
 	}
 }
 
-void log_convert_file_name(char *fileName)
-{
+void log_convert_file_name(char *fileName) {
     char* end = fileName;
-    while(*end != '.'){
+    while(*end != '.') {
         end++;
     }
     end--;
 
-    while(*end == '9'){
+    while(*end == '9') {
         *end = '0';
         end--;
     }
     *end += 1;
 }
 
-void log_create_new(log_t *log_obj)
-{
+void log_create_new(log_t *log_obj) {
     FIL file;
     UINT bw;
     FRESULT res;
     log_obj->fpointer = 0;
-    while(f_stat(log_obj->current_log, NULL) == FR_OK){
+    while(f_stat(log_obj->current_log, NULL) == FR_OK) {
         log_convert_file_name(log_obj->current_log);
     }
     log_obj->num_entries = 0;
