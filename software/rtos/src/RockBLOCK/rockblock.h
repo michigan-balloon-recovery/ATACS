@@ -161,11 +161,11 @@ bool rb_process_message(rb_rx_buffer_t *rx);
 // if false, turns off FTU
 void rb_cut_ftu(bool cut);
 
-// enables or disables the task and all its interrupts based on the bool input
-// use if you have critical section elsewhere.
-// should avoid having to call this. But it is safe. Communications will not break.
-// returns true if interrupts were actually disabled.
-// DO NOT ENABLE UNLESS YOU PREVIOUSLY SET IT TO FALSE.
-bool rb_set_enabled(ROCKBLOCK_t *rb, bool enable);
+// enables interrupts for the RockBLOCK. Do not call unless you previously disabled interrupts from rb_set_disabled()
+void rb_enable_interrupts(ROCKBLOCK_t *rb);
+
+// disables interrupts for the RockBLOCK. Returns true if interrupts were successfully disabled.
+// False indicates we were unable to disable interrupts for some reason.
+bool rb_disable_interrupts(ROCKBLOCK_t *rb);
 
 #endif /* SRC_ROCKBLOCK_ROCKBLOCK_H_ */

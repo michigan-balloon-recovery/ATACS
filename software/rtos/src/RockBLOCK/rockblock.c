@@ -561,10 +561,14 @@ void rb_cut_ftu(bool cut) {
         P8OUT &= ~BIT5;
 }
 
-bool rb_set_enabled(ROCKBLOCK_t *rb, bool enable) {
+void rb_enable_interrupts(ROCKBLOCK_t *rb) {
+
+    //TODO: enable UART somehow
+    return;
+}
+
+bool rb_disable_interrupts(ROCKBLOCK_t *rb) {
     if(xSemaphoreTake(rb->busy_semaphore, 20000 / portTICK_RATE_MS) == pdFALSE)
         return false;
-
-    //TODO: disable UART somehow
-
+    //TODO: disable UART
 }
