@@ -519,8 +519,11 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
     }
 
     if(cut) {
+        __bic_SR_register(GIE); // critical section for safety!
         rb_cut_ftu(true);
-        vTaskDelay(10000 / portTICK_RATE_MS);
+        for(i = 0; i < 20; i++) {
+            __delay_cycles(16000000UL);
+        }
         rb_cut_ftu(false);
     }
 
@@ -536,8 +539,11 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
 
     switch(rx->buff[cur_idx]) {
     case CUT_FTU_NOW:
+        __bic_SR_register(GIE); // critical section for safety!
         rb_cut_ftu(true);
-        vTaskDelay(2000 / portTICK_RATE_MS);
+        for(i = 0; i < 20; i++) {
+            __delay_cycles(16000000);
+        }
         rb_cut_ftu(false);
         break;
     case GET_TELEM:
