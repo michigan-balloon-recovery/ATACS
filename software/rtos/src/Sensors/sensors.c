@@ -74,7 +74,7 @@ void sens_init_pres(void) {
     for(j = 0; j<8; j++) {
         uint8_t data[2];
         vTaskDelay(100/portTICK_PERIOD_MS);
-        cmd[0] = 0xA0 + j;
+        cmd[0] = 0xA0 + j*2;
         while(i2c_write(0x77, cmd, 1) == false);
         vTaskDelay(100/portTICK_PERIOD_MS);
         while(i2c_read(0x77, data, 2) == false);
@@ -102,11 +102,11 @@ bool sens_calc_pres(int32_t* return_data) {
     uint8_t data[4] = {0x0, 0x0, 0x0, 0x0};
     uint8_t cmd[1];
 
-    int32_t pressure = 0;
+    int64_t pressure = 0;
 
     uint32_t d1, d2;
 
-    int32_t dT, pTemp;
+    int64_t dT, pTemp;
     int64_t offset, sens;
 
     //retrieves digital pressure value
@@ -159,35 +159,35 @@ bool sens_calc_pres(int32_t* return_data) {
 
     //calculate temperature
     dT = c[5];
-    dT *= 256;
+    dT = dT << 8;
     dT = d2 - dT;
 
     pTemp = c[6];
     pTemp *= dT;
-    pTemp /= 8388608;
+    pTemp = pTemp >> 23;
     pTemp += 2000;
 
     //calculate temperature compensated pressure
     int64_t temporary;
     offset = c[2];
-    offset *= 65536;
+    offset = offset << 16;
     temporary = c[4];
-    temporary += dT;
-    temporary /= 128;
+    temporary *= dT;
+    temporary = temporary >> 7;
     offset = offset + temporary;
 
     sens = c[1];
-    sens *= 32768;
+    sens = sens << 15;
     temporary = c[3];
     temporary *= dT;
-    temporary /= 256;
-
+    temporary = temporary >> 8;
+    sens = sens + temporary;
 
     pressure = d1;
     pressure *= sens;
-    pressure /= 2097152;
+    pressure = pressure >> 21;
     pressure -= offset;
-    pressure /= 16384; // 32768
+    pressure = pressure >> 15; // 32768
     pressure /= 100;
 
     pTemp += 50;

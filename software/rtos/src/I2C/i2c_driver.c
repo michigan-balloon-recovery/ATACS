@@ -149,8 +149,10 @@ __interrupt void USCI_B0_ISR(void) {
              UCB0CTLW0 |= UCTXSTP;
          }
          RXByteCtr--;
-         if(RXByteCtr == 0) {           // Clear lpm0 on return from interrupt
+         if(RXByteCtr == 0) {
              UCB0IFG &= ~UCRXIFG;
+             xSemaphoreGiveFromISR(i2c_rx_semaphore, &xHigherPriorityTaskWoken);
+             status = 'i';
              break;
          }
      } else {                           // Set debug flag and kill interrupt flag
