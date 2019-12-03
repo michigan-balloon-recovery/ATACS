@@ -147,18 +147,11 @@ __interrupt void USCI_B0_ISR(void) {
          RXByteCtr--;
          if(RXByteCtr == 0){           // Clear lpm0 on return from interrupt
              UCB0IFG &= ~UCRXIFG;
-             xSemaphoreGiveFromISR(i2c_txrx_semaphore, &xHigherPriorityTaskWoken);
-             __bic_SR_register_on_exit(LPM0_bits);
-             __no_operation();
-             __no_operation();
              break;
          }
      } else{                           // Set debug flag and kill interrupt flag
          UCB0IFG &= ~UCRXIFG;
          xSemaphoreGiveFromISR(i2c_txrx_semaphore, &xHigherPriorityTaskWoken);
-         __bic_SR_register_on_exit(LPM0_bits);
-         __no_operation();
-         __no_operation();
      }
       break;
 
@@ -178,14 +171,10 @@ __interrupt void USCI_B0_ISR(void) {
 //			 UCB0CTLW0 |= UCTXSTP;
 //		 }
 //	 }
-     else{
+     else {
          UCB0CTLW0 |= UCTXSTP;              // I2C stop condition
          UCB0IFG &= ~UCTXIFG;               // Clear USCI_B0 TX int flag
          xSemaphoreGiveFromISR(i2c_txrx_semaphore, &xHigherPriorityTaskWoken);
-		 // STATUS = 'i';						// change status to inactive
-         __bic_SR_register_on_exit(LPM0_bits);// Exit LPM0
-         __no_operation();
-         __no_operation();
      }
        break;
 
