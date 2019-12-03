@@ -109,14 +109,14 @@ int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf){
  */
 void disableUSCIUartInterrupts(UARTConfig* prtInf){
     // Clear RX interrupt flag
-    *(prtInf.usciRegs->IFG_REG) &= ~UCRXIFG;
+    *(prtInf->usciRegs->IFG_REG) &= ~UCRXIFG;
     // Disable RX interrupt
-    *(prtInf.usciRegs->IE_REG) &= ~UCRXIE;
+    *(prtInf->usciRegs->IE_REG) &= ~UCRXIE;
 
     // Clear TX interrupt flag
-    *(prtInf.usciRegs->IFG_REG) &= ~UCTXIFG;
+    *(prtInf->usciRegs->IFG_REG) &= ~UCTXIFG;
     // Disable TX interrupt
-    *(prtInf.usciRegs->IE_REG) &= ~UCTXIE;
+    *(prtInf->usciRegs->IE_REG) &= ~UCTXIE;
 }
 
 /*!
