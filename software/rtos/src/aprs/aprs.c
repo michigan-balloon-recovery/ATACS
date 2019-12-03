@@ -156,17 +156,7 @@ void configDRA818V(const char* freq_str){
 
     uartSendDataInt(&USCI_A3_cnf, (uint8_t*)cmd, strlen(cmd));
 
-    // Clear RX interrupt flag
-    *(USCI_A3_cnf.usciRegs->IFG_REG) &= ~UCRXIFG;
-    // Disable RX interrupt
-    *(USCI_A3_cnf.usciRegs->IE_REG) &= ~UCRXIE;
-
-    // Clear TX interrupt flag
-    *(USCI_A3_cnf.usciRegs->IFG_REG) &= ~UCTXIFG;
-    // Disable TX interrupt
-    *(USCI_A3_cnf.usciRegs->IE_REG) &= ~UCTXIE;
-
-//    disableUSCIUart(&a3_cnf);
+    disableUSCIUart(&USCI_A3_cnf);
 }
 
 
