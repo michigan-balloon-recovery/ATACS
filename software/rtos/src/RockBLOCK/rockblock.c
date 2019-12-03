@@ -564,6 +564,7 @@ void rb_cut_ftu(bool cut) {
 void rb_enable_interrupts(ROCKBLOCK_t *rb) {
 
     enableUartRx(&USCI_A1_cnf);
+    xSemaphoreGive(rb->busy_semaphore);
     return;
 }
 
