@@ -5,6 +5,7 @@
 
 extern gnss_t GNSS;
 extern sensor_data_t sensor_data;
+extern XBEE_t XBee;
 
 ROCKBLOCK_t rb = {.is_valid = false}; // global rockblock object for the task.
 
@@ -525,6 +526,7 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
             __delay_cycles(16000000UL);
         }
         rb_cut_ftu(false);
+        __bis_SR_register(GIE);
     }
 
     return cut;
@@ -533,7 +535,7 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
         return false;
 
     if(rx->buff[cur_idx++] != 0) { // use xbee and send this message
-        // TODO: use xbee to send message
+        xb_transmit(&XBee, rx->buff + cur_idx, rx->last_ptr - (rx->buff + cur_idx));
         return true;
     }
 
@@ -545,6 +547,7 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
             __delay_cycles(16000000);
         }
         rb_cut_ftu(false);
+        __bis_SR_register(GIE);
         break;
     case GET_TELEM:
         break;
