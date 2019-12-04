@@ -13,7 +13,7 @@
 #include <string.h>
 
 //max data points per file
-#define maxData                     5
+#define maxData                     30
 #define maxFileNameLength           30
 #define maxHeaderSize               100
 
