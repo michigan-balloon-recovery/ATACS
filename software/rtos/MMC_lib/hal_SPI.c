@@ -105,6 +105,9 @@
 * You may not use the Program in non-TI devices.
 * ********************************************************* */
 
+/*      Modified to add baud rate modification
+            Paul Young - December 2019
+*/
 
 #ifndef _SPILIB_C
 #define _SPILIB_C
@@ -176,10 +179,17 @@ void halSPISetup(void)
 {
   UCB0CTL0 = UCMST+UCCKPH+UCMSB+UCSYNC;     // 3-pin, 8-bit SPI master
   UCB0CTL1 = UCSSEL_2+UCSWRST;              // SMCLK
-  UCB0BR0 |= 0x29;                          // UCLK/2
+  UCB0BR0 |= 0x29;                          // UCLK/29
   UCB0BR1 = 0;
   //UCB0MCTL = 0;
   UCB0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
+}
+
+void halSPIPrescaler(unsigned int prescaler)
+{
+  UCB0CTL1 |= UCSWRST;                    // software reset
+  UCB0BRW = prescaler;
+  UCB0CTL1 &= ~UCSWRST;                   // **Initialize USCI state machine**
 }
 
 #elif SPI_SER_INTF == SER_INTF_USCIB1
@@ -188,10 +198,17 @@ void halSPISetup(void)
 {
   UCB1CTL0 = UCMST+UCCKPL+UCMSB+UCSYNC;     // 3-pin, 8-bit SPI master
   UCB1CTL1 = UCSSEL_2+UCSWRST;              // SMCLK
-  UCB1BR0 |= 0x02;                          // UCLK/2
+  UCB1BR0 |= 0x29;                          // UCLK/29
   UCB1BR1 = 0;
   UCB1MCTL = 0;
   UCB1CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
+}
+
+void halSPIPrescaler(unsigned int prescaler)
+{
+  UCB1CTL1 |= UCSWRST;                    // software reset
+  UCB1BRW = prescaler;
+  UCB1CTL1 &= ~UCSWRST;                   // **Initialize USCI state machine**
 }
 
 #elif SPI_SER_INTF == SER_INTF_USCIB3
@@ -200,10 +217,17 @@ void halSPISetup(void)
 {
   UCB3CTL0 = UCMST+UCCKPL+UCMSB+UCSYNC;     // 3-pin, 8-bit SPI master
   UCB3CTL1 = UCSSEL_2+UCSWRST;              // SMCLK
-  UCB3BR0 |= 0x29;                          // UCLK/2
+  UCB3BR0 |= 0x29;                          // UCLK/29
   UCB3BR1 = 0;
   //UCB3MCTL = 0;
   UCB3CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
+}
+
+void halSPIPrescaler(unsigned int prescaler)
+{
+  UCB3CTL1 |= UCSWRST;                    // software reset
+  UCB3BRW = prescaler;
+  UCB3CTL1 &= ~UCSWRST;                   // **Initialize USCI state machine**
 }
 
 #elif SPI_SER_INTF == SER_INTF_USI

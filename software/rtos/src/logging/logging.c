@@ -14,11 +14,6 @@ void task_log() {
     vTaskDelay(10);
     log_init();
     vTaskDelay(10);
-    UCB3CTL1 |= UCSWRST;
-    UCB3BR0 |= 0;
-    UCB3BR1 = 0;
-    UCB3CTL1 &= ~UCSWRST;
-    vTaskDelay(10);
     while(1) {
         GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
         if(rb.is_valid) {
@@ -78,6 +73,9 @@ void log_init() {
     strcpy(gnss_log.log_header, "GNSS log file\nhr:min,latitude(dSec),longitude(dSec),altitude(m)\n");
     strcpy(sens_log.log_header, "sensor log file\npressure,temperature(degF),humidity(%),temperature(degC)\n");
     strcpy(aprs_log.log_header, "APRS log file\n");
+
+    vTaskDelay(10);
+    halSPIPrescaler(0);
 }
 
 void log_rb() {
