@@ -14,10 +14,10 @@ void task_log() {
     vTaskDelay(10);
     log_init();
     vTaskDelay(10);
-    UCB0CTL1 |= UCSWRST;
-    UCB0BR0 |= 0;
-    UCB0BR1 = 0;
-    UCB0CTL1 &= ~UCSWRST;
+    UCB3CTL1 |= UCSWRST;
+    UCB3BR0 |= 0;
+    UCB3BR1 = 0;
+    UCB3CTL1 &= ~UCSWRST;
     vTaskDelay(10);
     while(1) {
         GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN2);
