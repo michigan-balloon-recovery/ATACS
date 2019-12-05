@@ -17,6 +17,11 @@ int i2c_setup(void) {
         GPIO_PORT_P3,
         GPIO_PIN1 + GPIO_PIN2
     );
+
+    P3SEL = BIT1 | BIT2;
+    P3OUT = BIT1 | BIT2;
+    P3REN = BIT1 | BIT2;
+    __delay_cycles(500000);
     USCI_B_I2C_initMasterParam param = {0};
     param.selectClockSource = USCI_B_I2C_CLOCKSOURCE_SMCLK;
     param.i2cClk = UCS_getSMCLK();
@@ -54,6 +59,8 @@ bool i2c_write(uint8_t addr, uint8_t * data, uint8_t numBytes) {
         USCI_B_I2C_TRANSMIT_INTERRUPT
     );
 
+    __delay_cycles(50);
+
     if(numBytes < 2)
         USCI_B_I2C_masterSendSingleByte(USCI_B0_BASE, transmitData[0]);
     else
@@ -61,8 +68,8 @@ bool i2c_write(uint8_t addr, uint8_t * data, uint8_t numBytes) {
 	
 	while (USCI_B_I2C_isBusBusy(USCI_B0_BASE));
 
-    USCI_B_I2C_disable(USCI_B0_BASE);
-    USCI_B_I2C_disableInterrupt(USCI_B0_BASE,USCI_B_I2C_TRANSMIT_INTERRUPT);
+//    USCI_B_I2C_disable(USCI_B0_BASE);
+//    USCI_B_I2C_disableInterrupt(USCI_B0_BASE,USCI_B_I2C_TRANSMIT_INTERRUPT);
 
 	xSemaphoreGive(i2c_busy_semaphore);
 	return true;
@@ -89,8 +96,8 @@ bool i2c_read(uint8_t addr, uint8_t * data, uint8_t numBytes) {
 
     while (USCI_B_I2C_isBusBusy(USCI_B0_BASE));
 
-    USCI_B_I2C_disable(USCI_B0_BASE);
-    USCI_B_I2C_disableInterrupt(USCI_B0_BASE, USCI_B_I2C_RECEIVE_INTERRUPT);
+//    USCI_B_I2C_disable(USCI_B0_BASE);
+//    USCI_B_I2C_disableInterrupt(USCI_B0_BASE, USCI_B_I2C_RECEIVE_INTERRUPT);
 
     if(numBytes > 1)
         USCI_B_I2C_masterReceiveMultiByteStart(USCI_B0_BASE);
