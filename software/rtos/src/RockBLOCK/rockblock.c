@@ -287,12 +287,12 @@ void rb_rx_callback(void *param, uint8_t datum) {
 bool rb_tx_callback(void *param, uint8_t *txAddress) {
     ROCKBLOCK_t *rb = (ROCKBLOCK_t *) param;
 
-    *txAddress= *(rb->tx.tx_ptr);
-
-    if(rb->tx.tx_ptr == rb->tx.last_ptr) { // sent last byte.
+    if(rb->tx.tx_ptr > rb->tx.last_ptr) { // sent last byte.
         xSemaphoreGiveFromISR(rb->tx.txSemaphore, NULL);
         return false;
     }
+
+    *txAddress= *(rb->tx.tx_ptr);
 
     rb->tx.tx_ptr++;
     return true;
@@ -310,6 +310,8 @@ void rb_send_message(ROCKBLOCK_t *rb, uint8_t *msg, uint16_t len, bool *msgSent,
         *(rb->tx.cur_ptr++) = *(msg+i);
     }
 
+    rb->tx.last_ptr = rb->tx.cur_ptr;
+    *(rb->tx.cur_ptr++) = '\r'; // end message with carriage return.
     rb->tx.last_ptr = rb->tx.cur_ptr;
     *(rb->tx.cur_ptr++) = '\r'; // end message with carriage return.
 
@@ -484,7 +486,7 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
         msg[cur_idx++] = ',';
         put_int32_array(decSecLong, msg, &cur_idx, true);
         msg[cur_idx++] = location->longitude.dir;
-        msg[cur_idx++] = '\n'; // end of message
+        msg[cur_idx++] = '\r'; // end of message
     } else {
         msg[cur_idx++] = '?'; // lat
         msg[cur_idx++] = ',';
@@ -493,7 +495,7 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
         msg[cur_idx++] = '?'; // long
         msg[cur_idx++] = ',';
         msg[cur_idx++] = '?'; // long dir
-        msg[cur_idx++] = '\n'; // end of message
+        msg[cur_idx++] = '\r'; // end of message
     }
     *len = cur_idx;
 }
