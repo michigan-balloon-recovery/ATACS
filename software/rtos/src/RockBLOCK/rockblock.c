@@ -535,36 +535,36 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
 
     return cut;
 
-    if(rx->buff[cur_idx++] != RB_SOF)
-        return false;
-
-    if(rx->buff[cur_idx++] != 0) { // use xbee and send this message
-        xb_transmit(&XBee, rx->buff + cur_idx, rx->last_ptr - (rx->buff + cur_idx));
-        return true;
-    }
-
-    switch(rx->buff[cur_idx]) {
-    case CUT_FTU_NOW:
-        __bic_SR_register(GIE); // critical section for safety!
-        rb_cut_ftu(true);
-        for(i = 0; i < 20; i++) {
-            __delay_cycles(16000000);
-        }
-        rb_cut_ftu(false);
-        __bis_SR_register(GIE);
-        break;
-    case GET_TELEM:
-        break;
-    case CONFIG_BUZZER:
-        break;
-    case SET_FTU_TIMER:
-        break;
-    case START_FTU_TIMER:
-        break;
-    case STOP_FTU_TIMER:
-        break;
-    }
-    return false;
+//    if(rx->buff[cur_idx++] != RB_SOF)
+//        return false;
+//
+//    if(rx->buff[cur_idx++] != 0) { // use xbee and send this message
+//        xb_transmit(&XBee, rx->buff + cur_idx, rx->last_ptr - (rx->buff + cur_idx));
+//        return true;
+//    }
+//
+//    switch(rx->buff[cur_idx]) {
+//    case CUT_FTU_NOW:
+//        __bic_SR_register(GIE); // critical section for safety!
+//        rb_cut_ftu(true);
+//        for(i = 0; i < 20; i++) {
+//            __delay_cycles(16000000);
+//        }
+//        rb_cut_ftu(false);
+//        __bis_SR_register(GIE);
+//        break;
+//    case GET_TELEM:
+//        break;
+//    case CONFIG_BUZZER:
+//        break;
+//    case SET_FTU_TIMER:
+//        break;
+//    case START_FTU_TIMER:
+//        break;
+//    case STOP_FTU_TIMER:
+//        break;
+//    }
+//    return false;
 }
 
 void rb_cut_ftu(bool cut) {
