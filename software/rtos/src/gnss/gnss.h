@@ -183,10 +183,10 @@ bool gnss_get_altitude(gnss_t *gnss_obj, int32_t *altitude);
  * \brief convert GNSS coordinate to deciSeconds
  *
  * @param coordinate is the GNSS coordinate to convert.
- * \return coordinate location in deciSeconds
+ * \return coordinate location in deciMilliSeconds
  *
  */
-int32_t gnss_coord_to_decSec(gnss_coordinate_t *coordinate);
+int32_t gnss_coord_to_decMilliSec(gnss_coordinate_t *coordinate);
 
 /*!
  * \brief disable GNSS interrupts
