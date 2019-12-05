@@ -192,8 +192,6 @@ bool sens_calc_pres(int32_t* return_data) {
 
     pTemp += 50;
     pTemp /= 100;
-    pTemp *= 1.8;
-    pTemp += 32;
 
     return_data[0] = pressure;
     return_data[1] = pTemp;

@@ -26,12 +26,13 @@ typedef struct {
     uint8_t tx_mem[XBEE_TX_BUFF_SIZE];
     ring_buff_t rx_buff;
     ring_buff_t tx_buff;
+    UARTConfig *uart;
 } XBEE_t;
 
 // does basic initialization of the xbee passed in as argument to this function.
 void xb_init(XBEE_t *xb);
 
-void xb_transmit(XBEE_t *xb);
+bool xb_transmit(XBEE_t *xb, uint8_t *buff, uint16_t len);
 
 void xb_rx_callback(void *param, uint8_t datum);
 
