@@ -112,7 +112,7 @@ void aprs_beacon(gnss_time_t* time, gnss_coordinate_pair_t* loc, int32_t* alt){
 //    ax25_send_string("0000.00N");
     uint32_t deg = loc->latitude.decMilliSec / 3600000;
     loc->latitude.decMilliSec -= deg*3600000;
-    uint32_t min = loc->latitude.decMilliSec / 600000;
+    uint32_t min = loc->latitude.decMilliSec / 60000;
     loc->latitude.decMilliSec -= min*60000;
     uint32_t percent_min = loc->latitude.decMilliSec / 600;
     snprintf(temp_str, 8, "%02hu%02hu.%02hu", (uint8_t)deg, (uint8_t)min, (uint8_t)percent_min);
@@ -125,7 +125,7 @@ void aprs_beacon(gnss_time_t* time, gnss_coordinate_pair_t* loc, int32_t* alt){
 //    ax25_send_string("00000.00E");
     deg = loc->longitude.decMilliSec / 3600000;
     loc->longitude.decMilliSec -= deg*3600000;
-    min = loc->longitude.decMilliSec / 600000;
+    min = loc->longitude.decMilliSec / 60000;
     loc->longitude.decMilliSec -= min*60000;
     percent_min = loc->longitude.decMilliSec / 600;
     snprintf(temp_str, 9, "%03hu%02hu.%02hu", (uint8_t)deg, (uint8_t)min, (uint8_t)percent_min);
