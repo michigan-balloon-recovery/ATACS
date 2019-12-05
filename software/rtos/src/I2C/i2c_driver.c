@@ -13,10 +13,16 @@ uint8_t transmitCounter = 0;
 
 int i2c_setup(void) {
     // Configure GPIO
-    USCI_B_I2C_initMasterParam param;
-    param.selectClockSource = UCS_getMCLK();
+    GPIO_setAsPeripheralModuleFunctionInputPin(
+        GPIO_PORT_P3,
+        GPIO_PIN1 + GPIO_PIN2
+    );
+    USCI_B_I2C_initMasterParam param = {0};
+    param.selectClockSource = USCI_B_I2C_CLOCKSOURCE_SMCLK;
+    param.i2cClk = UCS_getSMCLK();
     param.dataRate = USCI_B_I2C_SET_DATA_RATE_400KBPS;
     USCI_B_I2C_initMaster(USCI_B0_BASE, &param);
+    i2c_busy_semaphore = xSemaphoreCreateMutex();
 
     return 0;
 }
@@ -48,7 +54,7 @@ bool i2c_write(uint8_t addr, uint8_t * data, uint8_t numBytes) {
         USCI_B_I2C_TRANSMIT_INTERRUPT
     );
 
-    if(numBytes == 1)
+    if(numBytes < 2)
         USCI_B_I2C_masterSendSingleByte(USCI_B0_BASE, transmitData[0]);
     else
         USCI_B_I2C_masterSendMultiByteStart(USCI_B0_BASE, transmitData[0]);
