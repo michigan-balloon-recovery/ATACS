@@ -2,9 +2,10 @@
 #define SENSORS_H
 
 #include <msp430.h>
-#include "i2c_driver.h"
+#include "FreeRTOS.h"
 #include "task.h"
 #include <stdbool.h>
+#include "i2c_driver.h"
 
 typedef struct{
 	int32_t pressure;
