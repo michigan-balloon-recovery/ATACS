@@ -292,7 +292,7 @@ bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, void *data) {
     uint8_t i;
 
     // shift FIR buffer
-    for(i = 0; i < 31; i++) {
+    for(i = 31; i > 0; i--) {
         samples[i+1] = samples[i];
     }
 
@@ -341,7 +341,7 @@ bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, void *data) {
     }
 
     // shift FIR buffer
-    for(i = 0; i < 31; i++) {
+    for(i = 31; i > 0; i--) {
         samples[i+1] = samples[i];
     }
 
