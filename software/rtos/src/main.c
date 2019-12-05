@@ -11,7 +11,7 @@
 #include "uart.h"
 #include "gnss.h"
 #include "aprs.h"
-#include "rockblock.h"
+#include "rockblock.h"f
 #include "sensors.h"
 #include "i2c_driver.h"
 #include "logging.h"
@@ -28,12 +28,12 @@ void main( void ) {
     prvSetupHardware();
 
     /* Create Tasks */
-//    xTaskCreate((TaskFunction_t) task_gnss,           "gnss",             128, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_aprs,           "aprs",             512, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_gnss,           "gnss",             128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_aprs,           "aprs",             512, NULL, 1, NULL);
     xTaskCreate((TaskFunction_t) task_pressure,       "pressure",         128, NULL, 1, NULL);
-    xTaskCreate((TaskFunction_t) task_humidity,         "humidity",         128, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_humidity,       "humidity",         128, NULL, 1, NULL);
 //    xTaskCreate((TaskFunction_t) task_buzzer,           "buzzer",           64, NULL, 1, NULL);
-//    xTaskCreate((TaskFunction_t) task_rockblock,      "RockBLOCK",        512, NULL, 1, NULL);
+    xTaskCreate((TaskFunction_t) task_rockblock,      "RockBLOCK",        512, NULL, 1, NULL);
     xTaskCreate((TaskFunction_t) task_log,            "Logging",          512, NULL, 1, NULL);
 
 

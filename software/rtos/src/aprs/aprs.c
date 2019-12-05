@@ -21,8 +21,7 @@ void configDRA818V(const char* freq_str);
  */
 
 void task_aprs() {
-//    const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
-    const portTickType xFrequency = 5000 / portTICK_RATE_MS;
+    const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
     portTickType xLastWakeTime = xTaskGetTickCount();
 
     // P1.2 is PD (sleep)
@@ -56,7 +55,7 @@ void task_aprs() {
         // Disable everything with interrupts so that our sine is clean
         gnss_disable_interrupts(&GNSS);
         while(!rb_disable_interrupts(&rb));
-        while(!sens_disable_interrupts());
+//        while(!sens_disable_interrupts());
 
         vTaskSuspendAll();
         aprs_beacon(&time, &loc, &alt);
@@ -64,7 +63,7 @@ void task_aprs() {
 
         gnss_enable_interrupts(&GNSS);
         rb_enable_interrupts(&rb);
-        sens_enable_interrupts();
+//        sens_enable_interrupts();
     }
 }
 

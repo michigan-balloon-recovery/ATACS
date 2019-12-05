@@ -42,6 +42,8 @@ void gnss_init(gnss_t *gnss_obj) {
     initUSCIUart(&a0_cnf, &gnss_obj->gnss_tx_buff, &gnss_obj->gnss_rx_buff);
 
     initUartRxCallback(&USCI_A0_cnf, &gnss_rx_callback, gnss_obj);
+
+    GPIO_setAsOutputPin(GPIO_PORT_P8, GPIO_PIN4);
     gnss_obj->is_valid = true;
 }
 
