@@ -42,7 +42,7 @@ void task_humidity(void) {
     bool humid_valid = false;
 
     while(1) {
-        GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN3);
+        //GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN3);
 
         if(sens_calc_humid(data))
             humid_valid = true;
@@ -56,7 +56,7 @@ void task_humidity(void) {
             xSemaphoreGive(sensor_data.humiditySemaphore);
         }
 
-        GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
+        //GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN3);
         vTaskDelay(xFrequency);
     }
 }
