@@ -291,14 +291,14 @@ bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, void *data) {
     uint8_t i;
     uint64_t temp = 0;
 
-    // shift FIR buffer
-    for(i = 31; i > 0; i--) {
-        samples[i+1] = samples[i];
-    }
-
     // ensure the correct length
     if( (end - start) != 10) {
         return false;
+    }
+
+    // shift FIR buffer
+    for(i = 31; i > 0; i--) {
+        samples[i+1] = samples[i];
     }
 
     // initialize direction to be invalid
@@ -315,7 +315,7 @@ bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, void *data) {
 
     // milliseconds
     start++; // skip decimal place
-    samples[0] += ((uint32_t)gnss_nmea_atoi(temp, start, 5));
+    samples[0] += ((uint32_t)gnss_nmea_atoi(temp, start, 5)) * 60 * 100000;
 //    coord->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
 
     if(samples[0] == 0) samples[0] = 1;
@@ -366,7 +366,8 @@ bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, void *data) {
 
     // milliseconds
     start++; // skip decimal place
-    samples[0] += ((uint32_t)gnss_nmea_atoi(temp, start, 5));
+    samples[0] += ((uint32_t)gnss_nmea_atoi(temp, start, 5)) * 60 * 100000;
+//    coord->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
     if(samples[0] == 0) samples[0] = 1;
 
     // initialize buffer if first measurment
@@ -382,7 +383,6 @@ bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, void *data) {
     }
     coord->decMilliSec = temp >> 5;
 
-//    coord->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
     return true;
 }
 
