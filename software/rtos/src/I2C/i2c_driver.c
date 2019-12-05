@@ -13,6 +13,10 @@ uint8_t transmitCounter = 0;
 
 int i2c_setup(void) {
     // Configure GPIO
+    GPIO_setAsPeripheralModuleFunctionInputPin(
+        GPIO_PORT_P3,
+        GPIO_PIN1 + GPIO_PIN2
+    );
     USCI_B_I2C_initMasterParam param = {0};
     param.selectClockSource = USCI_B_I2C_CLOCKSOURCE_SMCLK;
     param.i2cClk = UCS_getSMCLK();

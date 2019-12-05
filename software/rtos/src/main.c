@@ -60,11 +60,6 @@ static void prvSetupHardware(void) {
 	GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P1, GPIO_PIN6);
 	GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2, GPIO_PIN0);
 
-    GPIO_setAsPeripheralModuleFunctionInputPin(
-        GPIO_PORT_P3,
-        GPIO_PIN1 + GPIO_PIN2
-    );
-
 	//Set VCore = 2 for 16MHz clock
     PMM_setVCore(PMM_CORE_LEVEL_2);
 
@@ -95,6 +90,7 @@ static void prvSetupHardware(void) {
 
     /* I2C */
     i2c_setup();
+
 
 }
 /*-----------------------------------------------------------*/
