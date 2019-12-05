@@ -23,7 +23,7 @@ void configDRA818V(const char* freq_str);
 void task_aprs() {
 //    const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
     const portTickType xFrequency = 5000 / portTICK_RATE_MS;
-//    portTickType xLastWakeTime = xTaskGetTickCount();
+    portTickType xLastWakeTime = xTaskGetTickCount();
 
     // P1.2 is PD (sleep)
     // P1.3 is PTT (push-to-talk)
@@ -40,6 +40,8 @@ void task_aprs() {
     while(!GNSS.is_valid);
 
     while (1){
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
         // Fetch GPS and sensor data
         gnss_time_t time = {0};
         gnss_coordinate_pair_t loc = {0};
@@ -63,8 +65,6 @@ void task_aprs() {
         gnss_enable_interrupts(&GNSS);
         rb_enable_interrupts(&rb);
         sens_enable_interrupts();
-
-        vTaskDelay(xFrequency);
     }
 }
 
