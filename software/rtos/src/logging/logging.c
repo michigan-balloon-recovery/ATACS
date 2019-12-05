@@ -140,8 +140,8 @@ void log_gnss() {
 			//int32_t gnss_coord_to_decSec(gnss_coordinate_t *coordinate);
 			int32_t latitude;
 			int32_t longitude;
-			latitude = gnss_coord_to_decSec(&location.latitude);
-			longitude = gnss_coord_to_decSec(&location.longitude);
+			latitude = gnss_coord_to_decMilliSec(&location.latitude);
+			longitude = gnss_coord_to_decMilliSec(&location.longitude);
 			
 			char lat[10];
 			char lon[10];

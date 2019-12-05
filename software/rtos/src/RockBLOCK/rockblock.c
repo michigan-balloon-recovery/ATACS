@@ -480,8 +480,8 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
     }
 
     if(success[6]) {// location
-        int32_t decSecLat = gnss_coord_to_decSec(&location->latitude); // should be fine using signed integer here.
-        int32_t decSecLong = gnss_coord_to_decSec(&location->longitude);
+        int32_t decSecLat = gnss_coord_to_decMilliSec(&location->latitude); // should be fine using signed integer here.
+        int32_t decSecLong = gnss_coord_to_decMilliSec(&location->longitude);
 
         put_int32_array(decSecLat, msg, &cur_idx, true);
         msg[cur_idx++] = location->latitude.dir;
