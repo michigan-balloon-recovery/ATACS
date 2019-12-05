@@ -110,9 +110,9 @@ bool gnss_get_altitude(gnss_t *gnss_obj, int32_t *altitude) {
     return data_valid;
 }
 
-int32_t gnss_coord_to_decMilliSec(gnss_coordinate_t *coordinate) {
-    return ((uint32_t) coordinate->deg) * 3600000 + ((uint32_t) coordinate->min) * 60000 + ((uint32_t) coordinate->msec);
-}
+//int32_t gnss_coord_to_decMilliSec(gnss_coordinate_t *coordinate) {
+//    return ((uint32_t) coordinate->deg) * 3600000 + ((uint32_t) coordinate->min) * 60000 + ((uint32_t) coordinate->msec);
+//}
 
 void gnss_disable_interrupts(gnss_t *gnss_obj) {
     while(gnss_obj->decoding_message == true);

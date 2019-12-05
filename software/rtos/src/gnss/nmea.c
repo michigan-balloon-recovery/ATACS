@@ -295,15 +295,18 @@ bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, void *data) {
     coord->dir = 'e';
 
     // degrees
-    coord->deg = gnss_nmea_atoi(temp, start, 2);
+    coord->decMilliSec = ((uint32_t)gnss_nmea_atoi(temp, start, 2)) * 3600000;
+//    coord->deg = gnss_nmea_atoi(temp, start, 2);
     start += 2;
     // minutes
-    coord->min = gnss_nmea_atoi(temp, start, 2);
+    coord->decMilliSec += ((uint32_t)gnss_nmea_atoi(temp, start, 2)) * 60000;
+//    coord->min = gnss_nmea_atoi(temp, start, 2);
     start += 2;
 
     // milliseconds
     start++; // skip decimal place
-    coord->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
+    coord->decMilliSec += ((uint32_t)gnss_nmea_atoi(temp, start, 5));
+//    coord->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
     return true;
 }
 
@@ -321,15 +324,18 @@ bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, void *data) {
     coord->dir = 'e';
 
     // degrees
-    coord->deg = gnss_nmea_atoi(temp, start, 3);
+    coord->decMilliSec = ((uint32_t)gnss_nmea_atoi(temp, start, 3)) * 3600000;
+//    coord->deg = gnss_nmea_atoi(temp, start, 3);
     start += 3;
     // minutes
-    coord->min = gnss_nmea_atoi(temp, start, 2);
+    coord->decMilliSec += ((uint32_t)gnss_nmea_atoi(temp, start, 2)) * 60000;
+//    coord->min = gnss_nmea_atoi(temp, start, 2);
     start += 2;
 
     // milliseconds
     start++; // skip decimal place
-    coord->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
+    coord->decMilliSec += ((uint32_t)gnss_nmea_atoi(temp, start, 5));
+//    coord->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
     return true;
 }
 

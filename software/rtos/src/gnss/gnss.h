@@ -58,9 +58,7 @@ typedef enum {
  *
  */
 typedef struct {
-    uint16_t deg;
-    uint8_t min;
-    uint16_t msec;
+    uint32_t decMilliSec;
     char dir;
 } gnss_coordinate_t;
 
@@ -179,14 +177,14 @@ bool gnss_get_location(gnss_t *gnss_obj, gnss_coordinate_pair_t *location);
  */
 bool gnss_get_altitude(gnss_t *gnss_obj, int32_t *altitude);
 
-/*!
- * \brief convert GNSS coordinate to deciSeconds
- *
- * @param coordinate is the GNSS coordinate to convert.
- * \return coordinate location in deciMilliSeconds
- *
- */
-int32_t gnss_coord_to_decMilliSec(gnss_coordinate_t *coordinate);
+///*!
+// * \brief convert GNSS coordinate to deciSeconds
+// *
+// * @param coordinate is the GNSS coordinate to convert.
+// * \return coordinate location in deciMilliSeconds
+// *
+// */
+//int32_t gnss_coord_to_decMilliSec(gnss_coordinate_t *coordinate);
 
 /*!
  * \brief disable GNSS interrupts

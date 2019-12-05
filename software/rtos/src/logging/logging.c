@@ -70,7 +70,7 @@ void log_init() {
 
     // initialize log headers
     strcpy(rb_log.log_header, "rockBLOCK log file\n");
-    strcpy(gnss_log.log_header, "GNSS log file\nhr:min,latitude(dSec),longitude(dSec),altitude(m)\n");
+    strcpy(gnss_log.log_header, "GNSS log file\nhr:min,latitude(dSec),longitude(decMilliSec),altitude(m)\n");
     strcpy(sens_log.log_header, "sensor log file\npressure,temperature(degF),humidity(%),temperature(degC)\n");
     strcpy(aprs_log.log_header, "APRS log file\n");
 
