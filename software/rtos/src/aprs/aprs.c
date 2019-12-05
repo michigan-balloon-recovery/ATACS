@@ -49,7 +49,9 @@ void task_aprs() {
         int32_t alt = -1;
 
         gnss_get_time(&GNSS, &time);
-        gnss_get_location(&GNSS, &loc);
+        if(!gnss_get_location(&GNSS, &loc)){
+            continue;
+        }
         gnss_get_altitude(&GNSS, &alt);
 
         // Disable everything with interrupts so that our sine is clean
@@ -85,7 +87,7 @@ void aprs_setup(const uint16_t pd_port,  const uint8_t pd_pin,
 
 address_t addresses[2] = {
     {"APRS", 0},
-    {"KD2OHS", 11},
+    {"KE8ISR", 11},
 //    {"WIDE2", 1},
 };
 
