@@ -2,6 +2,7 @@
 
 
 #include "rockblock.h"
+#include "xbee.h"
 
 extern gnss_t GNSS;
 extern sensor_data_t sensor_data;

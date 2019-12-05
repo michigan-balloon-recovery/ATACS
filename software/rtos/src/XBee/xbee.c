@@ -7,6 +7,8 @@
 
 #include "xbee.h"
 
+XBEE_t XBee;
+
 void xb_init(XBEE_t *xb) {
 
     ring_buff_init(&xb->rx_buff, xb->rx_mem, XBEE_RX_BUFF_SIZE);
@@ -28,10 +30,24 @@ void xb_init(XBEE_t *xb) {
                     .parity = UART_PARITY_NONE,
                     .stopbits = 1
     };
+    xb->uart = &USCI_A2_cnf;
 
     initUSCIUart(&a2_cnf, &xb->tx_buff, &xb->rx_buff);
 
-    initUartRxCallback(&USCI_A2_cnf, &xb_rx_callback, xb);
-    initUartTxCallback(&USCI_A2_cnf, &xb_tx_callback, xb);
+    initUartRxCallback(xb->uart, NULL, xb);
+    initUartTxCallback(xb->uart, NULL, xb);
 }
+
+void xb_rx_callback(void *param, uint8_t datum) {
+
+}
+
+bool xb_tx_callback(void *param, uint8_t * txAddress) {
+
+}
+
+bool xb_transmit(XBEE_t *xb, uint8_t *buff, uint16_t len) {
+    return uartSendDataInt(xb->uart, buff, len) == UART_SUCCESS;
+}
+
 
