@@ -75,7 +75,6 @@ void log_init() {
     strcpy(aprs_log.log_header, "APRS log file\n");
 
     vTaskDelay(10);
-    halSPIPrescaler(0);
 }
 
 void log_rb() {
