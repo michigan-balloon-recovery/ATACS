@@ -142,8 +142,6 @@ void task_rockblock(void) {
 
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xTaskFrequency);
-        GPIO_setOutputHighOnPin(GPIO_PORT_P8, GPIO_PIN4);
-
 
         i = 0;
 
@@ -189,7 +187,6 @@ void task_rockblock(void) {
                 }
             }
         }
-        GPIO_setOutputLowOnPin(GPIO_PORT_P8, GPIO_PIN4);
         xLastWakeTime = xTaskGetTickCount();
     }
 
@@ -486,7 +483,7 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
         put_int32_array(location->latitude.decMilliSec, msg, &cur_idx, true);
         msg[cur_idx++] = location->latitude.dir;
         msg[cur_idx++] = ',';
-        put_int32_array(location->latitude.decMilliSec, msg, &cur_idx, true);
+        put_int32_array(location->longitude.decMilliSec, msg, &cur_idx, true);
         msg[cur_idx++] = location->longitude.dir;
         msg[cur_idx++] = '\r'; // end of message
     } else {
