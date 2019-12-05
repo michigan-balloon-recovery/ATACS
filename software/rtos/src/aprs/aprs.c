@@ -12,6 +12,7 @@
 
 extern gnss_t GNSS;
 extern ROCKBLOCK_t rb;
+extern sensor_data_t sensor_data;
 
 void configDRA818V(const char* freq_str);
 
@@ -20,28 +21,25 @@ void configDRA818V(const char* freq_str);
  */
 
 void task_aprs() {
-    const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
-    portTickType xLastWakeTime = xTaskGetTickCount();
+//    const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
+    const portTickType xFrequency = 5000 / portTICK_RATE_MS;
+//    portTickType xLastWakeTime = xTaskGetTickCount();
 
     // P1.2 is PD (sleep)
     // P1.3 is PTT (push-to-talk)
-    // MIC_IN is routed to P2.1 on board rev 1.0, but P2.1 and P2.2 are
-    // bridged on the board because PWM from T1.0(P2.1) is inconvenient
+    // P2.2 is MIC_IN (AFSK tones go here)
     // ptt_active_high is false for DRA818
-//    aprs_setup(GPIO_PORT_P1, GPIO_PIN2,
-//               GPIO_PORT_P1, GPIO_PIN3,
-//               GPIO_PORT_P2, GPIO_PIN2,
-//               false);
-
-    // Devboard with HX-1 breakout
     aprs_setup(GPIO_PORT_P1, GPIO_PIN2,
-               GPIO_PORT_P2, GPIO_PIN0,
+               GPIO_PORT_P1, GPIO_PIN3,
                GPIO_PORT_P2, GPIO_PIN2,
-               true);
+               false);
+
+    // wait for all sensors to initialize.
+    while(!sensor_data.humid_init);
+    while(!sensor_data.pres_init);
+    while(!GNSS.is_valid);
 
     while (1){
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-
         // Fetch GPS and sensor data
         gnss_time_t time = {0};
         gnss_coordinate_pair_t loc = {0};
@@ -65,6 +63,8 @@ void task_aprs() {
         gnss_enable_interrupts(&GNSS);
         rb_enable_interrupts(&rb);
         sens_enable_interrupts();
+
+        vTaskDelay(xFrequency);
     }
 }
 
@@ -165,7 +165,7 @@ void configDRA818V(const char* freq_str){
     char cmd[50];
     sprintf(cmd, "AT+DMOSETGROUP=0,%s,%s,0000,4,0000\r\n", freq_str, freq_str);
 
-    uartSendDataInt(&USCI_A3_cnf, (uint8_t*)cmd, strlen(cmd));
+    uartSendDataBlocking(&USCI_A3_cnf, (uint8_t*)cmd, strlen(cmd));
 
     disableUSCIUartInterrupts(&USCI_A3_cnf);
 }

@@ -10,6 +10,10 @@ typedef struct {
     uint8_t  cont_ones;
     uint8_t  packet[AX25_MAX_PACKET];
     uint16_t packet_len; //bits
+
+    // For debugging
+    uint8_t  raw_packet[AX25_MAX_PACKET];
+    uint16_t raw_len; //bytes
 } ax25_state_t;
 
 ax25_state_t ax25_state;
@@ -27,6 +31,8 @@ void update_crc(uint8_t bit){
 }
 
 void send_byte(uint8_t byte) {
+    ax25_state.raw_packet[ax25_state.raw_len++] = byte; // For debugging
+
     uint8_t i = 0;
     for (i = 0 ; i < 8 ; i++) {
         uint8_t bit = byte & 1;
@@ -82,6 +88,7 @@ void ax25_send_header(const address_t* addresses, uint8_t num){
     ax25_state.crc = AX25_CRC_INITIAL;
     ax25_state.cont_ones = 0;
     ax25_state.packet_len = 0;
+    ax25_state.raw_len = 0;
 
     // Start flag(s)
     uint8_t i;
