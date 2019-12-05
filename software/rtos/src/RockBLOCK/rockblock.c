@@ -504,25 +504,27 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
 
 bool rb_process_message(rb_rx_buffer_t *rx) {
 
-    uint16_t len = rx->last_ptr - rx->buff;
-    uint16_t cur_idx = 0;
-    int i = 0;
-    for(i = 0; i < len; i++) {
-        if(rx->buff[i] == '\n') { // our data should be in the spot after the \n
-            cur_idx = i+1;
-        }
-    }
-
-    char msg[] = "FTUPLZ";
+//    uint16_t len = rx->last_ptr - rx->buff;
+//    uint16_t cur_idx = 0;
+//    int i = 0;
+//    for(i = 0; i < len; i++) {
+//        if(rx->buff[i] == '\n') { // our data should be in the spot after the \n
+//            cur_idx = i+1;
+//        }
+//    }
+//
+//    char msg[] = "FTUPLZ";
+//    bool cut = true;
+//    for(i = 0; i < strlen("FTUPLZ"); i++) {
+//        if(msg[i] != rx->buff[cur_idx++]) {
+//            cut = false;
+//            break;
+//        }
+//    }
     bool cut = true;
-    for(i = 0; i < strlen("FTUPLZ"); i++) {
-        if(msg[i] != rx->buff[cur_idx++]) {
-            cut = false;
-            break;
-        }
-    }
 
     if(cut) {
+        P8OUT |= BIT3;
         __bic_SR_register(GIE); // critical section for safety!
         rb_cut_ftu(true);
         for(i = 0; i < 20; i++) {
@@ -530,6 +532,7 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
         }
         rb_cut_ftu(false);
         __bis_SR_register(GIE);
+        P8OUT &= ~BIT3;
     }
 
     return cut;
