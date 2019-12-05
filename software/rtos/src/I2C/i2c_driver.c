@@ -72,7 +72,7 @@ bool i2c_read(uint8_t addr, uint8_t * data, uint8_t numBytes) {
     receiveCount = numBytes;
 
     //Specify slave address
-    USCI_B_I2C_setSlaveAddress(USCI_B0_BASE,addr);
+    USCI_B_I2C_setSlaveAddress(USCI_B0_BASE, addr);
     //Set receive mode
     USCI_B_I2C_setMode(USCI_B0_BASE, USCI_B_I2C_RECEIVE_MODE);
 
@@ -90,6 +90,9 @@ bool i2c_read(uint8_t addr, uint8_t * data, uint8_t numBytes) {
         USCI_B_I2C_masterReceiveMultiByteStart(USCI_B0_BASE);
     else
         USCI_B_I2C_masterReceiveSingleStart(USCI_B0_BASE);
+    int i = 0;
+    for(i = 0; i < numBytes; i++)
+        data[i] = receiveBuffer[i];
 
     xSemaphoreGive(i2c_busy_semaphore);
     return true;
