@@ -518,6 +518,7 @@ bool rb_process_message(rb_rx_buffer_t *rx) {
 //            break;
 //        }
 //    }
+    int i = 0;
     bool cut = true;
 
     if(cut) {
