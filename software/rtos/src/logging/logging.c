@@ -138,20 +138,22 @@ void log_gnss() {
 		gnss_coordinate_pair_t location;
 		if(gnss_get_location(&GNSS,&location)) {
 			//int32_t gnss_coord_to_decSec(gnss_coordinate_t *coordinate);
-			int32_t latitude;
-			int32_t longitude;
-			latitude = gnss_coord_to_decMilliSec(&location.latitude);
-			longitude = gnss_coord_to_decMilliSec(&location.longitude);
+//			int32_t latitude;
+//			int32_t longitude;
+//			latitude = gnss_coord_to_decMilliSec(&location.latitude);
+//			longitude = gnss_coord_to_decMilliSec(&location.longitude);
 			
 			char lat[10];
 			char lon[10];
-			ltoa(latitude,lat);
-			ltoa(longitude,lon);
+			ltoa(location.latitude.decMilliSec,lat);
+			ltoa(location.longitude.decMilliSec,lon);
 			int length = strlen(lat);
 			f_write(&file,lat,length,&bw);
+			f_write(&file,&location.latitude.dir,1,&bw);
 			f_write(&file,",",1,&bw);
 			length = strlen(lon);
 			f_write(&file,lon,length,&bw);
+			f_write(&file,&location.longitude.dir,1,&bw);
 		}
 		else {
             f_write(&file,"??,??",5,&bw);
