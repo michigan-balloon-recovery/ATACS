@@ -62,10 +62,6 @@ bool i2c_write(uint8_t addr, uint8_t * data, uint8_t numBytes) {
 	    success = true;
 	}
 	else {
-        UCB0CTL1 |= UCSWRST;                   // Software reset enabled
-        UCB0IV = 0;
-        xSemaphoreTake(i2c_tx_semaphore, 0);
-        UCB0CTL1 &= ~UCSWRST;
 	    success = false;
 	    // it failed
 	}
@@ -104,11 +100,7 @@ bool i2c_read(uint8_t addr, uint8_t * data, uint8_t numBytes) {
 	    }
 	}
 	else{
-	    UCB0CTL1 |= UCSWRST;                   // Software reset enabled
-        UCB0IV = 0;
-        xSemaphoreTake(i2c_rx_semaphore, 0);
-        success = false;
-	    UCB0CTL1 &= ~UCSWRST;
+	    success = false;
 	    // it failed
 	}
 
@@ -142,10 +134,6 @@ __interrupt void USCI_B0_ISR(void) {
     case USCI_NONE: break;                  // Vector 0: No interrupts
     case USCI_I2C_UCALIFG: break;           // Vector 2: ALIFG
     case USCI_I2C_UCNACKIFG:                // Vector 4: NACKIFG
-//        if ((status != 'r') && (TXByteCtr < TotalTXBytes) && (TXByteCtr >= 1)) {
-//            TXByteCtr++;						// resend byte that was dropped
-//        }
-        UCB0CTL1 |= UCTXSTT;                  // I2C start condition
     break;
     case USCI_I2C_UCSTTIFG: break;          // Vector 6: STTIFG
     case USCI_I2C_UCSTPIFG: break;          // Vector 8: STPIFG
