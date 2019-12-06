@@ -142,6 +142,7 @@ void task_rockblock(void) {
 
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, xTaskFrequency);
+        vTaskDelay(xTaskFrequency);
 
         i = 0;
 

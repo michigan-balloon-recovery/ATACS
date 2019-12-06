@@ -16,7 +16,7 @@
 #include "semphr.h"
 #include "task.h"
 
-#define BUZZ_OFF_MS 2000 // time buzzer spends off
+#define BUZZ_OFF_MS 30000 // time buzzer spends off
 #define BUZZ_ON_MS 1000 // time buzzer spends on
 
 
