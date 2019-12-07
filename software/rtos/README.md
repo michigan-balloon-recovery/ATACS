@@ -7,13 +7,13 @@
 `rtos` should now appear in the Project Explorer pane
 
 ## Driver documentation
-1. [APRS](./aprs/README.md)
-2. [buzzer](./buzzer/README.md)
-3. [GNSS](./gnss/README.md)
-4. [I2C](./I2C/README.md)
-5. [logging](./logging/README.md)
-6. [ring buffer](./ring_buff/README.md)
-7. [RockBLOCK](./rockBLOCK/README.md)
-8. [sensors](./sensors/README.md)
-9. [UART](./uart/README.md)
-10. [XBee](./XBee/README.md)
+1. [APRS](./src/aprs/README.md)
+2. [buzzer](./src/buzzer/README.md)
+3. [GNSS](./src/gnss/README.md)
+4. [I2C](./src/I2C/README.md)
+5. [logging](./src/logging/README.md)
+6. [ring buffer](./src/ring_buff/README.md)
+7. [RockBLOCK](./src/rockBLOCK/README.md)
+8. [sensors](./src/sensors/README.md)
+9. [UART](./src/uart/README.md)
+10. [XBee](./src/XBee/README.md)
