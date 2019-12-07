@@ -1,12 +1,65 @@
 #include "gnss.h"
+/*-------------------------------------------------------------------------------- /
+/ ATACS GNSS (Global Navigation Satellite System) driver
+/ -------------------------------------------------------------------------------- /
+/ Part of the ATACS (Aerial Termination And Communication System) project
+/       https://github.com/michigan-balloon-recovery/ATACS
+/       released under the GPLv2 license (see ATACS/LICENSE in git repository)
+/ Creation Date: November 2019
+/ Contributors: Paul Young
+/ --------------------------------------------------------------------------------*/
 
-extern UARTConfig * prtInfList[5];
+
+
+
+// ---------------------------------------------------------- //
+// -------------------- global variables -------------------- //
+// ---------------------------------------------------------- //
 
 gnss_t GNSS = {.is_valid = false, .last_fix = 0};
 
+extern UARTConfig * prtInfList[5];
+
+
+
+
+
+// ------------------------------------------------------------ //
+// -------------------- private prototypes -------------------- //
+// ------------------------------------------------------------ //
+
+/*!
+ * \brief UART RX callback function
+ *
+ * Callback function to be called within the UART RX Interrupt Service Routine (ISR).
+ * Identifies start or end of sentence and adds data to the ring buffer if part of a sentence.
+ * Must be registered with the UART driver with initUartRxCallback().
+ *
+ * @param param is the passed in parameter from the UART driver. should be set as the GNSS object.
+ * @param datum is the byte read over UART passed in by the UART driver.
+ * \return None
+ *
+ */
+static void gnss_rx_callback(void *param, uint8_t datum);
+
+/*!
+ * \brief initializes the GNSS object
+ * 
+ * @param gnss_obj the GNSS object to be initialized
+ * \return None
+ */
+static void gnss_init(gnss_t *gnss_obj);
+
+
+
+
+
+// -------------------------------------------------------------- //
+// -------------------- FreeRTOS task & init -------------------- //
+// -------------------------------------------------------------- //
+
 void task_gnss(void) {
     gnss_init(&GNSS);
-
     while (1) {
         // wait for completed message to be received
         xSemaphoreTake(GNSS.uart_semaphore, portMAX_DELAY);
@@ -14,7 +67,7 @@ void task_gnss(void) {
     }
 }
 
-void gnss_init(gnss_t *gnss_obj) {
+static void gnss_init(gnss_t *gnss_obj) {
     gnss_obj->decoding_message = false;
     gnss_obj->uart_module = USCI_A0;
 
@@ -47,16 +100,13 @@ void gnss_init(gnss_t *gnss_obj) {
     gnss_obj->is_valid = true;
 }
 
-void gnss_rx_callback(void *param, uint8_t datum) {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    gnss_t *gnss_obj = (gnss_t *)param;
 
-    gnss_nmea_queue(gnss_obj, datum);
 
-    // release parsing task
-    xSemaphoreGiveFromISR(gnss_obj->uart_semaphore, &xHigherPriorityTaskWoken);
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-}
+
+
+// ---------------------------------------------------- //
+// -------------------- public API -------------------- //
+// ---------------------------------------------------- //
 
 bool gnss_get_time(gnss_t *gnss_obj, gnss_time_t *time) {
     bool data_valid = false;
@@ -123,4 +173,23 @@ void gnss_disable_interrupts(gnss_t *gnss_obj) {
 
 void gnss_enable_interrupts(gnss_t *gnss_obj) {
     enableUartRx(prtInfList[gnss_obj->uart_module]);
+}
+
+
+
+
+
+// ----------------------------------------------------- //
+// -------------------- private API -------------------- //
+// ----------------------------------------------------- //
+
+static void gnss_rx_callback(void *param, uint8_t datum) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    gnss_t *gnss_obj = (gnss_t *)param;
+
+    gnss_nmea_queue(gnss_obj, datum);
+
+    // release parsing task
+    xSemaphoreGiveFromISR(gnss_obj->uart_semaphore, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

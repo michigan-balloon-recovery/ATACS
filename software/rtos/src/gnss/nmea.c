@@ -1,5 +1,18 @@
 
 #include "nmea.h"
+/*-------------------------------------------------------------------------------- /
+/ ATACS NMEA (National Marine Electronics Association) 0183 driver
+/ -------------------------------------------------------------------------------- /
+/ Part of the ATACS (Aerial Termination And Communication System) project
+/       https://github.com/michigan-balloon-recovery/ATACS
+/       released under the GPLv2 license (see ATACS/LICENSE in git repository)
+/ Creation Date: November 2019
+/ Contributors: Paul Young
+/ --------------------------------------------------------------------------------*/
+
+
+
+
 
 // ------------------------------------------------------------ //
 // -------------------- private prototypes -------------------- //
@@ -160,7 +173,7 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
 // -------------------- private API -------------------- //
 // ----------------------------------------------------- //
 
-int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uint8_t *payload) {
+static int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uint8_t *payload) {
     uint8_t *ptr = payload;
     gnss_fix_t current_fix = {.quality = no_fix};
     switch (sentence_id) {
@@ -257,11 +270,11 @@ int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_id, uin
     return NO_FAULT;
 }
 
-int8_t gnss_nmea_decode_PUBX() {
+static int8_t gnss_nmea_decode_PUBX() {
     return 0;
 }
 
-bool gnss_nmea_decode_field(uint8_t *payload, uint8_t **field, bool (*format_data)(uint8_t*, uint8_t*, void*), void *data) {
+static bool gnss_nmea_decode_field(uint8_t *payload, uint8_t **field, bool (*format_data)(uint8_t*, uint8_t*, void*), void *data) {
     uint8_t *start;
     if(**field == ',') {
         *field += 1;
@@ -285,7 +298,7 @@ bool gnss_nmea_decode_field(uint8_t *payload, uint8_t **field, bool (*format_dat
     return false;
 }
 
-bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, void *data) {
+static bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, void *data) {
     gnss_coordinate_t *coord = (gnss_coordinate_t*)data;
     uint8_t temp[6];
 
@@ -299,21 +312,18 @@ bool gnss_nmea_field_latitude(uint8_t *start, uint8_t *end, void *data) {
 
     // degrees
     coord->decMilliSec = ((uint32_t)gnss_nmea_atoi(temp, start, 2)) * 3600000;
-//    coord->deg = gnss_nmea_atoi(temp, start, 2);
     start += 2;
     // minutes
     coord->decMilliSec += ((uint32_t)gnss_nmea_atoi(temp, start, 2)) * 60000;
-//    coord->min = gnss_nmea_atoi(temp, start, 2);
     start += 2;
 
     // milliseconds
     start++; // skip decimal place
     coord->decMilliSec += ((uint32_t)gnss_nmea_atoi(temp, start, 5));
-//    coord->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
     return true;
 }
 
-bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, void *data) {
+static bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, void *data) {
     gnss_coordinate_t *coord = (gnss_coordinate_t*)data;
     uint8_t temp[6];
 
@@ -328,21 +338,18 @@ bool gnss_nmea_field_longitude(uint8_t *start, uint8_t *end, void *data) {
 
     // degrees
     coord->decMilliSec = ((uint32_t)gnss_nmea_atoi(temp, start, 3)) * 3600000;
-//    coord->deg = gnss_nmea_atoi(temp, start, 3);
     start += 3;
     // minutes
     coord->decMilliSec += ((uint32_t)gnss_nmea_atoi(temp, start, 2)) * 60000;
-//    coord->min = gnss_nmea_atoi(temp, start, 2);
     start += 2;
 
     // milliseconds
     start++; // skip decimal place
     coord->decMilliSec += ((uint32_t)gnss_nmea_atoi(temp, start, 5));
-//    coord->msec = gnss_nmea_atoi(temp, start, 5) * 60 * 100000;
     return true;
 }
 
-bool gnss_nmea_field_direction(uint8_t *start, uint8_t *end, void *data) {
+static bool gnss_nmea_field_direction(uint8_t *start, uint8_t *end, void *data) {
     gnss_coordinate_t *coord = (gnss_coordinate_t*)data;
     // ensure correct length
     if( (end - start) != 1) {
@@ -353,7 +360,7 @@ bool gnss_nmea_field_direction(uint8_t *start, uint8_t *end, void *data) {
     return true;
 }
 
-bool gnss_nmea_field_time(uint8_t *start, uint8_t *end, void *data) {
+static bool gnss_nmea_field_time(uint8_t *start, uint8_t *end, void *data) {
     gnss_time_t *time = (gnss_time_t*)data;
     uint8_t temp[3];
 
@@ -380,7 +387,7 @@ bool gnss_nmea_field_time(uint8_t *start, uint8_t *end, void *data) {
     return true;
 }
 
-bool gnss_nmea_field_char(uint8_t *start, uint8_t *end, void *data) {
+static bool gnss_nmea_field_char(uint8_t *start, uint8_t *end, void *data) {
     char *output = (char *)data;
     // ensure correct length
     if( (end - start) != 1) {
@@ -392,7 +399,7 @@ bool gnss_nmea_field_char(uint8_t *start, uint8_t *end, void *data) {
     return true;
 }
 
-bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, void *data) {
+static bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, void *data) {
     int32_t *output = (int32_t *)data;
     uint8_t temp[10];
     if( (end - start) == 0) {
@@ -404,7 +411,7 @@ bool gnss_nmea_field_int32(uint8_t *start, uint8_t *end, void *data) {
     return true;
 }
 
-bool gnss_nmea_field_int8(uint8_t *start, uint8_t *end, void *data) {
+static bool gnss_nmea_field_int8(uint8_t *start, uint8_t *end, void *data) {
     uint8_t *output = (uint8_t*)data;
     uint8_t temp[10];
     if( (end - start) == 0) {
@@ -421,4 +428,3 @@ static inline long gnss_nmea_atoi(uint8_t *temp, uint8_t *ascii, uint8_t length)
     memcpy(temp, ascii, length);
     return atol((char *)temp);
 }
-

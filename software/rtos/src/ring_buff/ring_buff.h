@@ -5,9 +5,26 @@
 extern "C" {
 #endif
 
+
+
+
+
+// -------------------------------------------------------------- //
+// -------------------- include dependencies -------------------- //
+// -------------------------------------------------------------- //
+
+// standard libraries
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+
+
+
+
+
+// ---------------------------------------------------------- //
+// -------------------- type definitions -------------------- //
+// ---------------------------------------------------------- //
 
 /** @struct ring_buff_t
  *  @brief object storing ring buffer configuration and status data

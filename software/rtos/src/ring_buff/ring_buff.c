@@ -1,4 +1,20 @@
 #include "ring_buff.h"
+/*-------------------------------------------------------------------------------- /
+/ Frame-based Ring Buffer
+/ -------------------------------------------------------------------------------- /
+/ Developed by: Paul Young
+/ Date: September 2019
+/
+/ Ring buffer that keeps track of byte and frame position to prevent partial frames
+/ being read or written.
+/
+/ Used with permission in the ATACS (Aerial Termination And Communication System) project
+/       https://github.com/michigan-balloon-recovery/ATACS
+/ --------------------------------------------------------------------------------*/
+
+
+
+
 
 // ------------------------------------------------------------ //
 // -------------------- private prototypes -------------------- //

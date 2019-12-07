@@ -5,10 +5,19 @@
 extern "C" {
 #endif
 
+
+
+
+
+// -------------------------------------------------------------- //
+// -------------------- include dependencies -------------------- //
+// -------------------------------------------------------------- //
+
+// standard libraries
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
+// application drivers
 #include "gnss.h"
 
 
@@ -84,6 +93,8 @@ bool gnss_nmea_queue(gnss_t *gnss_obj, uint8_t datum);
  * 
  * 
  * @param gnss_obj is the GNSS object
+ * \return error code defined by "NMEA Faults" macros
+ * 
  */
 int8_t gnss_nmea_decode(gnss_t *gnss_obj);
 

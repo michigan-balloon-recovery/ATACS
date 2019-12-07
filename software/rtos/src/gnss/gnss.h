@@ -5,18 +5,34 @@
 extern "C" {
 #endif
 
-// standard type definitions
+
+
+
+
+// -------------------------------------------------------------- //
+// -------------------- include dependencies -------------------- //
+// -------------------------------------------------------------- //
+
+// standard libraries
 #include <stdint.h>
 #include <stdbool.h>
-// MSP430 hardware includes
+// MSP430 hardware
 #include <msp430.h>
 #include <driverlib.h>
-// freeRTOS includes
+// FreeRTOS
 #include "FreeRTOS.h"
 #include "semphr.h"
-// application includes
+// application drivers
 #include "ring_buff.h"
 #include "uart.h"
+
+
+
+
+
+// ------------------------------------------------------- //
+// -------------------- public macros -------------------- //
+// ------------------------------------------------------- //
 
 /* protocol selection:
  *      - GNSS_NMEA for standardized NMEA communications
@@ -43,6 +59,14 @@ extern "C" {
 #define GNSS_RX_MAX_PAYLOAD             100
 
 #endif /* GNSS_NMEA */
+
+
+
+
+
+// ---------------------------------------------------------- //
+// -------------------- type definitions -------------------- //
+// ---------------------------------------------------------- //
 
 typedef enum {
     no_fix = 0,
@@ -118,34 +142,20 @@ typedef struct {
 #include "ubx.h"
 #endif
 
+
+
+
+
+// ----------------------------------------------------------- //
+// -------------------- public prototypes -------------------- //
+// ----------------------------------------------------------- //
+
 /*!
  * \brief freeRTOS task to decode GNSS messages
  *
  * \return None
  */
 void task_gnss(void);
-
-/*!
- * \brief initializes the GNSS object
- * 
- * @param gnss_obj the GNSS object to be initialized
- * \return None
- */
-void gnss_init(gnss_t *gnss_obj);
-
-/*!
- * \brief UART RX callback function
- *
- * Callback function to be called within the UART RX Interrupt Service Routine (ISR).
- * Identifies start or end of sentence and adds data to the ring buffer if part of a sentence.
- * Must be registered with the UART driver with initUartRxCallback().
- *
- * @param param is the passed in parameter from the UART driver. should be set as the GNSS object.
- * @param datum is the byte read over UART passed in by the UART driver.
- * \return None
- *
- */
-void gnss_rx_callback(void *param, uint8_t datum);
 
 /*!
  * \brief get time of the last GNSS fix
@@ -176,15 +186,6 @@ bool gnss_get_location(gnss_t *gnss_obj, gnss_coordinate_pair_t *location);
  *
  */
 bool gnss_get_altitude(gnss_t *gnss_obj, int32_t *altitude);
-
-///*!
-// * \brief convert GNSS coordinate to deciSeconds
-// *
-// * @param coordinate is the GNSS coordinate to convert.
-// * \return coordinate location in deciMilliSeconds
-// *
-// */
-//int32_t gnss_coord_to_decMilliSec(gnss_coordinate_t *coordinate);
 
 /*!
  * \brief disable GNSS interrupts
