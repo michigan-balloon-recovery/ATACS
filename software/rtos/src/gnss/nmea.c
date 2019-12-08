@@ -31,10 +31,13 @@ static int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_
 /*!
  * \brief Decode a PUBX (Ublox proprietary) NMEA sentence
  *
- * currently not implemented
+ * @param gnss_obj is the GNSS object
+ * @param sentence_id is proprietary PUBX sentence ID
+ * @param payload is a byte array containing the sentence payload
+ * \return NMEA fault code
  *
  */
-static int8_t gnss_nmea_decode_PUBX();
+static int8_t gnss_nmea_decode_PUBX(gnss_t *gnss_obj, uint8_t sentence_id, uint8_t *payload);
 
 /*!
  * \brief Decode a field in a NMEA sentence
@@ -105,7 +108,7 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
     uint8_t i = 0;
     for(i = 0; i < 5; i++) {
         if(!ring_buff_read(buff, address + i)) {
-            return EMPTY_BUFFER;
+            return NMEA_EMPTY_BUFFER;
         }
     }
     talker = TALKER(address[0], address[1]);
@@ -115,12 +118,12 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
     i = 0;
     do {
         if(!ring_buff_read(buff, payload + i)) {
-            return EMPTY_BUFFER;
+            return NMEA_EMPTY_BUFFER;
         }
         i++;
 
         // enure payload isn't too long
-        if(i > GNSS_RX_MAX_PAYLOAD) return PAYLOAD_OVERFLOW;
+        if(i > GNSS_RX_MAX_PAYLOAD) return NMEA_PAYLOAD_OVERFLOW;
     } while(payload[i-1] != '*');
 
     // read in checksum
@@ -133,6 +136,7 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
     // mark packet as read
     ring_buff_read_finish_packet(buff);
 
+    uint8_t temp[3];
     switch (talker) {
     // GPS message
     case TALKER_GPS:
@@ -154,14 +158,14 @@ int8_t gnss_nmea_decode(gnss_t *gnss_obj) {
         switch (sentence) {
         // all PUBX messages have the same sentence format field
         case SENTENCE_UBX:
-            return UNKNOWN_PROPRIETARY;
+            return gnss_nmea_decode_PUBX(gnss_obj, gnss_nmea_atoi(temp, payload, 2), payload);
         // invalid proprietary sentence format
         default:
-            return UNKNOWN_PROPRIETARY;
+            return NMEA_UNKNOWN_PROPRIETARY;
         }
     // unknown talker
     default:
-        return UNKNOWN_TALKER;
+        return NMEA_UNKNOWN_TALKER;
     }
 }
 
@@ -265,13 +269,30 @@ static int8_t gnss_nmea_decode_standard_msg(gnss_t *gnss_obj, uint32_t sentence_
             break;
         // unknown sentence format
         default:
-            return UNKNOWN_SENTENCE;
+            return NMEA_UNKNOWN_SENTENCE;
     }
-    return NO_FAULT;
+    return NMEA_NO_FAULT;
 }
 
-static int8_t gnss_nmea_decode_PUBX() {
-    return 0;
+static int8_t gnss_nmea_decode_PUBX(gnss_t *gnss_obj, uint8_t sentence_id, uint8_t *payload) {
+    switch(sentence_id) {
+        // lat/long position data
+        case SENTENCE_UBX_POSITION:
+
+            break;
+        // satellite status
+        case SENTENCE_UBX_SVSTATUS:
+
+            break;
+        // time of day and clock information
+        case SENTENCE_UBX_TIME:
+
+            break;
+        // unknown sentence format
+        default:
+            return NMEA_UNKNOWN_SENTENCE;
+    }
+    return NMEA_NO_FAULT;
 }
 
 static bool gnss_nmea_decode_field(uint8_t *payload, uint8_t **field, bool (*format_data)(uint8_t*, uint8_t*, void*), void *data) {
