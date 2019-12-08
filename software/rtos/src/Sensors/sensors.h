@@ -1,11 +1,24 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
+// -------------------------------------------------------------- //
+// -------------------- include dependencies -------------------- //
+// -------------------------------------------------------------- //
+
+//MSP430 Hardware
 #include <msp430.h>
+//FreeRTOS
 #include "FreeRTOS.h"
 #include "task.h"
+//standard libraries
 #include <stdbool.h>
+//application drivers
 #include "i2c_driver.h"
+
+
+// ---------------------------------------------------------- //
+// -------------------- type definitions -------------------- //
+// ---------------------------------------------------------- //
 
 typedef struct{
 	int32_t pressure;
@@ -22,9 +35,22 @@ typedef struct{
 
 uint16_t c[8];
 
+// ----------------------------------------------------------- //
+// -------------------- public prototypes -------------------- //
+// ----------------------------------------------------------- //
+
+/* \brief FreeRTOS task to get pressure and temperature reading 
+ *
+ * \return None 
+ */
 void task_pressure(void);
 
+/* \brief FreeRTOS task to get humidity and temperature reading 
+ *
+ * \return None 
+ */
 void task_humidity(void);
+
 
 void sens_init_pres(void);
 
