@@ -13,7 +13,7 @@
 4. [I2C](./src/I2C/README.md)
 5. [logging](./src/logging/README.md)
 6. [ring buffer](./src/ring_buff/README.md)
-7. [RockBLOCK](./src/rockBLOCK/README.md)
+7. [RockBLOCK](./src/RockBLOCK/README.md)
 8. [sensors](./src/sensors/README.md)
 9. [UART](./src/uart/README.md)
 10. [XBee](./src/XBee/README.md)
