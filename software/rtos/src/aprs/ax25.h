@@ -1,5 +1,5 @@
-#ifndef AFSK_H_
-#define AFSK_H_
+#ifndef AX25_H_
+#define AX25_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,4 +93,4 @@ void ax25_send_footer();
  */
 void ax25_flush_frame();
 
-#endif /* AFSK_H_ */
+#endif /* AX25_H_ */
