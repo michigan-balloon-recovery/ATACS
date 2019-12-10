@@ -1,16 +1,34 @@
 // Author: Scott Smith
 
-
 #include "rockblock.h"
-#include "xbee.h"
 
+// ---------------------------------------------------------- //
+// -------------------- global variables -------------------- //
+// ---------------------------------------------------------- //
 extern gnss_t GNSS;
 extern sensor_data_t sensor_data;
 extern XBEE_t XBee;
 
 ROCKBLOCK_t rb = {.is_valid = false}; // global rockblock object for the task.
 
-// formats the command for the message sent to the RockBLOCK.
+// ----------------------------------------------------- //
+// -------------------- private API -------------------- //
+// ----------------------------------------------------- //
+
+
+// 
+/*!
+ * \brief Formats the command for the message sent to the RockBLOCK.
+ *
+ * Formats the passed in rockblock's tx buffer to hold the appropriate command.
+ *
+ * @param rb: an input to this function that tells it which rockblock module's tx buffer to place the command.
+ * @param cmd: an input to this function that tells it what type of command you are trying to send to the RockBLOCK.
+ * @param numReturns: an output from this function representing how many carriage returns you should expect in response from the RockBLOCK.
+ * 
+ * \return None
+ *
+ */
 static void rb_format_command(ROCKBLOCK_t *rb, rb_message_t cmd, volatile uint8_t *numReturns) {
 
     *(rb->tx.cur_ptr++) = 'A';
@@ -62,7 +80,15 @@ static void rb_format_command(ROCKBLOCK_t *rb, rb_message_t cmd, volatile uint8_
         *(rb->tx.cur_ptr++) = '\r'; // should be 0x0D, same as '\r' hopefully.
 }
 
-// clear all of the rx/tx buffers for this rockblock.
+
+/*!
+ * \brief Clear all of the rx/tx buffers for this rockblock.
+ *
+ * @param rb: an input to this function that tells it which rockblock module's buffers to clear
+ *
+ * \return None
+ *
+ */
 static void rb_clear_buffers(ROCKBLOCK_t *rb) {
     rb->tx.cur_ptr = rb->tx.buff;
     rb->tx.last_ptr = rb->tx.buff;
@@ -71,7 +97,18 @@ static void rb_clear_buffers(ROCKBLOCK_t *rb) {
     rb->tx.tx_ptr = rb->tx.buff;
 }
 
-// use the uart associated with this rockblock.
+
+/*!
+ * \brief Safely use the uart associated with this rockblock.
+ *
+ * While in this function, this module cannot be disabled externally. 
+ * Blocks until UART is completed or it times out.
+ *
+ * @param rb: an input to this function that tells it which rockblock is using the UART.
+ *
+ * \return bool: If true, indicates UART worked properly. If false, semaphore timeout caused a failure.
+ *
+ */
 static bool rb_use_uart(ROCKBLOCK_t *rb) {
 
     if(xSemaphoreTake(rb->busy_semaphore, 2000 / portTICK_RATE_MS) == pdFALSE)
@@ -96,7 +133,18 @@ static bool rb_use_uart(ROCKBLOCK_t *rb) {
     return true;
 }
 
-// convert an int32 into a character array.
+
+/*!
+ * \brief Converts an int32 into a character array.
+ *
+ * @param toInsert: the int32_t to turn into a character array.
+ * @param msg: Pointer to the character array in which to place the converted int32_t.
+ * @param cur_idx: The index to the next place in the character array in which to place a character. Incremented by this function.
+ * @param success: Indicates whether or not this int32_t is valid. If false, it will place a ? into the array instead of the data.
+ *
+ * \return None
+ *
+ */
 static void put_int32_array(int32_t toInsert, uint8_t *msg, uint16_t *cur_idx, bool success) {
     char str[15]; // 2^32 + 1 < 15 indexes, so should be able to fit entire int32_t inside of this.
     uint16_t lenStr;
@@ -113,6 +161,11 @@ static void put_int32_array(int32_t toInsert, uint8_t *msg, uint16_t *cur_idx, b
     *cur_idx = *cur_idx + 1;
 }
 
+
+
+// ---------------------------------------------------- //
+// -------------------- public API -------------------- //
+// ---------------------------------------------------- //
 
 void task_rockblock(void) {
     const portTickType xTaskFrequency =  (uint16_t) ((uint32_t) RB_TRANSMIT_RATE_MS / (uint32_t) portTICK_RATE_MS);
