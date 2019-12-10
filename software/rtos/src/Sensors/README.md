@@ -4,7 +4,7 @@ Sensor driver for:
 
 ## Library Dependencies
 1. [FreeRTOS](https://www.freertos.org/index.html) (semaphore and mutex support)
-2. [i2c driver](../i2c/README.md) 
+2. [i2c driver](../I2C/README.md) 
 
 ## Hardware Resources
 1. USCI B0
