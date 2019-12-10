@@ -62,6 +62,7 @@ static void rb_format_command(ROCKBLOCK_t *rb, rb_message_t cmd, volatile uint8_
         *(rb->tx.cur_ptr++) = '\r'; // should be 0x0D, same as '\r' hopefully.
 }
 
+// clear all of the rx/tx buffers for this rockblock.
 static void rb_clear_buffers(ROCKBLOCK_t *rb) {
     rb->tx.cur_ptr = rb->tx.buff;
     rb->tx.last_ptr = rb->tx.buff;
@@ -70,6 +71,7 @@ static void rb_clear_buffers(ROCKBLOCK_t *rb) {
     rb->tx.tx_ptr = rb->tx.buff;
 }
 
+// use the uart associated with this rockblock.
 static bool rb_use_uart(ROCKBLOCK_t *rb) {
 
     if(xSemaphoreTake(rb->busy_semaphore, 2000 / portTICK_RATE_MS) == pdFALSE)
@@ -94,6 +96,7 @@ static bool rb_use_uart(ROCKBLOCK_t *rb) {
     return true;
 }
 
+// convert an int32 into a character array.
 static void put_int32_array(int32_t toInsert, uint8_t *msg, uint16_t *cur_idx, bool success) {
     char str[15]; // 2^32 + 1 < 15 indexes, so should be able to fit entire int32_t inside of this.
     uint16_t lenStr;
@@ -277,9 +280,6 @@ void rb_rx_callback(void *param, uint8_t datum) {
             }
         }
 
-//        if(datum == (uint8_t) ')' || datum == (uint8_t) '(')
-//            numReturns = 200;
-
         rb->rx.cur_ptr++; // increment the index.
     }
 }
@@ -323,8 +323,6 @@ void rb_send_message(ROCKBLOCK_t *rb, uint8_t *msg, uint16_t len, bool *msgSent,
     }
 
     rb_start_session(rb, msgSent, msgReceived, msgsQueued);
-
-    // process response to see if message succeeded.
 
 }
 
@@ -478,9 +476,6 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
     }
 
     if(success[6]) {// location
-//        int32_t decSecLat = gnss_coord_to_decMilliSec(&location->latitude); // should be fine using signed integer here.
-//        int32_t decSecLong = gnss_coord_to_decMilliSec(&location->longitude);
-
         put_int32_array(location->latitude.decMilliSec, msg, &cur_idx, true);
         msg[cur_idx++] = location->latitude.dir;
         msg[cur_idx++] = ',';
@@ -501,7 +496,7 @@ void rb_create_telemetry_packet(uint8_t *msg, uint16_t *len, int32_t pressure,
 }
 
 bool rb_process_message(rb_rx_buffer_t *rx) {
-
+// TODO: process any type of message.
 //    uint16_t len = rx->last_ptr - rx->buff;
 //    uint16_t cur_idx = 0;
 //    int i = 0;
@@ -576,7 +571,6 @@ void rb_cut_ftu(bool cut) {
 }
 
 void rb_enable_interrupts(ROCKBLOCK_t *rb) {
-
     enableUartRx(&USCI_A1_cnf);
     xSemaphoreGive(rb->busy_semaphore);
     return;
@@ -587,5 +581,4 @@ bool rb_disable_interrupts(ROCKBLOCK_t *rb) {
         return false;
     disableUSCIUartInterrupts(&USCI_A1_cnf);
     return true;
-    //TODO: disable UART
 }
