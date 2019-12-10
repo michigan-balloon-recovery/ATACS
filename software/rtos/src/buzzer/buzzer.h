@@ -19,9 +19,28 @@
 #define BUZZ_OFF_MS 30000 // time buzzer spends off
 #define BUZZ_ON_MS 1000 // time buzzer spends on
 
+/*!
+ * \brief Initializes the GPIO pin associated with the buzzer.
+ *
+ * \return None
+ */
+void buzzer_init(void);
 
-void buzzer_init(void); // call before trying to turn on the buzzer
-void buzzer_control(bool on); // turns the buzzer on/off depending on the bool
-void task_buzzer(void); // task that controls whether the buzzer is on/off
+
+/*!
+ * \brief Turns the buzzer on or off.
+ *
+ * @param on: If true, turns the buzzer on. If false, turns the buzzer off.
+ * \return None
+ */
+void buzzer_control(bool on);
+
+
+/*!
+ * \brief Task which decides whether or not the buzzer should be on.
+ *
+ * \return None
+ */
+void task_buzzer(void);
 
 #endif /* SRC_BUZZER_BUZZER_H_ */
