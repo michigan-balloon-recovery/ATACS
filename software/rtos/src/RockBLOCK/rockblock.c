@@ -7,7 +7,6 @@
 // ---------------------------------------------------------- //
 extern gnss_t GNSS;
 extern sensor_data_t sensor_data;
-extern XBEE_t XBee;
 
 ROCKBLOCK_t rb = {.is_valid = false}; // global rockblock object for the task.
 
