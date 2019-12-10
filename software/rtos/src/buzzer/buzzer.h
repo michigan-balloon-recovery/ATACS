@@ -31,6 +31,7 @@ void buzzer_init(void);
  * \brief Turns the buzzer on or off.
  *
  * @param on: If true, turns the buzzer on. If false, turns the buzzer off.
+ *
  * \return None
  */
 void buzzer_control(bool on);
