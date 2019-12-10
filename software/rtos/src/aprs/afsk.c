@@ -1,11 +1,18 @@
-#include <stdint.h>
-#include <stdlib.h>
 #include <afsk.h>
-#include <driverlib.h>
+/*-------------------------------------------------------------------------------- /
+/ ATACS AFSK driver
+/ -------------------------------------------------------------------------------- /
+/ Part of the ATACS (Aerial Termination And Communication System) project
+/       https://github.com/michigan-balloon-recovery/ATACS
+/       released under the GPLv2 license (see ATACS/LICENSE in git repository)
+/ Creation Date: November 2019
+/ Contributors: Justin Shetty
+/ --------------------------------------------------------------------------------*/
 
-/*
- * Global Constants
- */
+
+// ---------------------------------------------------------- //
+// -------------------- global variables -------------------- //
+// ---------------------------------------------------------- //
 
 const uint8_t AFSK_SINE_TABLE[AFSK_TABLE_SIZE_100/100] = {
     128, 129, 131, 132, 134, 135, 137, 138, 140, 142, 143, 145, 146, 148, 149, 151,
