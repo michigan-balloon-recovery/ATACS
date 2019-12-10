@@ -1,37 +1,83 @@
 #include "aprs.h"
+/*-------------------------------------------------------------------------------- /
+/ ATACS APRS (Automatic Packet Reporting System) driver
+/ -------------------------------------------------------------------------------- /
+/ Part of the ATACS (Aerial Termination And Communication System) project
+/       https://github.com/michigan-balloon-recovery/ATACS
+/       released under the GPLv2 license (see ATACS/LICENSE in git repository)
+/ Creation Date: November 2019
+/ Contributors: Justin Shetty
+/ --------------------------------------------------------------------------------*/
 
-#include "FreeRTOS.h"
-#include "afsk.h"
-#include "ax25.h"
-#include "uart.h"
-#include "sensors.h"
-#include "rockblock.h"
-#include <string.h>
-#include <stdio.h>
-#include <stdbool.h>
+
+
+// ---------------------------------------------------------- //
+// -------------------- global variables -------------------- //
+// ---------------------------------------------------------- //
 
 extern gnss_t GNSS;
 extern ROCKBLOCK_t rb;
 extern sensor_data_t sensor_data;
+address_t addresses[2] = {
+    {APRS_DEST_CALLSIGN, 0},
+    {APRS_SRC_CALLSIGN, 11},
+};
 
-void configDRA818V(const char* freq_str);
 
-/*
- * Exported Functions Definitions
+// ------------------------------------------------------------ //
+// -------------------- private prototypes -------------------- //
+// ------------------------------------------------------------ //
+
+/*!
+ * \brief Initializes appropriate hardware to enable APRS transmissions
+ *
+ * @param pd_port Port to which the radio's ON/OFF pin is connected
+ * @param pd_pin  Pin to which the radio's ON/OFF pin is connected
+ * @param ptt_port Port to which the radio's PTT pin is connected
+ * @param ptt_pin  Pin to which the radio's PTT pin is connected
+ * @param tx_port Port to which the radio's MIC pin is connected
+ * @param tx_pin  Pin to which the radio's MIC pin is connected
+ * @param ptt_active_high Whether activity level (true: transmit when high)
+ * \return None
  */
+void aprs_setup(const uint16_t pd_port,  const uint8_t pd_pin,
+                const uint16_t ptt_port, const uint8_t ptt_pin,
+                const uint16_t tx_port,  const uint8_t tx_pin,
+                const bool ptt_active_high);
+
+/*!
+ * \brief Turns on the DRA818V and sets the frequency
+ *
+ * @param pd_port Port to which the radio's ON/OFF pin is connected
+ * @param pd_pin  Pin to which the radio's ON/OFF pin is connected
+ * @param freq_str Pointer to beginning of string which contains the desired transmit frequency
+ * \return None
+ */
+void configDRA818V(const uint16_t pd_port, const uint16_t pd_pin,
+                   const char* freq_str);
+
+/*!
+ * \brief Transmits an APRS packet
+ *
+ * @param time Pointer to a gnss_time_t object which contains the current time
+ * @param loc  Pointer to a gnss_coordinate_pair_t object which contains the current position
+ * @param alt  Pointer to a uint32_t which contains the current altitude in meters
+ * \return None
+ */
+void aprs_beacon(gnss_time_t* time, gnss_coordinate_pair_t* loc, int32_t* alt);
+
+// -------------------------------------------------------------- //
+// ----------------------- FreeRTOS task ------------------------ //
+// -------------------------------------------------------------- //
 
 void task_aprs() {
     const portTickType xFrequency = APRS_PERIOD_MS / portTICK_RATE_MS;
     portTickType xLastWakeTime = xTaskGetTickCount();
 
-    // P1.2 is PD (sleep)
-    // P1.3 is PTT (push-to-talk)
-    // P2.2 is MIC_IN (AFSK tones go here)
-    // ptt_active_high is false for DRA818
-    aprs_setup(GPIO_PORT_P1, GPIO_PIN2,
-               GPIO_PORT_P1, GPIO_PIN3,
-               GPIO_PORT_P2, GPIO_PIN2,
-               false);
+    aprs_setup(APRS_PD_PORT, APRS_PD_PIN,
+               APRS_PTT_PORT, APRS_PTT_PIN,
+               APRS_PWM_PORT, APRS_PWM_PIN,
+               APRS_ACTIVE_HIGH);
 
     // wait for all sensors to initialize.
     while(!sensor_data.humid_init);
@@ -69,27 +115,22 @@ void task_aprs() {
     }
 }
 
+
+// ----------------------------------------------------- //
+// -------------------- private API -------------------- //
+// ----------------------------------------------------- //
+
 void aprs_setup(const uint16_t pd_port,  const uint8_t pd_pin,
                 const uint16_t ptt_port, const uint8_t ptt_pin,
                 const uint16_t tx_port,  const uint8_t tx_pin,
                 const bool ptt_active_level){
-    // Turn on radio
-    GPIO_setAsOutputPin(pd_port, pd_pin);
-    GPIO_setOutputHighOnPin(pd_port, pd_pin);
-    __delay_cycles(2 * configCPU_CLOCK_HZ);
 
-    // Send configuration command to radio
-    configDRA818V("144.3900");
+    // Send configuration command
+    configDRA818V(pd_port, pd_pin, "144.3900");
 
     // Initialize AFSK library
     afsk_setup(ptt_port, ptt_pin, tx_port, tx_pin, ptt_active_level);
 }
-
-address_t addresses[2] = {
-    {"APRS", 0},
-    {"KE8ISR", 11},
-//    {"WIDE2", 1},
-};
 
 void aprs_beacon(gnss_time_t* time, gnss_coordinate_pair_t* loc, int32_t* alt){
     char temp_str[16];
@@ -152,10 +193,13 @@ void aprs_beacon(gnss_time_t* time, gnss_coordinate_pair_t* loc, int32_t* alt){
     ax25_flush_frame();
 }
 
-/*
- * Local Functions Definitions
- */
-void configDRA818V(const char* freq_str){
+void configDRA818V(const uint16_t pd_port, const uint16_t pd_pin,
+                   const char* freq_str){
+    // Turn on radio
+    GPIO_setAsOutputPin(pd_port, pd_pin);
+    GPIO_setOutputHighOnPin(pd_port, pd_pin);
+    __delay_cycles(2 * configCPU_CLOCK_HZ);
+
     // UART initialization
     UARTConfig a3_cnf = {
                     .moduleName = USCI_A3,
@@ -182,6 +226,3 @@ void configDRA818V(const char* freq_str){
 
     disableUSCIUartInterrupts(&USCI_A3_cnf);
 }
-
-
-
