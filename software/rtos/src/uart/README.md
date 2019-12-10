@@ -3,7 +3,8 @@ Genaric UART driver for the MSP430 by Gustavo Litovsky (Refer to copywrite notic
 Has been heavily modified to support Paul Young's [Frame-preserving ring buffer](../ring_buff/README.md) as well as adding callback functions for RX and TX operations.
 
 ## Library Dependencies
-1. Paul Young's [Frame-preserving ring buffer](../ring_buff/README.md)
+1. Gustavo Litovsky's [original MSP430 UART driver](https://github.com/glitovsky38412/msp430uartdriver)
+2. Paul Young's [Frame-preserving ring buffer](../ring_buff/README.md)
 
 ## Hardware Resources
 configured by application drivers
