@@ -33,6 +33,28 @@ extern "C" {
 #define AFSK_STRIDE_MARK_100  983                       // Indices to move in LUT for mark (1200 Hz)
 #define AFSK_STRIDE_SPACE_100 1802                      // Indices to move in LUT for space (2200 Hz)
 
+
+// ---------------------------------------------------------- //
+// -------------------- type definitions -------------------- //
+// ---------------------------------------------------------- //
+
+typedef struct {
+    uint16_t ptt_port;
+    uint8_t  ptt_pin;
+    bool     ptt_active_high;
+
+    uint16_t sine_idx_100;
+    uint16_t stride_100;
+
+    uint8_t  tx_flag;
+    uint16_t tx_idx;     // bitwise
+
+    uint8_t* packet_buf;
+    uint16_t packet_len; // bitwise
+    uint8_t  current_byte;
+} afsk_state_t;
+
+
 // ----------------------------------------------------------- //
 // -------------------- public prototypes -------------------- //
 // ----------------------------------------------------------- //

@@ -49,38 +49,37 @@ const uint8_t AFSK_SINE_TABLE[AFSK_TABLE_SIZE_100/100] = {
     103, 104, 106, 107, 109, 110, 112, 113, 115, 117, 118, 120, 121, 123, 124, 126,
 };
 
-/*
- * Global State
- */
-
-typedef struct {
-    uint16_t ptt_port;
-    uint8_t  ptt_pin;
-    bool     ptt_active_high;
-
-    uint16_t sine_idx_100;
-    uint16_t stride_100;
-
-    uint8_t  tx_flag;
-    uint16_t tx_idx;     // bitwise
-
-    uint8_t* packet_buf;
-    uint16_t packet_len; // bitwise
-    uint8_t  current_byte;
-} afsk_state_t;
-
 afsk_state_t afsk_state;
 
-/*
- * Local Function Declarations
+// ------------------------------------------------------------ //
+// -------------------- private prototypes -------------------- //
+// ------------------------------------------------------------ //
+
+/*!
+ * \brief Initialize timer
+ *
+ * \return None
  */
 void afsk_timer_setup();
+
+/*!
+ * \brief Start timer
+ *
+ * \return None
+ */
 void afsk_timer_start();
+
+/*!
+ * \brief Stop timer
+ *
+ * \return None
+ */
 void afsk_timer_stop();
 
-/*
- * Exported Functions Definitions
- */
+// ---------------------------------------------------- //
+// -------------------- public API -------------------- //
+// ---------------------------------------------------- //
+
 void afsk_setup(const uint16_t ptt_port, const uint8_t ptt_pin,
                 const uint16_t tx_port,  const uint8_t tx_pin,
                 const bool ptt_active_high){
@@ -148,9 +147,9 @@ void afsk_transmit(){
     }
 }
 
-/*
- * Local Function Definitions
- */
+// ---------------------------------------------------- //
+// ------------------- private API -------------------- //
+// ---------------------------------------------------- //
 void afsk_timer_setup(){
     TA1CCR0   = AFSK_CPS;
     TA1CCTL1 |= OUTMOD_7; // set at CCR0, reset at CCRx
