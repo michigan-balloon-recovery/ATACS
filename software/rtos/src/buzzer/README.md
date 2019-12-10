@@ -3,7 +3,7 @@ Buzzer driver for:
 1. Controlling when a buzzer is on or off. 
 
 ## Library Dependencies
-1. FreeRTOS (semaphore and mutex support)
+1. FreeRTOS (timing support)
 
 ## Hardware Resources
 1. GPIO Pin
