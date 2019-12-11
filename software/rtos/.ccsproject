@@ -9,5 +9,5 @@
 	<rts value="libc.a"/>
 	<connection value="common/targetdb/connections/TIMSP430-USB.xml"/>
 	<deviceFamily value="MSP430"/>
-	<isTargetManual value="true"/>
+	<isTargetManual value="false"/>
 </projectOptions>

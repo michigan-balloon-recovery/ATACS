@@ -30,15 +30,16 @@ extern "C" {
 
 #include "ring_buff.h"
 
-#define PORT_1 1
-#define PORT_2 2
-#define PORT_3 3
-#define PORT_4 4
-#define PORT_5 5
-#define PORT_6 6
-#define PORT_7 7
-#define PORT_8 8
-#define PORT_9 9
+#define PORT_1   1
+#define PORT_2   2
+#define PORT_3   3
+#define PORT_4   4
+#define PORT_5   5
+#define PORT_6   6
+#define PORT_7   7
+#define PORT_8   8
+#define PORT_9   9
+#define PORT_10 10
 
 #define PIN0 0
 #define PIN1 1
@@ -162,6 +163,7 @@ USCIUARTRegs USCI_A0_regs, USCI_A1_regs, USCI_A2_regs, USCI_A3_regs;
 
 /* Function Declarations */
 int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf);
+void disableUSCIUartInterrupts(UARTConfig* prtInf);
 void initUartRxCallback(UARTConfig * prtInf, void (*callback) (void *params, uint8_t datum), void *params);
 void initUartTxCallback(UARTConfig * prtInf, bool (*callback) (void *params, uint8_t *txAddress), void *params);
 int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs);

@@ -25,6 +25,8 @@
 #include <math.h>
 #include <string.h>
 #include "uart.h"
+#include <driverlib.h>
+
 
 // Port Information List so user isn't forced to pass information all the time
 UARTConfig * prtInfList[5];
@@ -99,6 +101,22 @@ int initUSCIUart(UARTConfig * prtInf, ring_buff_t *txbuf, ring_buff_t *rxbuf){
 			return UART_INVALID_MODULE;
 	}
 	return UART_SUCCESS;
+}
+
+/*
+ * Clears RX and TX interrupt flags and enable bits
+ * May corrupt data being sent, ensure transmission is complete before invoking
+ */
+void disableUSCIUartInterrupts(UARTConfig* prtInf){
+    // Clear RX interrupt flag
+    *(prtInf->usciRegs->IFG_REG) &= ~UCRXIFG;
+    // Disable RX interrupt
+    *(prtInf->usciRegs->IE_REG) &= ~UCRXIE;
+
+    // Clear TX interrupt flag
+    *(prtInf->usciRegs->IFG_REG) &= ~UCTXIFG;
+    // Disable TX interrupt
+    *(prtInf->usciRegs->IE_REG) &= ~UCTXIE;
 }
 
 /*!
@@ -194,6 +212,11 @@ int initUartPort(UARTConfig * prtInf)
 			prtSelReg = (unsigned char *)&P9SEL;
 			break;
 #endif
+#ifdef __MSP430_HAS_PORT10_R__
+        case 10:
+            prtSelReg = (unsigned char *)&P10SEL;
+            break;
+#endif
 		default:
 			prtSelReg = NULL;
 			break;
@@ -224,7 +247,7 @@ int initUartPort(UARTConfig * prtInf)
  * \return Success or errors as defined by UART_ERR_CODES
  *
  */
-#if defined(__MSP430_HAS_USCI__) || defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__)
+#if defined(__MSP430_HAS_USCI__) || defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__) || defined(__MSP430_HAS_USCI_A3__)
 int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs)
 {
 	initUartPort(prtInf);
@@ -285,7 +308,19 @@ int configUSCIUart(UARTConfig * prtInf,USCIUARTRegs * confRegs)
 			confRegs->IFG_REG = (unsigned char *)&UCA2IFG;
 			break;
 #endif
-
+#if (defined(__MSP430_HAS_USCI_A3__)) && (!defined(__MSP430_HAS_USCI__))
+        case USCI_A3:
+            confRegs->CTL0_REG = (unsigned char *)&UCA3CTL0;
+            confRegs->CTL1_REG = (unsigned char *)&UCA3CTL1;
+            confRegs->MCTL_REG = (unsigned char *)&UCA3MCTL;
+            confRegs->BR0_REG  = (unsigned char *)&UCA3BR0;
+            confRegs->BR1_REG  = (unsigned char *)&UCA3BR1;
+            confRegs->IE_REG  = (unsigned char *)&UCA3IE;
+            confRegs->RX_BUF = (unsigned char *)&UCA3RXBUF;
+            confRegs->TX_BUF = (unsigned char *)&UCA3TXBUF;
+            confRegs->IFG_REG = (unsigned char *)&UCA3IFG;
+            break;
+#endif
 
 	}
 
@@ -539,8 +574,8 @@ int uartSendDataBlocking(UARTConfig * prtInf,unsigned char * buf, int len)
 	int i = 0;
 	for(i = 0; i < len; i++)
 	{
-#if (defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__)) && (!defined(__MSP430_HAS_USCI__))
-		if(prtInf->moduleName == USCI_A0|| prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2)
+#if (defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__)) || defined(__MSP430_HAS_USCI_A3__) && (!defined(__MSP430_HAS_USCI__))
+		if(prtInf->moduleName == USCI_A0|| prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2 || prtInf->moduleName == USCI_A3)
 		{
 
 			while(!( *prtInf->usciRegs->IFG_REG & UCTXIFG));
@@ -630,7 +665,7 @@ int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len)
 
 #if (defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__)) && (!defined(__MSP430_HAS_USCI__))
 
-	if(prtInf->moduleName == USCI_A0 || prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2)
+	if(prtInf->moduleName == USCI_A0 || prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2 || prtInf->moduleName == USCI_A3)
 	{
 		// Enable TX IE
 		*prtInf->usciRegs->IFG_REG &= ~UCTXIFG;
@@ -672,7 +707,7 @@ int uartSendDataInt(UARTConfig * prtInf,unsigned char * buf, int len)
 void enableUartRx(UARTConfig * prtInf)
 {
 #if (defined(__MSP430_HAS_USCI_A0__) || defined(__MSP430_HAS_USCI_A1__) || defined(__MSP430_HAS_USCI_A2__)) && (!defined(__MSP430_HAS_USCI__))
-	if(prtInf->moduleName == USCI_A0|| prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2)
+	if(prtInf->moduleName == USCI_A0|| prtInf->moduleName == USCI_A1 || prtInf->moduleName == USCI_A2 || prtInf->moduleName == USCI_A3)
 	{
 		// Enable RX IE
 		*prtInf->usciRegs->IFG_REG &= ~UCRXIFG;
@@ -859,10 +894,14 @@ __interrupt void USCI0RX_ISR(void)
 __interrupt void USCI_A1_ISR(void)
 {
 	UARTConfig * prtInf = prtInfList[USCI_A1];
+	uint8_t datum;
 	switch(__even_in_range(UCA1IV,4))
 	{
 	  case 0:break;                             // Vector 0 - no interrupt
 	  case 2:                                   // Vector 2 - RXIFG
+
+//	    if(UCA1RXBUF == '\r')
+//	        datum = 200;
 		uartRxIsr(prtInf);
 		break;
 	  case 4:                                   // Vector 4 - TXIFG

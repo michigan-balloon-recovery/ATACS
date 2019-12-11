@@ -5,10 +5,31 @@
 extern "C" {
 #endif
 
+
+
+
+
+// -------------------------------------------------------------- //
+// -------------------- include dependencies -------------------- //
+// -------------------------------------------------------------- //
+
+// standard libraries
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
+
+
+
+
+// ---------------------------------------------------------- //
+// -------------------- type definitions -------------------- //
+// ---------------------------------------------------------- //
+
+/** @struct ring_buff_t
+ *  @brief object storing ring buffer configuration and status data
+ *
+ */
 typedef struct {
     uint16_t size;
     uint8_t *start;
@@ -18,6 +39,13 @@ typedef struct {
     uint8_t *write_ptr_packet;
 } ring_buff_t;
 
+
+
+
+
+// ----------------------------------------------------------- //
+// -------------------- public prototypes -------------------- //
+// ----------------------------------------------------------- //
 
 /*!
  * \brief Initializes the ring buffer
@@ -99,12 +127,20 @@ uint16_t ring_buff_read_finish_packet(ring_buff_t *buff);
 /*!
  * \brief Restarts reading a packet
  * 
- * 
  * @param buff is the ring_buff_t instance
  * \return None
  * 
  */
 void ring_buff_read_clear_packet(ring_buff_t *buff);
+
+/*!
+ * \brief Clears the entire ring buffer
+ * 
+ * @param buff is the ring_buff_t instance
+ * \return None
+ * 
+ */
+void ring_buff_clear_buff(ring_buff_t *buff);
 
 #ifdef __cplusplus
 }

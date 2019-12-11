@@ -1,11 +1,18 @@
-#include <stdint.h>
-#include <stdlib.h>
 #include <afsk.h>
-#include <driverlib.h>
+/*-------------------------------------------------------------------------------- /
+/ ATACS AFSK driver
+/ -------------------------------------------------------------------------------- /
+/ Part of the ATACS (Aerial Termination And Communication System) project
+/       https://github.com/michigan-balloon-recovery/ATACS
+/       released under the GPLv2 license (see ATACS/LICENSE in git repository)
+/ Creation Date: November 2019
+/ Contributors: Justin Shetty
+/ --------------------------------------------------------------------------------*/
 
-/*
- * Global Constants
- */
+
+// ---------------------------------------------------------- //
+// -------------------- global variables -------------------- //
+// ---------------------------------------------------------- //
 
 const uint8_t AFSK_SINE_TABLE[AFSK_TABLE_SIZE_100/100] = {
     128, 129, 131, 132, 134, 135, 137, 138, 140, 142, 143, 145, 146, 148, 149, 151,
@@ -42,60 +49,63 @@ const uint8_t AFSK_SINE_TABLE[AFSK_TABLE_SIZE_100/100] = {
     103, 104, 106, 107, 109, 110, 112, 113, 115, 117, 118, 120, 121, 123, 124, 126,
 };
 
-/*
- * Global State
- */
-
-typedef struct {
-    uint16_t ptt_port, tx_port;
-    uint8_t  ptt_pin, tx_pin;
-
-    uint16_t sine_idx_100;
-    uint16_t stride_100;
-
-    uint8_t  tx_flag;
-    uint16_t tx_idx;     // bitwise
-
-    uint8_t* packet_buf;
-    uint16_t packet_len; // bitwise
-    uint8_t  current_byte;
-} afsk_state_t;
-
 afsk_state_t afsk_state;
 
-/*
- * Local Function Declarations
+// ------------------------------------------------------------ //
+// -------------------- private prototypes -------------------- //
+// ------------------------------------------------------------ //
+
+/*!
+ * \brief Initialize timer
+ *
+ * \return None
  */
 void afsk_timer_setup();
+
+/*!
+ * \brief Start timer
+ *
+ * \return None
+ */
 void afsk_timer_start();
+
+/*!
+ * \brief Stop timer
+ *
+ * \return None
+ */
 void afsk_timer_stop();
 
-/*
- * Exported Functions Definitions
- */
-void afsk_setup(const uint16_t tx_port, const uint8_t tx_pin,
-                const uint16_t ptt_port, const uint8_t ptt_pin){
+// ---------------------------------------------------- //
+// -------------------- public API -------------------- //
+// ---------------------------------------------------- //
+
+void afsk_setup(const uint16_t ptt_port, const uint8_t ptt_pin,
+                const uint16_t tx_port,  const uint8_t tx_pin,
+                const bool ptt_active_high){
     // Setup radio GPIO
-    afsk_state.ptt_port = ptt_port;
-    afsk_state.ptt_pin = ptt_pin;
-    GPIO_setOutputHighOnPin(ptt_port, ptt_pin);
-    afsk_state.tx_port = tx_port;
-    afsk_state.tx_pin  = tx_pin;
+    afsk_state.ptt_port         = ptt_port;
+    afsk_state.ptt_pin          = ptt_pin;
+    afsk_state.ptt_active_high  = ptt_active_high;
+    GPIO_setAsOutputPin(ptt_port, ptt_pin);
+    if(ptt_active_high){
+        GPIO_setOutputLowOnPin(ptt_port, ptt_pin);
+    } else {
+        GPIO_setOutputHighOnPin(ptt_port, ptt_pin);
+    }
     GPIO_setAsPeripheralModuleFunctionOutputPin(tx_port, tx_pin);
 
     // Setup timer ISR
     afsk_timer_setup();
 
-    // Reset tx flag
+    // Reset TX flag
     afsk_state.tx_flag = false;
 }
 
-void afsk_reset(){
-    if (afsk_state.packet_buf) {
-        free(afsk_state.packet_buf);
-        afsk_state.packet_buf = 0;
-    }
+void afsk_clear(){
+    afsk_state.packet_buf = 0;
     afsk_state.packet_len = 0;
+    afsk_state.current_byte = 0;
 }
 
 void afsk_send(uint8_t* buf, uint16_t len) {
@@ -107,9 +117,13 @@ void afsk_transmit(){
     if (afsk_state.packet_buf == 0 || afsk_state.packet_len == 0)
         return;
 
-    // Put radio in TX mode (active low), wait 1ms
-    GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
-    __delay_cycles(configCPU_CLOCK_HZ / 10);
+    // Put radio in TX mode
+    if (afsk_state.ptt_active_high) {
+        GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    } else {
+        GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    }
+    __delay_cycles(configCPU_CLOCK_HZ / 50); // 20ms
 
     // Reset metadata
     afsk_state.tx_idx             = 0;
@@ -117,21 +131,25 @@ void afsk_transmit(){
     afsk_state.stride_100         = AFSK_STRIDE_SPACE_100;    // initially 2200 Hz
     afsk_state.current_byte       = afsk_state.packet_buf[0];
 
-    // Set tx flag and start timers
+    // Set TX flag and start timers
     afsk_state.tx_flag            = true;
     afsk_timer_start();
 
     // Block until ISR resets tx flag
     while(afsk_state.tx_flag);
 
-    // Wait 1ms, then put radio back in RX mode
-    __delay_cycles(configCPU_CLOCK_HZ / 1000);
-    GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    // Return to RX mode
+    __delay_cycles(configCPU_CLOCK_HZ / 100); // 20ms
+    if (afsk_state.ptt_active_high) {
+        GPIO_setOutputLowOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    } else {
+        GPIO_setOutputHighOnPin(afsk_state.ptt_port, afsk_state.ptt_pin);
+    }
 }
 
-/*
- * Local Function Definitions
- */
+// ---------------------------------------------------- //
+// ------------------- private API -------------------- //
+// ---------------------------------------------------- //
 void afsk_timer_setup(){
     TA1CCR0   = AFSK_CPS;
     TA1CCTL1 |= OUTMOD_7; // set at CCR0, reset at CCRx
@@ -141,20 +159,20 @@ void afsk_timer_setup(){
 
 void afsk_timer_start(){
     TA1CTL   |= MC__UP;
-    TA1CCTL0 |= CCIE;
+    TA1CCTL1 |= CCIE;
 }
 
 void afsk_timer_stop(){
     TA1CTL   &= ~MC__STOP;
-    TA1CCTL0 &= ~CCIE;
+    TA1CCTL1 &= ~CCIE;
 }
 
 /*
  * AFSK ISR
  */
-uint16_t sample_ctr = 0;
-#pragma vector=TIMER1_A0_VECTOR
-__interrupt void TIMER1_A0_ISR (void) {
+#pragma vector=TIMER1_A1_VECTOR
+__interrupt void TIMER1_A1_ISR (void) {
+    static uint16_t sample_ctr = 0;
     // Read TAIV to reset interrupt flag
     uint16_t taiv = TA1IV;
 

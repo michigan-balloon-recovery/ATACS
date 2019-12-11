@@ -43,27 +43,28 @@ void halBoardStopOutputSystemClock(void)
  *************************************************************************/
 void halBoardInit(void)
 {
-  //Tie unused ports
-  PAOUT  = 0;
-  PADIR  = 0xFFFF;
+  // Set all pins to input (safest, but wastes power)
+//  PAOUT  = 0;
+  PADIR  = 0;
   PASEL  = 0;
-  PBOUT  = 0;
-  PBDIR  = 0xFFFF;
+//  PBOUT  = 0;
+  PBDIR  = 0;
   PBSEL  = 0;
-  PCOUT  = 0;
-  PCDIR  = 0xFFFF;
+//  PCOUT  = 0;
+  PCDIR  = 0;
   PCSEL  = 0;
-  PDOUT  = 0;
-  P8DIR  = 0xFF & ~(BIT0 | BIT2); // ROCKBLOCK pins 8.0, 8.2 are inputs.
-  PDSEL  = 0x0003;
-  PEOUT  = 0;
-  PEDIR  = 0xFEFF;                          // P10.0 to USB RST pin,
+//  PDOUT  = 0;
+  P8DIR  = 0; // ROCKBLOCK pins 8.0, 8.2 are inputs.
+  PDSEL  = 0;
+  PDSEL  = 0;
+//  PEOUT  = 0;
+  PEDIR  = 0;                          // P10.0 to USB RST pin,
                                             // ...if enabled with J5
   PESEL  = 0;
-  P11OUT = 0;
-  P11DIR = 0xFF;
-  PJOUT  = 0;
-  PJDIR  = 0xFF;
+//  P11OUT = 0;
+  P11DIR = 0;
+//  PJOUT  = 0;
+  PJDIR  = 0;
   P11SEL = 0;
 }
 
