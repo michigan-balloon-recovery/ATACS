@@ -7,8 +7,6 @@
 5. RockBLOCK account with credits available (to send messages)
 6. Google Maps API key
 
-`rtos` should now appear in the Project Explorer pane
-
 ## Usage
 1. Download `groundstation.py`. Place it into a folder, it will generate a few files while running. Open the script in a text editor, we will have to change a few lines of the software.
 2. Fill in your RockBLOCK username, password, and imei inside of the `rb_send_message()` function in the Python code.
