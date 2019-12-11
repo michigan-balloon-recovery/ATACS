@@ -8,12 +8,12 @@
 
 ## Driver documentation
 1. [APRS](./src/aprs/README.md)
-2. [buzzer](./src/buzzer/README.md)
+2. [Buzzer](./src/buzzer/README.md)
 3. [GNSS](./src/gnss/README.md)
 4. [I2C](./src/I2C/README.md)
-5. [logging](./src/logging/README.md)
-6. [ring buffer](./src/ring_buff/README.md)
+5. [Logging](./src/logging/README.md)
+6. [Ring Buffer](./src/ring_buff/README.md)
 7. [RockBLOCK](./src/RockBLOCK/README.md)
-8. [sensors](./src/Sensors/README.md)
+8. [Sensors](./src/Sensors/README.md)
 9. [UART](./src/uart/README.md)
 10. [XBee](./src/XBee/README.md)
