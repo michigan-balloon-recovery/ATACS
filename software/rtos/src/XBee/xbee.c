@@ -7,12 +7,8 @@
 
 #include "xbee.h"
 
-XBEE_t XBee;
 
 void xb_init(XBEE_t *xb) {
-
-    ring_buff_init(&xb->rx_buff, xb->rx_mem, XBEE_RX_BUFF_SIZE);
-    ring_buff_init(&xb->tx_buff, xb->tx_mem, XBEE_TX_BUFF_SIZE);
 
     // initialize semaphore
     //vSemaphoreCreateBinary(xb->uart_semaphore);
@@ -34,8 +30,8 @@ void xb_init(XBEE_t *xb) {
 
     initUSCIUart(&a2_cnf, &xb->tx_buff, &xb->rx_buff);
 
-    initUartRxCallback(xb->uart, NULL, xb);
-    initUartTxCallback(xb->uart, NULL, xb);
+    initUartRxCallback(xb->uart, &xb_rx_callback, xb);
+    initUartTxCallback(xb->uart, &xb_tx_callback, xb);
 }
 
 void xb_rx_callback(void *param, uint8_t datum) {
@@ -43,11 +39,25 @@ void xb_rx_callback(void *param, uint8_t datum) {
 }
 
 bool xb_tx_callback(void *param, uint8_t * txAddress) {
+    static int i = 0;
+    XBEE_t *xb = (XBEE_t *) param;
+
+    *txAddress = xb->tx_buff[i++];
+
+    if(i == XBEE_TX_BUFF_SIZE) {
+        return false;
+        i = 0;
+    }
+    return true;
 
 }
 
 bool xb_transmit(XBEE_t *xb, uint8_t *buff, uint16_t len) {
-    return uartSendDataInt(xb->uart, buff, len) == UART_SUCCESS;
+    int i = 0;
+    for(i = 0; i < len; i++)
+        xb->tx_buff[i] = buff[i];
+
+    uartSendDataInt(xb->uart, xb->tx_buff[i], len);
 }
 
 

@@ -17,17 +17,20 @@
 #include "uart.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
+#include <string.h>
 
 #define XBEE_TX_BUFF_SIZE 32
 #define XBEE_RX_BUFF_SIZE 32
 
 typedef struct {
-    uint8_t rx_mem[XBEE_RX_BUFF_SIZE];
-    uint8_t tx_mem[XBEE_TX_BUFF_SIZE];
-    ring_buff_t rx_buff;
-    ring_buff_t tx_buff;
+    char rx_buff[XBEE_RX_BUFF_SIZE];
+    char tx_buff[XBEE_TX_BUFF_SIZE];
     UARTConfig *uart;
 } XBEE_t;
+
+XBEE_t XBee;
+
+
 
 // does basic initialization of the xbee passed in as argument to this function.
 void xb_init(XBEE_t *xb);
