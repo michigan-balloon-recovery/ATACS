@@ -131,9 +131,6 @@
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/RockBLOCK"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/gnss"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/logging"/>
-									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/sddisk"/>
-									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS-Plus-FAT-191108a-MIT"/>
-									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/FreeRTOS-Plus-FAT-191108a-MIT/include"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/MMC_lib"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/src/ring_buff"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/ff14/source"/>
@@ -149,7 +146,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="lnk_msp430f5438.cmd|ff14/source/ffsystem.c|ff14/source/diskio.c|ff14/documents|FreeRTOS_Source/portable/MemMang/heap_2.c|FreeRTOS_Source/portable/MemMang/heap_5.c|FreeRTOS_Source/portable/MemMang/heap_4.c|FreeRTOS_Source/portable/MemMang/heap_1.c|FreeRTOS-Plus-FAT-191108a-MIT/ff_dev_support.c|FreeRTOS-Plus-FAT-191108a-MIT/portable" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="lnk_msp430f5438.cmd|ff14/source/ffsystem.c|ff14/source/diskio.c|ff14/documents|FreeRTOS_Source/portable/MemMang/heap_2.c|FreeRTOS_Source/portable/MemMang/heap_5.c|FreeRTOS_Source/portable/MemMang/heap_4.c|FreeRTOS_Source/portable/MemMang/heap_1.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
