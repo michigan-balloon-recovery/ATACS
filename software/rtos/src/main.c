@@ -11,7 +11,7 @@
 #include "uart.h"
 #include "gnss.h"
 #include "aprs.h"
-#include "rockblock.h"f
+#include "rockblock.h"
 #include "sensors.h"
 #include "i2c_driver.h"
 #include "logging.h"

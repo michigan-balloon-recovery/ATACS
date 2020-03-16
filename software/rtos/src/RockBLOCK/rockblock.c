@@ -116,7 +116,7 @@ static bool rb_use_uart(ROCKBLOCK_t *rb) {
     uint16_t totalLen = rb->tx.last_ptr - rb->tx.buff + 1; // length
     rb->rx.finished = false;
 
-    uartSendDataInt(&USCI_A1_cnf, rb->tx.buff, totalLen);
+    uartSendDataInt(&USCI_A1_cnf, (unsigned char*)rb->tx.buff, totalLen);
 
     if(xSemaphoreTake(rb->tx.txSemaphore, 20000 / portTICK_RATE_MS) == pdFALSE) {
         xSemaphoreGive(rb->busy_semaphore);

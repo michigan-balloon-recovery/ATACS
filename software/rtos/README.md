@@ -2,9 +2,9 @@
 ## Import instructions for Code Composer Studio 9
 1. After installing CCS9, configure it to use a workspace that is **not** the same as the project directory.
 2. `File` > `Import` > `Code Composer Studio` > `CCS Projects`
-3. Set import source as `ATACS/software/rtos`, then Finish. `rtos` should now appear in the Project Explorer pane
-4. Right-click the `rtos` project, go to `Properties`, then `Manage Configurations`
-5. Select `Debug_Large_Date_Model` and `Set Active`
+3. Set import source as `ATACS/software/rtos`, then Finish.
+
+`rtos` should now appear in the Project Explorer pane
 
 ## Driver documentation
 1. [APRS](./src/aprs/README.md)

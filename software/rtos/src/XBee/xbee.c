@@ -39,11 +39,13 @@ void xb_init(XBEE_t *xb) {
 }
 
 void xb_rx_callback(void *param, uint8_t datum) {
-
+    //stub
+    return;
 }
 
 bool xb_tx_callback(void *param, uint8_t * txAddress) {
-
+    //stub
+    return true;
 }
 
 bool xb_transmit(XBEE_t *xb, uint8_t *buff, uint16_t len) {
